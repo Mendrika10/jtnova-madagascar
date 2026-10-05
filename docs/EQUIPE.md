@@ -88,14 +88,17 @@ dev    ←── PR ── feat/S4.2-edition-realisation ── PR ────�
   └── PR ── fix/S6.1-anti-spam-contact
 ```
 
-- **`main`** : état de production. Protégée. Fusion **uniquement** depuis `dev`, en fin de sprint.
+- **`main`** : état de production. Fusion **uniquement** depuis `dev`, en fin de sprint.
+  ⚠️ La protection de branche n'est pas disponible sur un dépôt privé en offre gratuite
+  (l'API répond 403 « Upgrade to GitHub Pro »). La règle est donc une **convention d'équipe**,
+  pas un verrou technique. Elle devient un verrou si le dépôt passe en public ou en Pro.
 - **`dev`** : intégration continue, déployée automatiquement en **preview Vercel**.
 - **`feat/<sprint>.<n>-<slug>`** : une branche par fonctionnalité. PR vers `dev`.
 - **`fix/<sprint>.<n>-<slug>`** : corrections.
 - **`chore/…`** : outillage, CI, dépendances.
 
 **Règles**
-1. Aucun commit direct sur `main` ou `dev`.
+1. Aucun commit direct sur `main` ou `dev` (convention non verrouillée techniquement, cf. ci-dessus).
 2. Une PR = une fonctionnalité = un critère d'acceptation.
 3. La CI doit être verte avant fusion (lint, typecheck, build).
 4. La PR est relue par le rôle complémentaire (ex. Frontend relit le Backend).
