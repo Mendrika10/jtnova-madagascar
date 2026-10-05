@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { motion, cubicBezier, type Variants } from "framer-motion";
 import styles from "./Services.module.css";
+import type { ServiceItem } from "@/lib/content";
 
 const expo = cubicBezier(0.16, 1, 0.3, 1);
 
@@ -67,7 +68,7 @@ const cardVariant: Variants = {
   },
 };
 
-const services = [
+const servicesFallback = [
   {
     icon: (
       <svg
@@ -212,7 +213,32 @@ function createShooter(container: HTMLDivElement) {
   );
 }
 
-export default function Services() {
+// Icônes décoratives des cartes, attribuées par ordre.
+const SERVICES_ICONS = [
+  <svg key="web" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M9 21V9" /></svg>,
+  <svg key="dev" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19l-7-7 7-7M19 19l-7-7 7-7" /></svg>,
+  <svg key="design" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" /></svg>,
+  <svg key="commerce" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2l.01 6L10 12l-3.99 4.01L6 22h12v-5.99L14 12l4-3.99V2H6z" /></svg>,
+  <svg key="seo" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>,
+  <svg key="conseil" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" /></svg>,
+];
+
+type ServicesProps = {
+  /** Services publiés depuis Supabase ; absent → repli sur les données locales. */
+  items?: ServiceItem[];
+};
+
+export default function Services({ items }: ServicesProps = {}) {
+  const services =
+    items && items.length > 0
+      ? items.map((it, i) => ({
+          icon: SERVICES_ICONS[i % SERVICES_ICONS.length],
+          title: it.title,
+          desc: it.description,
+          tag: it.tag,
+        }))
+      : servicesFallback;
+
   const shooterRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

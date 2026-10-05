@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion, cubicBezier, type Variants } from "framer-motion";
 import styles from "./Projects.module.css";
+import type { ProjectCardItem } from "@/lib/content";
 
 const expo = cubicBezier(0.16, 1, 0.3, 1);
 
@@ -90,7 +91,7 @@ const cardVar: Variants = {
   },
 };
 
-const projects = [
+const projectsFallback = [
   {
     title: "JULIA - Plateforme de gestion d'activités et de planning",
     category: "Développement & Design",
@@ -210,7 +211,22 @@ function DeviceFrame({
   );
 }
 
-export default function Projects() {
+type ProjectsProps = {
+  /** Réalisations publiées depuis Supabase ; absent → repli sur les données locales. */
+  items?: ProjectCardItem[];
+};
+
+export default function Projects({ items }: ProjectsProps = {}) {
+  const projects =
+    items && items.length > 0
+      ? items.map((it) => ({
+          ...it,
+          bg: "linear-gradient(145deg, #1a2332 0%, #0d1420 100%)",
+          accent: "rgba(0,180,216,0.18)",
+          frame: "desktop",
+        }))
+      : projectsFallback;
+
   const shooterRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

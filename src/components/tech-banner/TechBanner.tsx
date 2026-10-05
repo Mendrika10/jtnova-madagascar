@@ -1,10 +1,11 @@
 "use client";
 
 import styles from "./TechBanner.module.css";
+import type { TechItem } from "@/lib/content";
 
-const techs = [
-  {
-    name: "HTML",
+// Icônes SVG internes, associées aux technos par nom (fallback : puce neutre).
+const TECH_ICONS: Record<string, { color: string; icon: React.ReactNode }> = {
+  "HTML": {
     color: "#e44d26",
     icon: (
       <svg
@@ -18,8 +19,7 @@ const techs = [
       </svg>
     ),
   },
-  {
-    name: "CSS",
+  "CSS": {
     color: "#264de4",
     icon: (
       <svg
@@ -33,8 +33,7 @@ const techs = [
       </svg>
     ),
   },
-  {
-    name: "JavaScript",
+  "JavaScript": {
     color: "#f7df1e",
     icon: (
       <svg
@@ -48,8 +47,7 @@ const techs = [
       </svg>
     ),
   },
-  {
-    name: "TypeScript",
+  "TypeScript": {
     color: "#3178c6",
     icon: (
       <svg
@@ -63,8 +61,7 @@ const techs = [
       </svg>
     ),
   },
-  {
-    name: "React.js",
+  "React.js": {
     color: "#61dafb",
     icon: (
       <svg
@@ -78,8 +75,7 @@ const techs = [
       </svg>
     ),
   },
-  {
-    name: "Next.js",
+  "Next.js": {
     color: "#ffffff",
     icon: (
       <svg
@@ -93,8 +89,7 @@ const techs = [
       </svg>
     ),
   },
-  {
-    name: "Node.js",
+  "Node.js": {
     color: "#339933",
     icon: (
       <svg
@@ -108,8 +103,7 @@ const techs = [
       </svg>
     ),
   },
-  {
-    name: "Tailwind",
+  "Tailwind": {
     color: "#06b6d4",
     icon: (
       <svg
@@ -123,8 +117,7 @@ const techs = [
       </svg>
     ),
   },
-  {
-    name: "MongoDB",
+  "MongoDB": {
     color: "#47a248",
     icon: (
       <svg
@@ -138,8 +131,7 @@ const techs = [
       </svg>
     ),
   },
-  {
-    name: "PostgreSQL",
+  "PostgreSQL": {
     color: "#336791",
     icon: (
       <svg
@@ -153,8 +145,7 @@ const techs = [
       </svg>
     ),
   },
-  {
-    name: "Git",
+  "Git": {
     color: "#f05032",
     icon: (
       <svg
@@ -168,8 +159,7 @@ const techs = [
       </svg>
     ),
   },
-  {
-    name: "Docker",
+  "Docker": {
     color: "#2496ed",
     icon: (
       <svg
@@ -183,8 +173,7 @@ const techs = [
       </svg>
     ),
   },
-  {
-    name: "Figma",
+  "Figma": {
     color: "#f24e1e",
     icon: (
       <svg
@@ -198,26 +187,54 @@ const techs = [
       </svg>
     ),
   },
+};
+
+const TECH_FALLBACK = [
+  "HTML", "CSS", "JavaScript", "TypeScript", "React.js", "Next.js",
+  "Node.js", "Tailwind", "MongoDB", "PostgreSQL", "Git", "Docker", "Figma",
 ];
 
-// Double la liste pour le défilement infini
-const ITEMS = [...techs, ...techs];
+type TechBannerProps = {
+  /** Technologies depuis Supabase ; absent → repli sur la liste locale. */
+  items?: TechItem[];
+};
 
-export default function TechBanner() {
+export default function TechBanner({ items }: TechBannerProps = {}) {
+  const names =
+    items && items.length > 0 ? items.map((t) => t.name) : TECH_FALLBACK;
+
+  // Double la liste pour le défilement infini
+  const ITEMS = [...names, ...names];
   return (
     <div className={styles.wrapper} aria-label="Technologies maîtrisées">
       <div className={styles.track}>
-        {ITEMS.map((tech, i) => (
-          <div key={i} className={styles.item}>
-            <span
-              className={styles.iconWrap}
-              style={{ "--tech-color": tech.color } as React.CSSProperties}
-            >
-              {tech.icon}
-            </span>
-            <span className={styles.name}>{tech.name}</span>
-          </div>
-        ))}
+        {ITEMS.map((name, i) => {
+          const tech = TECH_ICONS[name] ?? {
+            color: "var(--color-accent, #00b4d8)",
+            icon: (
+              <svg
+                viewBox="0 0 24 24"
+                width="18"
+                height="18"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="4" />
+              </svg>
+            ),
+          };
+          return (
+            <div key={i} className={styles.item}>
+              <span
+                className={styles.iconWrap}
+                style={{ "--tech-color": tech.color } as React.CSSProperties}
+              >
+                {tech.icon}
+              </span>
+              <span className={styles.name}>{name}</span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
