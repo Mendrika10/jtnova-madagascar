@@ -79,7 +79,7 @@ export default function Skills() {
               <div className={styles.imageMock}>
                 <div className={styles.imageMockScreen}>
                   <div className={styles.codeLines}>
-                    {["const dev = () => {", '  return "Nante";', "};", "", "// Full Stack"].map((line, i) => (
+                    {["const dev = () => {", '  return "Jtnova";', "};", "", "// Full Stack"].map((line, i) => (
                       <span key={i} className={styles.codeLine} style={{ opacity: 1 - i * 0.15 }}>
                         {line}
                       </span>
