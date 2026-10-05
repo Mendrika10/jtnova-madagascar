@@ -1,4 +1,5 @@
 import Services from "@/components/services/Services";
+import { getServices } from "@/lib/content";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -7,6 +8,10 @@ export const metadata: Metadata = {
     "Découvrez tous les services de Jtnova : création web, design UI/UX, e-commerce, applications et conseil digital.",
 };
 
-export default function ServicesPage() {
-  return <Services />;
+// Revalide les contenus depuis Supabase toutes les 60 s (ISR)
+export const revalidate = 60;
+
+export default async function ServicesPage() {
+  const services = await getServices();
+  return <Services items={services ?? undefined} />;
 }

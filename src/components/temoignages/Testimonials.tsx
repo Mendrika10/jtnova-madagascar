@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import {
   motion,
   AnimatePresence,
@@ -8,6 +8,7 @@ import {
   type Variants,
 } from "framer-motion";
 import styles from "./Testimonials.module.css";
+import type { TestimonialItem } from "@/lib/content";
 
 const expo = cubicBezier(0.16, 1, 0.3, 1);
 
@@ -23,7 +24,7 @@ const headerVar: Variants = {
   },
 };
 
-const testimonials = [
+const testimonialsFallback = [
   {
     name: "Sophie Martin",
     role: "CEO, TechStart",
@@ -69,8 +70,25 @@ const testimonials = [
 ];
 
 const MAX_CHARS = 220;
+type TestimonialsProps = {
+  /** Témoignages publiés depuis Supabase ; absent → repli sur les données locales. */
+  items?: TestimonialItem[];
+};
 
-export default function Testimonials() {
+export default function Testimonials({ items }: TestimonialsProps = {}) {
+  const testimonials: TestimonialItem[] = useMemo(
+    () =>
+      items && items.length > 0
+        ? items
+        : testimonialsFallback.map((t) => ({
+            name: t.name,
+            role: t.role,
+            avatar: t.avatar,
+            text: t.text,
+            linkedin: t.linkedin,
+          })),
+    [items],
+  );
   const [index, setIndex] = useState(0);
   const [dir, setDir] = useState(1);
   const [expanded, setExpanded] = useState(false);
@@ -78,12 +96,15 @@ export default function Testimonials() {
   const [progressKey, setProgressKey] = useState(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const go = useCallback((d: number) => {
-    setDir(d);
-    setExpanded(false);
-    setProgressKey((k) => k + 1);
-    setIndex((prev) => (prev + d + testimonials.length) % testimonials.length);
-  }, []);
+  const go = useCallback(
+    (d: number) => {
+      setDir(d);
+      setExpanded(false);
+      setProgressKey((k) => k + 1);
+      setIndex((prev) => (prev + d + testimonials.length) % testimonials.length);
+    },
+    [testimonials.length],
+  );
 
   const goTo = (i: number) => {
     setDir(i > index ? 1 : -1);

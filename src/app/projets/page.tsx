@@ -1,4 +1,5 @@
 import Projects from "@/components/projets/Projects";
+import { getPublishedProjects } from "@/lib/content";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -6,6 +7,10 @@ export const metadata: Metadata = {
   description: "Découvrez les projets et réalisations de Jtnova, agence web.",
 };
 
-export default function ProjetsPage() {
-  return <Projects />;
+// Revalide les contenus depuis Supabase toutes les 60 s (ISR)
+export const revalidate = 60;
+
+export default async function ProjetsPage() {
+  const projects = await getPublishedProjects();
+  return <Projects items={projects ?? undefined} />;
 }

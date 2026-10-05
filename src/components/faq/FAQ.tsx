@@ -8,6 +8,7 @@ import {
   type Variants,
 } from "framer-motion";
 import styles from "./FAQ.module.css";
+import type { FaqItem } from "@/lib/content";
 
 const expo = cubicBezier(0.16, 1, 0.3, 1);
 
@@ -150,7 +151,17 @@ function IconTag() {
   );
 }
 
-const faqs = [
+// Icônes décoratives de la colonne de gauche, attribuées par ordre.
+const FAQ_ICONS = [
+  <IconCode key="code" />,
+  <IconClock key="clock" />,
+  <IconStack key="stack" />,
+  <IconShield key="shield" />,
+  <IconFlow key="flow" />,
+  <IconTag key="tag" />,
+];
+
+const faqsFallback = [
   {
     icon: <IconCode />,
     q: "Quels types de projets réalisez-vous ?",
@@ -183,8 +194,28 @@ const faqs = [
   },
 ];
 
-export default function FAQ() {
+type FaqEntry = {
+  icon: React.ReactNode;
+  q: string;
+  a: string;
+};
+
+type FaqProps = {
+  /** Items publiés depuis Supabase ; absent → repli sur les données locales. */
+  items?: FaqItem[];
+};
+
+export default function FAQ({ items }: FaqProps = {}) {
   const [open, setOpen] = useState<number | null>(0);
+
+  const faqs: FaqEntry[] =
+    items && items.length > 0
+      ? items.map((it, i) => ({
+          icon: FAQ_ICONS[i % FAQ_ICONS.length],
+          q: it.question,
+          a: it.answer,
+        }))
+      : faqsFallback;
 
   return (
     <section id="faq" className={styles.section}>
