@@ -51,6 +51,16 @@ npm run build      # build de production
 
 La CI (`.github/workflows/ci.yml`) exécute ces trois vérifications sur chaque Pull Request.
 
+## Déploiement
+
+| Environnement | Branche | Mise en place |
+|---|---|---|
+| Production | `main` | à finaliser : `vercel link` |
+| Preview | `dev` et branches de fonctionnalité | générée automatiquement par Vercel |
+
+Procédure complète, variables d'environnement, rollback et seuils des offres gratuites :
+**`docs/DEPLOIEMENT.md`**.
+
 ## Documentation de pilotage
 
 | Document | Contenu |
@@ -59,6 +69,7 @@ La CI (`.github/workflows/ci.yml`) exécute ces trois vérifications sur chaque 
 | `docs/ARCHITECTURE.md` | Flux de données, modèle de données, politiques RLS, sécurité, performances |
 | `docs/EQUIPE.md` | Rôles, matrice RACI, workflow Git, conventions |
 | `docs/SPRINTS.md` | Sprints S0 → S7, chaque fonctionnalité et son critère d'acceptation |
+| `docs/DEPLOIEMENT.md` | Runbook Vercel, variables d'environnement, rollback, limites gratuites |
 
 ## Règles à ne pas enfreindre
 
