@@ -7,20 +7,21 @@
 | Dépôt GitHub `Mendrika10/jtnova-madagascar` (privé) | ✅ créé |
 | Branches `main` et `dev` poussées | ✅ fait |
 | CI (types, lint, build) sur `main` et `dev` | ✅ verte |
-| Projet Vercel `nantenaina2/jtnova-madagascar` | ✅ créé et lié (`vercel link --yes`) |
-| **Production en ligne** | ✅ `https://jtnova-madagascar.vercel.app` (déploiement CLI du 2026-10-05) |
+| Projet Vercel | ✅ **`mendrikaramaro20-7982/jtnova-madagascar`** — compte Jtnova (migré le 2026-10-05 depuis le compte d'une autre entreprise, projet y ayant été supprimé) |
+| **Production en ligne** | ✅ `https://jtnova-madagascar.vercel.app` (déploiement CLI, routes vérifiées 200) |
 | Déploiements automatiques Git | ⛔ **une action manuelle reste à faire** (voir §2) |
 | Branche `main` protégée | ⚠️ impossible sur un dépôt privé gratuit (403 GitHub Pro) |
 
 ## 2. Activer les déploiements automatiques (une action, 2 minutes)
 
-`vercel git connect` échoue avec l'erreur :
+À refaire sur chaque nouveau compte Vercel : `vercel git connect` échoue avec l'erreur :
 > « You need to add a Login Connection to your GitHub account first. (400) »
 
 C'est une configuration de **compte**, pas de projet : elle ne peut être faite que depuis le
 tableau de bord. Une seule fois :
 
-1. **Vercel → Account Settings → Login Connections** → connecter le compte GitHub `Mendrika10`.
+1. **Vercel → Account Settings → Login Connections** → connecter le compte GitHub `Mendrika10`
+   (aujourd'hui sur le compte `mendrikaramaro20-7982`).
 2. **Projet jtnova-madagascar → Settings → Git → Connect Git Repository** → sélectionner
    `Mendrika10/jtnova-madagascar` (ou relancer `vercel git connect --yes` une fois la connexion ajoutée).
 
