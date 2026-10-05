@@ -1,6 +1,7 @@
 ﻿"use client";
 import { useRef, useEffect, useState } from "react";
 import { motion, useInView, cubicBezier, type Variants } from "framer-motion";
+import Link from "next/link";
 import styles from "./About.module.css";
 import StarField from "@/components/accueil/StarField";
 import FloatingLogos from "@/components/accueil/FloatingLogos";
@@ -536,7 +537,7 @@ export default function About() {
               </div>
 
               {/* Cercle tournant */}
-              <a
+              <Link
                 href="/#contact"
                 className={styles.spinWrap}
                 aria-label="Travaillons ensemble"
@@ -579,7 +580,7 @@ export default function About() {
                     <path d="M7 17L17 7M17 7H7M17 7v10" />
                   </svg>
                 </div>
-              </a>
+              </Link>
             </div>
           </motion.div>
 
@@ -1047,7 +1048,7 @@ export default function About() {
           </AnimBlock>
           <AnimBlock variant={blurIn}>
             <h2 className={styles.legalSectionTitle}>
-              Identification de l'entreprise
+              Identification de l&apos;entreprise
             </h2>
           </AnimBlock>
           <AnimBlock>
@@ -1225,9 +1226,9 @@ export default function About() {
             <p className={styles.ctaSub}>
               Parlez-nous de votre projet. Nous vous répondons sous 24h.
             </p>
-            <a href="/#contact" className={styles.btnPrimary}>
+            <Link href="/#contact" className={styles.btnPrimary}>
               Démarrer un projet
-            </a>
+            </Link>
           </AnimBlock>
         </div>
       </section>

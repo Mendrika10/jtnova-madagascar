@@ -107,7 +107,7 @@ export default function Testimonials() {
 
   // Étoiles déterministes
   const seed = (n: number) => {
-    let x = Math.sin(n) * 10000;
+    const x = Math.sin(n) * 10000;
     return x - Math.floor(x);
   };
   const STARS = Array.from({ length: 70 }, (_, i) => ({

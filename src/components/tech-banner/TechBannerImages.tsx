@@ -11,6 +11,10 @@ export default function TechBannerImages({
   images?: string[];
   title?: string;
 }) {
+  // Les hooks doivent être appelés inconditionnellement : jamais après un return.
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [startIndex, setStartIndex] = useState(0);
+
   if (!images || images.length === 0) return null;
 
   // Duplicate images to create an infinite marquee effect
@@ -18,9 +22,6 @@ export default function TechBannerImages({
     images.length > 1
       ? [...images, ...images]
       : [...images, ...images, ...images];
-
-  const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [startIndex, setStartIndex] = useState(0);
 
   function openAt(i: number) {
     setStartIndex(i % images.length);
