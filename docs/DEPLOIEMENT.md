@@ -7,29 +7,35 @@
 | Dépôt GitHub `Mendrika10/jtnova-madagascar` (privé) | ✅ créé |
 | Branches `main` et `dev` poussées | ✅ fait |
 | CI (types, lint, build) sur `main` et `dev` | ✅ verte |
-| Projet Vercel lié | ⛔ **à faire** — aucune authentification Vercel sur la machine |
+| Projet Vercel `nantenaina2/jtnova-madagascar` | ✅ créé et lié (`vercel link --yes`) |
+| **Production en ligne** | ✅ `https://jtnova-madagascar.vercel.app` (déploiement CLI du 2026-10-05) |
+| Déploiements automatiques Git | ⛔ **une action manuelle reste à faire** (voir §2) |
 | Branche `main` protégée | ⚠️ impossible sur un dépôt privé gratuit (403 GitHub Pro) |
 
-## 2. Lier Vercel (à exécuter une seule fois, en local)
+## 2. Activer les déploiements automatiques (une action, 2 minutes)
 
-Vercel exige une connexion interactive : elle ne peut pas être automatisée.
+`vercel git connect` échoue avec l'erreur :
+> « You need to add a Login Connection to your GitHub account first. (400) »
 
-```bash
-vercel login                      # ouvre le navigateur / envoie un lien par e-mail
-cd "D:/Projet Nante/jtnova-madagascar"
-vercel link                       # associe le dossier au projet Vercel (créé si absent)
-vercel git connect                # relie le dépôt GitHub → déploiements automatiques
-```
+C'est une configuration de **compte**, pas de projet : elle ne peut être faite que depuis le
+tableau de bord. Une seule fois :
 
-Si `vercel git connect` échoue, faire l'équivalent dans le tableau de bord Vercel :
-**Project → Settings → Git → Connect Git Repository**, puis sélectionner
-`Mendrika10/jtnova-madagascar`.
+1. **Vercel → Account Settings → Login Connections** → connecter le compte GitHub `Mendrika10`.
+2. **Projet jtnova-madagascar → Settings → Git → Connect Git Repository** → sélectionner
+   `Mendrika10/jtnova-madagascar` (ou relancer `vercel git connect --yes` une fois la connexion ajoutée).
 
 ### Vérifier que le lien a fonctionné
 
 - Vercel doit afficher **Production Branch = `main`**.
 - Un push sur `dev` doit produire un **preview deployment**.
 - Un merge dans `main` doit produire un **déploiement de production**.
+
+En attendant, la production peut être mise à jour à la main depuis le dossier lié :
+
+```bash
+vercel --prod --yes    # déploie le code local en production
+vercel --yes           # déploie un preview
+```
 
 ## 3. Variables d'environnement
 
