@@ -10,7 +10,17 @@
 | Projet Vercel | ✅ **`mendrikaramaro20-7982/jtnova-madagascar`** — compte dédié à Jtnova (mis en place le 2026-10-05) |
 | **Production en ligne** | ✅ `https://jtnova-madagascar.vercel.app` (déploiement CLI, routes vérifiées 200) |
 | Déploiements automatiques Git | ⛔ **une action manuelle reste à faire** (voir §2) |
-| Branche `main` protégée | ⚠️ impossible sur un dépôt privé gratuit (403 GitHub Pro) |
+| Branche `main` protégée | ✅ **active** (dépôt public) — CI requise, même pour l'admin ; idem `dev` |
+
+## 1bis. Protection des branches (active)
+
+`main` et `dev` sont protégées (dépôt public) :
+
+- le check **« Types, lint et build »** doit être vert pour fusionner une PR — y compris pour
+  l'administrateur du dépôt (`enforce_admins`) ;
+- force-push et suppression de branche interdits ;
+- conséquence : **les fusions locales suivies d'un `git push origin main` ne fonctionnent plus** —
+  tout passe par PR (commandes dans `docs/EQUIPE.md` §4).
 
 ## 2. Activer les déploiements automatiques (une action, 2 minutes)
 

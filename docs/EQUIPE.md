@@ -88,20 +88,43 @@ dev    ←── PR ── feat/S4.2-edition-realisation ── PR ────�
   └── PR ── fix/S6.1-anti-spam-contact
 ```
 
-- **`main`** : état de production. Fusion **uniquement** depuis `dev`, en fin de sprint.
-  ⚠️ La protection de branche n'est pas disponible sur un dépôt privé en offre gratuite
-  (l'API répond 403 « Upgrade to GitHub Pro »). La règle est donc une **convention d'équipe**,
-  pas un verrou technique. Elle devient un verrou si le dépôt passe en public ou en Pro.
-- **`dev`** : intégration continue, déployée automatiquement en **preview Vercel**.
+- **`main`** : état de production. **Protégée techniquement** (GitHub) : la CI doit être verte pour
+  fusionner, même pour l'administrateur du dépôt ; force-push et suppression interdits.
+  Fusion **uniquement** depuis `dev`, via Pull Request.
+- **`dev`** : intégration continue, **protégée par les mêmes règles**, déployée automatiquement en
+  **preview Vercel**.
 - **`feat/<sprint>.<n>-<slug>`** : une branche par fonctionnalité. PR vers `dev`.
 - **`fix/<sprint>.<n>-<slug>`** : corrections.
 - **`chore/…`** : outillage, CI, dépendances.
 
 **Règles**
-1. Aucun commit direct sur `main` ou `dev` (convention non verrouillée techniquement, cf. ci-dessus).
+1. Aucun commit direct sur `main` ou `dev` : **impossible techniquement** — GitHub rejette le push
+   si les vérifications requises ne sont pas vertes sur le commit.
 2. Une PR = une fonctionnalité = un critère d'acceptation.
 3. La CI doit être verte avant fusion (lint, typecheck, build).
 4. La PR est relue par le rôle complémentaire (ex. Frontend relit le Backend).
+
+### Commandes du flux (à partir du moment où les branches sont protégées)
+
+```bash
+# 1. branche de fonctionnalité depuis dev
+git switch dev && git switch -c feat/S4.2-edition-realisation
+
+# 2. commits, puis pousser la branche (seule branche non protégée)
+git push -u origin feat/S4.2-edition-realisation
+
+# 3. ouvrir la PR vers dev, attendre la CI, fusionner
+gh pr create --base dev --title "feat(S4.2): édition d'une réalisation" --fill
+gh pr checks --watch          # la CI doit être verte
+gh pr merge --merge --delete-branch
+
+# 4. en fin de sprint : PR de release dev → main
+gh pr create --base main --head dev --title "release: sprint S4" --fill
+gh pr checks --watch && gh pr merge --merge
+
+# 5. synchroniser le local
+git switch dev && git pull && git switch main && git pull
+```
 
 ### Conventions de commit
 `<type>(<périmètre>): <description à l'impératif>`
