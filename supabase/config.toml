@@ -69,7 +69,11 @@ schema_paths = []
 enabled = true
 # Specifies an ordered list of seed files to load during db reset.
 # Supports glob patterns relative to supabase directory: "./seeds/*.sql"
-sql_paths = ["./seed.sql"]
+# seed.sql       = données éditoriales, sans compte (sûr pour le cloud)
+# seed.local.sql = compte admin local (admin@jtnova.local / admin123)
+# ⚠️ Ne jamais utiliser `supabase db push --include-seed` sur le projet linked :
+#    cette option applique CETTE liste et pousserait le compte admin local.
+sql_paths = ["./seed.sql", "./seed.local.sql"]
 
 [db.network_restrictions]
 # Enable management of network restrictions.
