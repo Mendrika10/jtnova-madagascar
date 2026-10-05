@@ -7,7 +7,7 @@
 | Dépôt GitHub `Mendrika10/jtnova-madagascar` (privé) | ✅ créé |
 | Branches `main` et `dev` poussées | ✅ fait |
 | CI (types, lint, build) sur `main` et `dev` | ✅ verte |
-| Projet Vercel | ✅ **`mendrikaramaro20-7982/jtnova-madagascar`** — compte Jtnova (migré le 2026-10-05 depuis le compte d'une autre entreprise, projet y ayant été supprimé) |
+| Projet Vercel | ✅ **`mendrikaramaro20-7982/jtnova-madagascar`** — compte dédié à Jtnova (mis en place le 2026-10-05) |
 | **Production en ligne** | ✅ `https://jtnova-madagascar.vercel.app` (déploiement CLI, routes vérifiées 200) |
 | Déploiements automatiques Git | ⛔ **une action manuelle reste à faire** (voir §2) |
 | Branche `main` protégée | ⚠️ impossible sur un dépôt privé gratuit (403 GitHub Pro) |
