@@ -1,0 +1,513 @@
+.section {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-bg, #070d1a);
+  padding: clamp(80px, 10vw, 60px) 0;
+}
+
+.section::before {
+  content: "";
+  position: absolute;
+  top: -180px;
+  left: 30%;
+  width: 700px;
+  height: 420px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 180, 216, 0.07) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+.bg {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 180, 216, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 180, 216, 0.04) 1px, transparent 1px);
+  background-size: 64px 64px;
+  pointer-events: none;
+}
+
+/* ── 2-column grid ── */
+.container {
+  position: relative;
+  z-index: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 clamp(16px, 5vw, 64px);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(40px, 6vw, 80px);
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .container {
+    grid-template-columns: 1fr;
+  }
+  .right {
+    order: -1;
+  }
+}
+
+/* ── Left ── */
+.left {
+  display: flex;
+  flex-direction: column;
+}
+
+.topLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-accent, #00b4d8);
+  background: rgba(0, 180, 216, 0.08);
+  border: 1px solid rgba(0, 180, 216, 0.2);
+  border-radius: 100px;
+  padding: 5px 14px;
+  margin-bottom: 20px;
+  width: fit-content;
+}
+
+.title {
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.2;
+  margin: 0 0 32px;
+}
+
+.accent {
+  background: linear-gradient(90deg, #7dd9f5 0%, #00d4ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Accordion list ── */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.item {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.03);
+  transition:
+    border-color 0.25s,
+    background 0.25s;
+}
+
+.item:hover {
+  border-color: rgba(0, 180, 216, 0.22);
+  background: rgba(0, 180, 216, 0.04);
+}
+
+/* ── Question button ── */
+.question {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.question:hover .qText {
+  color: #fff;
+}
+
+.qLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.qIcon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(180, 210, 240, 0.5);
+  transition:
+    background 0.2s,
+    color 0.2s,
+    border-color 0.2s;
+}
+
+.qIconOpen {
+  background: rgba(0, 180, 216, 0.12);
+  border-color: rgba(0, 180, 216, 0.35);
+  color: var(--color-accent, #00b4d8);
+}
+
+.qText {
+  font-size: 0.94rem;
+  font-weight: 500;
+  color: rgba(200, 220, 240, 0.75);
+  line-height: 1.45;
+  transition: color 0.2s;
+}
+
+.questionOpen .qText {
+  color: #fff;
+  font-weight: 600;
+}
+
+.chevron {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(150, 180, 210, 0.4);
+  transition:
+    transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    color 0.2s;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+  color: var(--color-accent, #00b4d8);
+}
+
+/* ── Answer ── */
+.answerWrap {
+  overflow: hidden;
+}
+
+.answer {
+  margin: 0;
+  padding: 0 18px 16px 64px;
+  font-size: 0.875rem;
+  line-height: 1.7;
+  color: rgba(170, 200, 225, 0.6);
+}
+
+/* ── Right — logo card ── */
+.right {
+  position: sticky;
+  top: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@property --borderAngle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes borderAngleSpin {
+  to {
+    --borderAngle: 360deg;
+  }
+}
+
+@keyframes scanMove {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  5% {
+    opacity: 0.65;
+  }
+  95% {
+    opacity: 0.65;
+  }
+  100% {
+    transform: translateY(800px);
+    opacity: 0;
+  }
+}
+
+@keyframes glowPulse {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.18);
+  }
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 8px rgba(0, 212, 255, 0.9);
+  }
+  50% {
+    opacity: 0.3;
+    box-shadow: 0 0 2px rgba(0, 212, 255, 0.2);
+  }
+}
+
+@keyframes glowCard {
+  0%,
+  100% {
+    box-shadow:
+      0 0 30px rgba(0, 180, 216, 0.08),
+      0 0 70px rgba(0, 180, 216, 0.04),
+      0 24px 60px rgba(0, 0, 0, 0.45);
+  }
+  50% {
+    box-shadow:
+      0 0 55px rgba(0, 180, 216, 0.2),
+      0 0 110px rgba(0, 180, 216, 0.09),
+      0 24px 60px rgba(0, 0, 0, 0.45);
+  }
+}
+
+.logoCardOuter {
+  --borderAngle: 0deg;
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  border-radius: 26px;
+  padding: clamp(44px, 6vw, 64px) clamp(32px, 4vw, 52px);
+  border: 1.5px solid transparent;
+  background-image:
+    linear-gradient(rgba(6, 12, 28, 0.98), rgba(5, 10, 22, 0.99)),
+    conic-gradient(
+      from var(--borderAngle),
+      transparent 68%,
+      rgba(0, 180, 216, 0.55) 82%,
+      rgba(0, 212, 255, 1) 90%,
+      rgba(125, 217, 245, 0.75) 97%,
+      transparent 112%
+    );
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  animation:
+    borderAngleSpin 4s linear infinite,
+    glowCard 3s ease-in-out infinite;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* clip container: scan line + glow clipped to card shape */
+.cardClip {
+  position: absolute;
+  inset: 0;
+  border-radius: 24.5px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.logoGlow {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  width: 420px;
+  height: 270px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 180, 216, 0.16) 0%,
+    transparent 65%
+  );
+  animation: glowPulse 3s ease-in-out infinite;
+}
+
+.scanLine {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(0, 212, 255, 0.3) 15%,
+    rgba(0, 212, 255, 0.95) 50%,
+    rgba(0, 212, 255, 0.3) 85%,
+    transparent 100%
+  );
+  animation: scanMove 5s ease-in-out infinite;
+}
+
+/* ── 4 corner decorations ── */
+.cornerTL,
+.cornerTR,
+.cornerBL,
+.cornerBR {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+}
+
+.cornerTL {
+  top: 14px;
+  left: 14px;
+  border-top: 2px solid rgba(0, 180, 216, 0.65);
+  border-left: 2px solid rgba(0, 180, 216, 0.65);
+  border-radius: 5px 0 0 0;
+}
+
+.cornerTR {
+  top: 14px;
+  right: 14px;
+  border-top: 2px solid rgba(0, 180, 216, 0.65);
+  border-right: 2px solid rgba(0, 180, 216, 0.65);
+  border-radius: 0 5px 0 0;
+}
+
+.cornerBL {
+  bottom: 14px;
+  left: 14px;
+  border-bottom: 2px solid rgba(0, 180, 216, 0.65);
+  border-left: 2px solid rgba(0, 180, 216, 0.65);
+  border-radius: 0 0 0 5px;
+}
+
+.cornerBR {
+  bottom: 14px;
+  right: 14px;
+  border-bottom: 2px solid rgba(0, 180, 216, 0.65);
+  border-right: 2px solid rgba(0, 180, 216, 0.65);
+  border-radius: 0 0 5px 0;
+}
+
+/* ── Status label ── */
+.cardLabel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.67rem;
+  font-weight: 600;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+  color: rgba(0, 200, 240, 0.65);
+  margin-bottom: 28px;
+}
+
+.cardLabelDot {
+  display: block;
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #00d4ff;
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.9);
+  animation: blink 2s ease-in-out infinite;
+}
+
+/* ── Logo image ── */
+.logoImgWrap {
+  position: relative;
+  z-index: 1;
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 26px 48px;
+  box-shadow:
+    0 0 0 1px rgba(0, 180, 216, 0.18),
+    0 14px 44px rgba(0, 0, 0, 0.38),
+    0 0 55px rgba(0, 180, 216, 0.16);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 22px;
+}
+
+.logoImg {
+  display: block;
+  width: 100%;
+  max-width: 290px;
+  height: auto;
+  object-fit: contain;
+}
+
+.logoTagline {
+  position: relative;
+  z-index: 1;
+  font-size: 0.78rem;
+  color: rgba(160, 200, 230, 0.4);
+  letter-spacing: 0.06em;
+  text-align: center;
+  margin: 0 0 24px;
+}
+
+.cardDivider {
+  width: 80%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(0, 180, 216, 0.28) 30%,
+    rgba(0, 180, 216, 0.28) 70%,
+    transparent
+  );
+  margin-bottom: 26px;
+}
+
+/* ── Stats ── */
+.stats {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.statNum {
+  font-size: 1.6rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #7dd9f5 0%, #00d4ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+}
+
+.statLabel {
+  font-size: 0.7rem;
+  color: rgba(160, 200, 230, 0.45);
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+.statSep {
+  width: 1px;
+  height: 36px;
+  background: linear-gradient(
+    transparent,
+    rgba(0, 180, 216, 0.25),
+    transparent
+  );
+  flex-shrink: 0;
+}

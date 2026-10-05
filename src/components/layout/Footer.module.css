@@ -1,0 +1,144 @@
+.footer {
+  background: var(--color-bg);
+  border-top: 1px solid var(--color-border);
+}
+
+/* CTA Section */
+.ctaSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 6rem 1.5rem 5rem;
+  gap: 2rem;
+}
+
+.availableBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.ctaTitle {
+  font-family: var(--font-heading, "Space Grotesk", sans-serif);
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.08;
+  color: #fff;
+  margin: 0;
+}
+
+.ctaBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #fff;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 13px 28px;
+  border-radius: 100px;
+  text-decoration: none;
+  border: 1px solid var(--color-border);
+  transition:
+    border-color 0.2s,
+    background 0.2s;
+}
+.ctaBtn:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+/* Bottom bar */
+.bottomBar {
+  border-top: 1px solid var(--color-border);
+}
+
+.bottomInner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.logo {
+  font-family: var(--font-heading, "Space Grotesk", sans-serif);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+  text-decoration: none;
+  letter-spacing: -0.02em;
+}
+.logo span {
+  color: var(--color-accent);
+}
+
+.nav {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.navLink {
+  font-size: 0.8rem;
+  color: var(--color-muted);
+  text-decoration: none;
+  padding: 4px 10px;
+  border-radius: 6px;
+  transition: color 0.2s;
+}
+.navLink:hover {
+  color: #fff;
+}
+
+.copy {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .ctaTitle {
+    font-size: clamp(2rem, 8vw, 3rem);
+  }
+  .bottomInner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+}
+
+.logoBadge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border: 1px solid rgba(0, 180, 216, 0.2);
+  border-radius: 10px;
+  padding: 6px 5px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 2px 12px rgba(0, 0, 0, 0.4);
+  transition: border-color 0.25s;
+}
+
+.logo:hover .logoBadge {
+  border-color: rgba(0, 180, 216, 0.45);
+}
+
+.logoImg {
+  height: 22px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}

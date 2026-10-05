@@ -1,0 +1,97 @@
+.field {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+/* Étoile de base */
+.star {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  animation: twinkle var(--dur, 3s) ease-in-out infinite;
+  box-shadow: 0 0 2px rgba(255, 255, 255, 0.3);
+}
+
+/* Étoile plus visible */
+.starMedium {
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 4px 1px rgba(255, 255, 255, 0.3);
+}
+
+/* Étoile accent verte */
+.starBright {
+  background: var(--color-accent);
+  box-shadow:
+    0 0 6px 2px rgba(0, 180, 216, 0.5),
+    0 0 12px 4px rgba(0, 180, 216, 0.2);
+}
+
+@keyframes twinkle {
+  0% {
+    opacity: 0.05;
+    transform: scale(0.8);
+  }
+  30% {
+    opacity: 0.6;
+    transform: scale(1.1);
+  }
+  60% {
+    opacity: 0.15;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 0.05;
+    transform: scale(0.8);
+  }
+}
+
+/* ── Étoiles filantes ── */
+.shooterContainer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.shooter {
+  position: absolute;
+  left: var(--sx, 50%);
+  top: var(--sy, 10%);
+  width: var(--len, 150px);
+  height: 1px;
+  border-radius: 100px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(0, 180, 216, 0.35) 55%,
+    rgba(255, 255, 255, 0.55) 100%
+  );
+  transform-origin: right center;
+  transform: rotate(var(--angle, 35deg));
+  opacity: 0;
+  animation: shoot linear forwards;
+  box-shadow: 0 0 3px 0px rgba(0, 180, 216, 0.15);
+}
+
+@keyframes shoot {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--angle, 35deg)) translateX(0);
+  }
+  8% {
+    opacity: 0.55;
+  }
+  75% {
+    opacity: 0.45;
+    transform: rotate(var(--angle, 35deg))
+      translateX(calc(var(--len, 150px) * 2.8));
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--angle, 35deg))
+      translateX(calc(var(--len, 150px) * 3));
+  }
+}

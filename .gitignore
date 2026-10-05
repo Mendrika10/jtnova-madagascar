@@ -1,0 +1,32 @@
+# Dépendances
+/node_modules
+/.pnp
+.pnp.*
+
+# Next.js
+/.next/
+/out/
+/build
+next-env.d.ts
+
+# Variables d'environnement (ne jamais committer de secret)
+.env
+.env*.local
+
+# Vercel
+.vercel
+
+# Divers
+.DS_Store
+*.pem
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Médias lourds : à héberger sur Supabase Storage ou une plateforme vidéo,
+# jamais dans le dépôt (limite d'upload Vercel Hobby : 100 Mo).
+*.mp4
+*.mov
+*.webm

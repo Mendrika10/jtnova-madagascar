@@ -1,0 +1,62 @@
+.wrapper {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.logo {
+  position: absolute;
+  top: 0;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+/* Monte de bas en haut */
+.logoUp {
+  animation: driftUp var(--duration, 80s) linear infinite;
+}
+
+/* Descend de haut en bas */
+.logoDown {
+  animation: driftDown var(--duration, 80s) linear infinite;
+}
+
+@keyframes driftUp {
+  0% {
+    transform: translateY(calc(100vh + var(--offset, 0vh)));
+    opacity: 0;
+  }
+  6% {
+    opacity: var(--op, 0.08);
+  }
+  90% {
+    opacity: var(--op, 0.08);
+  }
+  100% {
+    transform: translateY(-120px);
+    opacity: 0;
+  }
+}
+
+@keyframes driftDown {
+  0% {
+    transform: translateY(calc(-120px - var(--offset, 0vh)));
+    opacity: 0;
+  }
+  6% {
+    opacity: var(--op, 0.08);
+  }
+  90% {
+    opacity: var(--op, 0.08);
+  }
+  100% {
+    transform: translateY(calc(100vh + 20px));
+    opacity: 0;
+  }
+}

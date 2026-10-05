@@ -1,0 +1,43 @@
+:root {
+  --color-bg: #070d1a;
+  --color-surface: #0d1829;
+  --color-border: rgba(0, 180, 216, 0.12);
+  --color-text: #e8f4f8;
+  --color-muted: #6b8ca8;
+  --color-accent: #00b4d8;
+  --color-accent-dark: #1b2744;
+  --color-accent-rgb: 0, 180, 216;
+  --font-heading: "Satoshi", "Satoshi Fallback", sans-serif;
+  --font-body: "Satoshi", "Satoshi Fallback", sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-bg) !important;
+  background-image: radial-gradient(
+    ellipse 80% 50% at 50% -10%,
+    rgba(0, 180, 216, 0.07) 0%,
+    transparent 70%
+  );
+  color: var(--color-text);
+  font-family: var(--font-body);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+}
+
+main {
+  padding-top: 0;
+}
+a {
+  text-decoration: none !important;
+}
