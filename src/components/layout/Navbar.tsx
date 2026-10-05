@@ -72,8 +72,6 @@ export default function Navbar() {
     );
   }, [dark]);
 
-  useEffect(() => setOpen(false), [pathname]);
-
   return (
     <motion.nav
       className={`${styles.navbar} ${scrolled ? styles.scrolled : ""}`}
@@ -160,12 +158,17 @@ export default function Navbar() {
           <Link
             key={link.href}
             href={link.href}
+            onClick={() => setOpen(false)}
             className={`${styles.mobileLink} ${pathname === link.href ? styles.active : ""}`}
           >
             {link.label}
           </Link>
         ))}
-        <Link href="/contact" className={styles.mobileCta}>
+        <Link
+          href="/contact"
+          onClick={() => setOpen(false)}
+          className={styles.mobileCta}
+        >
           Me contacter
         </Link>
       </div>
