@@ -34,6 +34,23 @@ Sprint en cours : S1 — phase : 3 — dernière mise à jour : 2026-10-05
 - 2026-10-05 — F1.8 vérifié avec un vrai PNG : un `text/plain` est rejeté (400) par la contrainte MIME du bucket, ce qui masquait la politique. Test refait en `image/png` → comportement RLS correct.
 - 2026-10-05 — S1 et S2 partiellement livrés avant l'adoption du cadre : `STATUS.md` reflète l'état réel au lieu de repartir de zéro ; les trous (F2.3, F2.5-détail, F2.6) restent au périmètre de S2.
 
+## Porte de merge §4ter — état au 2026-10-05 (HEAD `dev` = `bf5cc25`) : **8/10**
+
+| # | Condition | État | Preuve / cause de l'échec |
+|---|---|---|---|
+| 1 | Toutes les `F` de **S1** ✅ | ❌ | `F1.1` BLOQUÉE (pré-requis humain). `F2.3` est également BLOQUÉE mais appartient à **S2**, hors périmètre de ce sprint. |
+| 2 | CI verte sur `dev` et sur la PR de release | ✅ | re-vérifié à chaud sur `bf5cc25` : 2 check-runs `success` |
+| 3 | `tsc` / `eslint` / build 0 erreur | ✅ | CI + local (`tsc` 0, `eslint` 0 erreur / 20 warnings préexistants) |
+| 4 | Critères d'acceptation rejoués | ✅ | preuves locales S1 + revalidation après `db reset` (PR #8) |
+| 5 | Pas de régression, routes clés en 200 | ✅ | 7 routes en 200 sur la stack locale ; revalidation cloud à faire après F1.1 |
+| 6 | Verdict REVIEWER, pas d'écriture hors zone | ✅ | PR #8 (zone `supabase/**`) et PR #9 (zone `docs/STATUS.md`) |
+| 7 | Aucun secret dans le diff | ✅ | scan sur 773 lignes de `git diff origin/main...origin/dev` : 0 secret (la clé `publishable` locale n'est pas versionnée) |
+| 8 | Migrations additives, `db reset` rejoué | ✅ | `supabase db reset` exit 0 après PR #8 ; aucune migration destructive |
+| 9 | RLS anon → 0 ligne sur le non publié | ✅ | local : `vina-io` → `[]`, 3 publiés visibles. À rejouer sur le cloud. |
+| 10 | Aucun pré-requis humain en attente | ❌ | `F1.1` + décisions §10 non tranchées |
+
+**Conclusion** : une seule action — `F1.1` — tient les deux conditions en échec. Les décisions §10 restent couvertes par les hypothèses par défaut du cadre et ne sont pas bloquantes pour la porte.
+
 ## Bloquants et pré-requis humains en attente
 
 - **S1 (F1.1)** : créer le projet **Supabase cloud (free)** ; renseigner `NEXT_PUBLIC_SUPABASE_URL` + clé anon dans `.env.local` **et** Vercel (jamais dans le chat) ; `npx supabase login` ; `npx supabase link --project-ref <ref>` (le CLI demande le mot de passe base → ne jamais le taper dans le chat) ; connexion Git ↔ Vercel (§9 de AGENTS.md).
