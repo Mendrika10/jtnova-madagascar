@@ -8,6 +8,7 @@ import {
   type Variants,
 } from "framer-motion";
 import styles from "./Testimonials.module.css";
+import type { TestimonialItem } from "@/lib/content";
 
 const expo = cubicBezier(0.16, 1, 0.3, 1);
 
@@ -23,7 +24,7 @@ const headerVar: Variants = {
   },
 };
 
-const testimonials = [
+const testimonialsFallback = [
   {
     name: "Sophie Martin",
     role: "CEO, TechStart",
@@ -70,7 +71,30 @@ const testimonials = [
 
 const MAX_CHARS = 220;
 
-export default function Testimonials() {
+type TestimonialsProps = {
+  /** Témoignages publiés depuis Supabase ; absent → repli sur les données locales. */
+  items?: TestimonialItem[];
+};
+
+const initialsOf = (name: string) =>
+  name
+    .split(" ")
+    .map((p) => p[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
+export default function Testimonials({ items }: TestimonialsProps = {}) {
+  const testimonials: TestimonialItem[] =
+    items && items.length > 0
+      ? items
+      : testimonialsFallback.map((t) => ({
+          name: t.name,
+          role: t.role,
+          avatar: t.avatar,
+          text: t.text,
+          linkedin: t.linkedin,
+        }));
   const [index, setIndex] = useState(0);
   const [dir, setDir] = useState(1);
   const [expanded, setExpanded] = useState(false);
