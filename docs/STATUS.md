@@ -1,6 +1,6 @@
 # STATUS
 
-Sprint en cours : S5 — **Admin : personnalisation complète du site** (Phase 1, non publié) — dernière mise à jour : 2026-10-06
+Sprint en cours : S5 — **Admin : personnalisation complète du site** — **terminé et publié** (release #45, `5caf1f3`) — dernière mise à jour : 2026-10-06
 
 Sprint précédent : S4bis — **terminé et publié** (release #38, `78ff057`)
 
@@ -189,7 +189,7 @@ Contexte : stack Docker locale **réinitialisée** (`supabase db reset`, compte 
 | # | Condition | État |
 |---|---|---|
 | 1 | Toutes les `F` ✅ | ✅ F5.1→F5.8 ✅ |
-| 2 | CI verte sur `dev` + PR de release | ✅ (dev) / à confirmer (PR) |
+| 2 | CI verte sur `dev` + PR de release | ✅ (`dev` + PR #45) |
 | 3 | `tsc`/`eslint`/build 0 erreur | ✅ |
 | 4 | Critères rejoués, preuves jointes | ✅ rejoués sur `dev` (local) — preview SSO non atteignable (limitation ci-dessus) |
 | 5 | Pas de régression | ✅ 7 routes `200` |
@@ -198,6 +198,8 @@ Contexte : stack Docker locale **réinitialisée** (`supabase db reset`, compte 
 | 8 | Aucune migration destructive | ✅ aucune migration |
 | 9 | RLS anonyme → 0 ligne non publiée | ✅ `[]` + `INSERT` anon `401` |
 | 10 | Aucun pré-requis humain bloquant ce sprint | ✅ (pré-requis logo = « actuels conservés », appliqué) |
+
+**Release S5 fusionnée** : PR **#45** (`dev` → `main`) fusionnée par **commit de fusion** (`5caf1f3`), `AUTO_MERGE_MAIN = true`, Porte §4ter **10/10**, CI verte. **Smoke test production** (`jtnova-madagascar.vercel.app`) : `/`, `/projets`, `/services`, `/competences`, `/a-propos`, `/contact`, `/admin/login`, `/projects/julia`, `/projects/vitascore` → **200** ; `/admin` anonyme → `307 → /admin/login?redirect=%2Fadmin` ; `/projects/vina-io` (brouillon) → **404**. Discriminateur S5 : la page d'accueil sert désormais `<meta property="og:title">` (absent de l'ancien `layout.tsx`) → le nouveau code est bien déployé. **Aucun rollback.**
 
 ## S4 — Admin : réalisations (vérification 2026-10-06)
 
