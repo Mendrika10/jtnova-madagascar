@@ -1,9 +1,10 @@
-﻿"use client";
+"use client";
 import Link from "next/link";
 import { motion, cubicBezier, type Variants } from "framer-motion";
 import StarField from "./StarField";
 import FloatingLogos from "./FloatingLogos";
 import styles from "./Hero.module.css";
+import type { HeroSetting, SocialLink } from "@/lib/site-settings";
 
 // Easing expo-out ultra-fluide
 const expo = cubicBezier(0.16, 1, 0.3, 1);
@@ -75,13 +76,6 @@ const marqueeVariant: Variants = {
   },
 };
 
-const socials = [
-  { label: "LINKEDIN", href: "#" },
-  { label: "GITHUB", href: "#" },
-  { label: "BEHANCE", href: "#" },
-  { label: "CONTACT", href: "/contact" },
-];
-
 const marqueeTop = [
   { text: "Création web", highlight: false },
   { text: "Design UI/UX", highlight: true },
@@ -120,7 +114,28 @@ const marqueeBottom = [
   { text: "Docker", highlight: false },
 ];
 
-export default function Hero() {
+/** Normalise un mot (minuscules, ponctuation retirée) pour la comparaison. */
+function normalizeWord(word: string): string {
+  return word.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "");
+}
+
+export default function Hero({
+  hero,
+  socials,
+}: {
+  hero: HeroSetting;
+  socials: SocialLink[];
+}) {
+  // F5.1 — les mots listés dans `title_accent` sont rendus en couleur d'accent.
+  const accentWords = new Set(
+    hero.title_accent
+      .split(/\s+/)
+      .map(normalizeWord)
+      .filter(Boolean),
+  );
+  const titleWords = hero.title.split(/\s+/).filter(Boolean);
+  const visibleSocials = socials.filter((s) => s.label && s.href);
+
   return (
     <section id="hero" className={styles.hero}>
       <StarField />
@@ -142,7 +157,7 @@ export default function Hero() {
           >
             <path d="M13 2L4.5 13.5H11L10 22L20.5 10H14L13 2Z" />
           </svg>
-          Jtnova — Agence Web &amp; Digital
+          {hero.badge}
         </motion.div>
 
         {/* Titre pleine largeur — animation mot par mot */}
@@ -152,63 +167,18 @@ export default function Hero() {
           initial="hidden"
           animate="show"
         >
-          <motion.span
-            variants={wordVariant}
-            style={{ display: "inline-block" }}
-          >
-            Nous
-          </motion.span>{" "}
-          <motion.span
-            variants={wordVariant}
-            style={{ display: "inline-block" }}
-          >
-            créons
-          </motion.span>{" "}
-          <motion.span
-            variants={wordVariant}
-            style={{ display: "inline-block" }}
-          >
-            des
-          </motion.span>{" "}
-          <motion.span
-            variants={wordVariant}
-            className={styles.accent}
-            style={{ display: "inline-block" }}
-          >
-            expériences
-          </motion.span>{" "}
-          <motion.span
-            variants={wordVariant}
-            className={styles.accent}
-            style={{ display: "inline-block" }}
-          >
-            digitales
-          </motion.span>
-          <br />
-          <motion.span
-            variants={wordVariant}
-            style={{ display: "inline-block" }}
-          >
-            qui
-          </motion.span>{" "}
-          <motion.span
-            variants={wordVariant}
-            style={{ display: "inline-block" }}
-          >
-            propulsent
-          </motion.span>{" "}
-          <motion.span
-            variants={wordVariant}
-            style={{ display: "inline-block" }}
-          >
-            votre
-          </motion.span>{" "}
-          <motion.span
-            variants={wordVariant}
-            style={{ display: "inline-block" }}
-          >
-            business.
-          </motion.span>
+          {titleWords.map((word, i) => (
+            <motion.span
+              key={`${word}-${i}`}
+              variants={wordVariant}
+              className={
+                accentWords.has(normalizeWord(word)) ? styles.accent : undefined
+              }
+              style={{ display: "inline-block" }}
+            >
+              {word}
+            </motion.span>
+          ))}
         </motion.h1>
 
         {/* Barre basse : socials gauche | desc + CTA droite */}
@@ -246,9 +216,9 @@ export default function Hero() {
               initial="hidden"
               animate="show"
             >
-              {socials.map((s) => (
+              {visibleSocials.map((s) => (
                 <motion.a
-                  key={s.label}
+                  key={`${s.label}-${s.href}`}
                   href={s.href}
                   className={styles.socialLink}
                   variants={socialItemVariant}
@@ -287,14 +257,25 @@ export default function Hero() {
             initial="hidden"
             animate="show"
           >
-            <p className={styles.desc}>
-              Jtnova accompagne les entreprises dans leur transformation
-              numérique avec des sites web performants, un design moderne et des
-              solutions sur mesure qui génèrent des résultats concrets.
-            </p>
-            <Link href="/services" className={styles.ctaBtn}>
-              Découvrir nos services
-            </Link>
+            <p className={styles.desc}>{hero.subtitle}</p>
+            <div className={styles.ctaActions}>
+              {hero.cta_primary.label && (
+                <Link
+                  href={hero.cta_primary.href || "#"}
+                  className={styles.ctaBtn}
+                >
+                  {hero.cta_primary.label}
+                </Link>
+              )}
+              {hero.cta_secondary.label && (
+                <Link
+                  href={hero.cta_secondary.href || "#"}
+                  className={`${styles.ctaBtn} ${styles.ctaBtnGhost}`}
+                >
+                  {hero.cta_secondary.label}
+                </Link>
+              )}
+            </div>
           </motion.div>
         </div>
       </div>

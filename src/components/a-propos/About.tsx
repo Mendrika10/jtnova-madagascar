@@ -6,6 +6,7 @@ import styles from "./About.module.css";
 import StarField from "@/components/accueil/StarField";
 import FloatingLogos from "@/components/accueil/FloatingLogos";
 import TechBanner from "@/components/tech-banner/TechBanner";
+import type { AboutSetting } from "@/lib/site-settings";
 
 const expo = cubicBezier(0.16, 1, 0.3, 1);
 
@@ -431,6 +432,18 @@ function CountUp({
     </>
   );
 }
+/* ── Stat number: parse « 50+ » → target 50 / suffix « + » ── */
+function parseStatNum(num: string): { target: number; suffix: string } | null {
+  const match = /^(\d+)(.*)$/.exec(num.trim());
+  if (!match) return null;
+  return { target: Number(match[1]), suffix: match[2] };
+}
+
+function StatNumber({ num, active }: { num: string; active: boolean }) {
+  const parsed = parseStatNum(num);
+  if (!parsed) return <>{num}</>;
+  return <CountUp target={parsed.target} suffix={parsed.suffix} active={active} />;
+}
 /* ── sub-components ────────────────────────────────────── */
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -466,7 +479,7 @@ function AnimBlock({
 }
 
 /* ── main component ───────────────────────────────────── */
-export default function About() {
+export default function About({ setting }: { setting: AboutSetting }) {
   const heroRef = useRef<HTMLDivElement>(null);
   const heroInView = useInView(heroRef, { once: true });
   const mvRef = useRef<HTMLDivElement>(null);
@@ -758,16 +771,9 @@ export default function About() {
                 <span className={styles.mvBadge}>Mission</span>
               </div>
 
-              <h3 className={styles.mvTitle}>
-                Transformer les idées en produits digitaux qui comptent
-              </h3>
+              <h3 className={styles.mvTitle}>{setting.mission_title}</h3>
 
-              <p className={styles.mvDesc}>
-                Permettre à chaque entreprise — startup ou grand groupe — de
-                disposer d&apos;une présence digitale puissante, esthétique et
-                performante. Nous transformons vos ambitions en produits
-                numériques concrets qui génèrent une valeur mesurable.
-              </p>
+              <p className={styles.mvDesc}>{setting.mission_text}</p>
 
               <ul className={styles.mvPoints}>
                 {[
@@ -829,16 +835,9 @@ export default function About() {
                 <span className={styles.mvBadge}>Vision</span>
               </div>
 
-              <h3 className={styles.mvTitle}>
-                Devenir la référence de l&apos;excellence digitale
-              </h3>
+              <h3 className={styles.mvTitle}>{setting.vision_title}</h3>
 
-              <p className={styles.mvDesc}>
-                S&apos;imposer comme la référence des agences numériques pour
-                les entreprises qui veulent croître vite et bien. Prouver que
-                l&apos;excellence technique et la créativité peuvent coexister
-                sans le moindre compromis.
-              </p>
+              <p className={styles.mvDesc}>{setting.vision_text}</p>
 
               <ul className={styles.mvPoints}>
                 {[
@@ -875,27 +874,25 @@ export default function About() {
             animate={statsInView ? "show" : "hidden"}
             variants={gridContainer(0.12)}
           >
-            {STATS.map((s, i) => (
+            {setting.stats.map((s, i) => (
               <motion.div
                 key={i}
-                className={`${styles.statCard}${STAT_COLOR_CLASSES[i] ? ` ${styles[STAT_COLOR_CLASSES[i]]}` : ""}`}
-                variants={statCardVariants[i]}
+                className={`${styles.statCard}${STAT_COLOR_CLASSES[i % STAT_COLOR_CLASSES.length] ? ` ${styles[STAT_COLOR_CLASSES[i % STAT_COLOR_CLASSES.length]]}` : ""}`}
+                variants={statCardVariants[i % statCardVariants.length]}
               >
                 <div className={styles.statCardGlow} />
                 <div className={styles.statCardInner}>
-                  <div className={styles.statIconWrap}>{s.icon}</div>
+                  <div className={styles.statIconWrap}>
+                    {STATS[i % STATS.length].icon}
+                  </div>
                   <div className={styles.statNumWrap}>
                     <span className={styles.statNum}>
-                      <CountUp
-                        target={s.target}
-                        suffix={s.suffix}
-                        active={statsInView}
-                      />
+                      <StatNumber num={s.num} active={statsInView} />
                     </span>
                   </div>
                   <div className={styles.statTexts}>
                     <span className={styles.statLabel}>{s.label}</span>
-                    <span className={styles.statSublabel}>{s.sublabel}</span>
+                    <span className={styles.statSublabel} />
                   </div>
                 </div>
                 <div className={styles.statProgressBar}>
