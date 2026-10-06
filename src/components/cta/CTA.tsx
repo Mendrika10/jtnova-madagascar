@@ -9,6 +9,7 @@ import {
   cubicBezier,
 } from "framer-motion";
 import styles from "./CTA.module.css";
+import type { ContactInfoSetting, CtaSetting } from "@/lib/site-settings";
 
 const expo = cubicBezier(0.16, 1, 0.3, 1);
 
@@ -34,7 +35,13 @@ const colVar = {
   }),
 };
 
-export default function CTA() {
+export default function CTA({
+  setting,
+  contact,
+}: {
+  setting: CtaSetting;
+  contact: ContactInfoSetting;
+}) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [sent, setSent] = useState(false);
 
@@ -119,13 +126,13 @@ export default function CTA() {
             >
               <div className={styles.badge}>
                 <span className={styles.badgeDot} aria-hidden="true" />
-                {"Disponible pour de nouveaux projets"}
+                {setting.badge}
               </div>
 
               <h2 className={styles.title}>
-                {"Créons votre prochaine"}
+                {setting.title_line1}
                 <br />
-                <span className={styles.accent}>{"grande idée."}</span>
+                <span className={styles.accent}>{setting.title_line2}</span>
               </h2>
 
               <p className={styles.sub}>
@@ -133,6 +140,12 @@ export default function CTA() {
                   "Discutons de votre projet — un brief, une vision, et on construit quelque chose d'exceptionnel ensemble."
                 }
               </p>
+
+              {setting.button_label && (
+                <a href={setting.button_href || "#"} className={styles.social}>
+                  {setting.button_label}
+                </a>
+              )}
 
               <div className={styles.infos}>
                 <div className={styles.infoItem}>
@@ -151,7 +164,7 @@ export default function CTA() {
                       <polyline points="22,6 12,13 2,6" />
                     </svg>
                   </span>
-                  <span>{"contact@jtnova.fr"}</span>
+                  <span>{contact.email}</span>
                 </div>
                 <div className={styles.infoItem}>
                   <span className={styles.infoIcon} aria-hidden="true">
@@ -169,7 +182,7 @@ export default function CTA() {
                       <circle cx="12" cy="10" r="3" />
                     </svg>
                   </span>
-                  <span>{"Madagascar — Remote worldwide"}</span>
+                  <span>{contact.location}</span>
                 </div>
                 <div className={styles.infoItem}>
                   <span className={styles.infoIcon} aria-hidden="true">
@@ -187,48 +200,28 @@ export default function CTA() {
                       <polyline points="12 6 12 12 16 14" />
                     </svg>
                   </span>
-                  <span>{"Réponse sous 24h"}</span>
+                  <span>{contact.availability}</span>
                 </div>
               </div>
 
               <div className={styles.socials}>
-                <a
-                  href="#"
-                  className={styles.social}
-                  aria-label="LinkedIn"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2z" />
-                    <circle cx="4" cy="4" r="2" />
-                  </svg>
-                  {"LinkedIn"}
-                </a>
-                <a
-                  href="#"
-                  className={styles.social}
-                  aria-label="GitHub"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
-                  </svg>
-                  {"GitHub"}
-                </a>
+                {setting.socials
+                  .filter((s) => s.label && s.href)
+                  .map((s) => (
+                    <a
+                      key={`${s.label}-${s.href}`}
+                      href={s.href}
+                      className={styles.social}
+                      target={s.href.startsWith("http") ? "_blank" : undefined}
+                      rel={
+                        s.href.startsWith("http")
+                          ? "noopener noreferrer"
+                          : undefined
+                      }
+                    >
+                      {s.label}
+                    </a>
+                  ))}
               </div>
             </motion.div>
 

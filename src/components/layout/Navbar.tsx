@@ -53,7 +53,7 @@ const navLinks = [
   { label: "Contact", href: "/contact" },
 ];
 
-export default function Navbar() {
+export default function Navbar({ logoUrl }: { logoUrl?: string }) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [dark, setDark] = useState(true);
@@ -89,7 +89,7 @@ export default function Navbar() {
           <Link href="/" className={styles.logo}>
             <span className={styles.logoBadge}>
               <img
-                src="/images/logo.png"
+                src={logoUrl || "/images/logo.png"}
                 alt="Jtnova"
                 className={styles.logoImg}
               />

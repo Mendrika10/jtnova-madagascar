@@ -12,28 +12,33 @@ import {
   getTechBanner,
   getPublishedProjects,
 } from "@/lib/content";
+import { getSiteSetting } from "@/lib/site-settings";
 
 // Revalide les contenus depuis Supabase toutes les 60 s (ISR)
 export const revalidate = 60;
 
 export default async function Home() {
-  const [services, faqs, testimonials, techs, projects] = await Promise.all([
-    getServices(),
-    getFaqs(),
-    getTestimonials(),
-    getTechBanner(),
-    getPublishedProjects(),
-  ]);
+  const [services, faqs, testimonials, techs, projects, hero, cta, contact] =
+    await Promise.all([
+      getServices(),
+      getFaqs(),
+      getTestimonials(),
+      getTechBanner(),
+      getPublishedProjects(),
+      getSiteSetting("hero"),
+      getSiteSetting("cta"),
+      getSiteSetting("contact_info"),
+    ]);
 
   return (
     <>
-      <Hero />
+      <Hero hero={hero} socials={cta.socials} />
       <Services items={services ?? undefined} />
       <Projects items={projects ?? undefined} />
       <Testimonials items={testimonials ?? undefined} />
       <TechBanner items={techs ?? undefined} />
       <FAQ items={faqs ?? undefined} />
-      <CTA />
+      <CTA setting={cta} contact={contact} />
     </>
   );
 }
