@@ -1,12 +1,12 @@
 # STATUS
 
-Sprint en cours : S1 — phase : 3 — dernière mise à jour : 2026-10-05
+Sprint en cours : S1 — phase : 3 — dernière mise à jour : 2026-10-06
 
 ## État des sprints
 
 | F | Agent | État | PR | Note |
 |---|---|---|---|---|
-| F1.1 | DEVOPS (+ humain) | PARTIELLE | #8, #12, #13 | **Cloud créé, peuplé et lu par le site.** Preuves : 12/12 tables · `projects` 3 publiés visibles / 4 en base · brouillon `vina-io` anon → `[]` · INSERT anon `401 42501` · 6/6/6/13/3 · **`profiles` = 0** · accueil `/` servant les 6 citations absentes de `src/` → lecture cloud prouvée. **Reste : poser les 2 variables dans Vercel + connecter le dépôt Git à Vercel** (le CLI a refusé d'écrire : *« Project does not have a connected Git repository »* → les push sur `dev` ne produisent aucune preview). **Rejoué 2026-10-05 : le dépôt Git EST connecté** — la PR #14 a déclenché une preview Vercel automatique. **Il ne reste que les 2 variables** : `vercel env ls` → *No Environment Variables found*, et la prod publique sert le **repli local** (0/6 citation cloud). `supabase link` non fait, remplacé volontairement (voir journal). |
+| F1.1 | DEVOPS (+ humain) | ✅ | #8, #12, #13 | **Cloud créé, peuplé et lu par le site.** Preuves : 12/12 tables · `projects` 3 publiés visibles / 4 en base · brouillon `vina-io` anon → `[]` · INSERT anon `401 42501` · 6/6/6/13/3 · **`profiles` = 0**. **Débloquée le 2026-10-06** : les **2 variables** `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY` sont posées dans Vercel (**Preview + Production**, toutes branches) → `vercel env ls` liste 2 variables ; **redéploiement prod** (`vercel --prod`) aliasé sur `jtnova-madagascar.vercel.app` → accueil servant **6/6 citations de témoignages cloud** (0/6 avant). Dépôt Git connecté (preview auto PR #14). `supabase link` non fait, remplacé volontairement (voir journal). |
 | F1.2 | SCHEMA | ✅ | #3 | `projects`, `project_images`, `project_tech`, `project_highlights` ; preuve : `db reset` rejoué sur `dev` sans erreur. |
 | F1.3 | SCHEMA | ✅ | #3 | `site_settings`, `services`, `testimonials`, `faq_items`, `tech_banner` ; idem. |
 | F1.4 | SCHEMA | ✅ | #3 | `contact_messages`, `profiles` ; idem. |
@@ -33,6 +33,7 @@ Sprint en cours : S1 — phase : 3 — dernière mise à jour : 2026-10-05
 - 2026-10-05 — **Faux positif évité sur la preuve de lecture cloud** : `/projects/project1` affichait une chaîne également présente dans `Project1Details.tsx` (page statique) → elle ne prouvait aucune lecture base. La preuve retenue utilise les 6 citations de témoignages, présentes **uniquement** en base et servies par `/`. De même, `/projets` et `/services` n'ont fourni aucune chaîne discriminante (contenu identique en base et en repli local) : leur lecture cloud reste **plausible mais non prouvée** par ce moyen.
 - 2026-10-05 — **Ligne de test assumée** : un `INSERT` anon sur `contact_messages` (`Test RLS / test@example.com`) a servi à prouver que l'insertion publique est autorisée (201). Elle est **insupprimable par l'agent** (c'est la preuve du verrouillage en lecture/écriture) → à supprimer par l'humain dans *Table Editor* avant la démonstration.
 
+- 2026-10-06 — **F1.1 débloquée : variables Vercel posées et production redéployée.** Les 2 variables publiques (`NEXT_PUBLIC_SUPABASE_URL` = URL du projet, `NEXT_PUBLIC_SUPABASE_ANON_KEY` = clé publishable — **aucune clé de service**) ont été posées sur **Preview + Production**, pour **toutes les branches**. Le prompt CLI *« Add … to which Git branch? »* bloquait en mode non interactif : les previews ont été créées via l'API REST Vercel (`POST /v10/projects/{id}/env`, `target: ["preview"]`, sans `gitBranch`) avec le jeton CLI local ; les cibles Production ont été posées par `vercel env add … production` (stdin). Contrôle API : **4 entrées** (2 clés × {preview, production}), `branch = None`. Puis `vercel --prod --yes` → déploiement `jtnova-madagascar-hl80sjeb9-…` **aliasé** sur `jtnova-madagascar.vercel.app`. Vérification fraîche : **8/8 routes clés en `200`**, et l'accueil sert **6/6** citations de témoignages cloud (chaînes présentes uniquement en base, **0 occurrence dans `src/`**) contre **0/6** avant → la production lit désormais bien Supabase.
 - 2026-10-05 (rejeu) — **Correction Vercel : le dépôt Git est connecté.** La PR #14 (`docs/S1-verification`) a produit **automatiquement** une preview Vercel (`jtnova-madagascar-qwf73xhsl-…`, statut *Ready*) → l'integration Git fonctionne, contrairement au constat « aucun dépôt connecté » consigné plus haut. Restent vrais : **0 variable d'environnement** (`vercel env ls` → *No Environment Variables found*) et la **production publique sert le repli local** (`jtnova-madagascar.vercel.app` = 200, mais 0/6 citation de témoignage cloud) → les 2 variables restent l'unique pré-requis Vercel. À noter : les URL de déploiement brut sont protégées par **Vercel SSO** (302 → login) ; seule l'alias de production est public.
 - 2026-10-05 — **Incident de clé secrète (traité, non contourné)** : la clé `sb_secret_…` du projet cloud a été collée dans la conversation par erreur. L'agent ne l'a **ni utilisée, ni écrite dans un fichier, ni committée** ; vérification faite : aucun fichier de travail ne la contient, `.env.local` est propre, **0 occurrence sur 60 commits** de l'historique. Seule exposition = la conversation, donc **rotation demandée à l'humain** (Settings → API Keys). Rappels actés : la clé `publishable` seule suffit au site public ; `SUPABASE_SERVICE_ROLE_KEY` n'arrive qu'en S3, **serveur uniquement**, et ne doit jamais transiter par le chat ni le dépôt.
 - 2026-10-05 — **Projet cloud créé et joignable** : URL `https://<project-ref>.supabase.co` (valeur exacte dans `.env.local`, gitignoré) et clé `publishable` obtenue. Preuves en lecture seule avec la clé publishable : `GET /auth/v1/settings` → **200** ; `GET /rest/v1/projects` → **404 `PGRST205`** « table `public.projects` absente du cache de schéma » → la paire URL + clé est **valide** et le **schéma n'est pas encore appliqué**, ce qui est l'état attendu avant `db push`. Aucune migration n'a donc encore été jouée en cloud. À noter : le `ref` lu dans le jeton exposé(différait de l'URL réelle (`http=000`, DNS inexistant) → l'URL fournie par l'humain a été retenue et vérifiée, pas la déduction.
@@ -47,11 +48,11 @@ Sprint en cours : S1 — phase : 3 — dernière mise à jour : 2026-10-05
 - 2026-10-05 — F1.8 vérifié avec un vrai PNG : un `text/plain` est rejeté (400) par la contrainte MIME du bucket, ce qui masquait la politique. Test refait en `image/png` → comportement RLS correct.
 - 2026-10-05 — S1 et S2 partiellement livrés avant l'adoption du cadre : `STATUS.md` reflète l'état réel au lieu de repartir de zéro ; les trous (F2.3, F2.5-détail, F2.6) restent au périmètre de S2.
 
-## Porte de merge §4ter — état au 2026-10-05 (HEAD `dev` = `19c8ea6`, rejouée) : **8/10**
+## Porte de merge §4ter — état au 2026-10-06 (HEAD `dev` = `6f6e3bc`) : **10/10**
 
 | # | Condition | État | Preuve / cause de l'échec |
 |---|---|---|---|
-| 1 | Toutes les `F` de **S1** ✅ | ❌ | `F1.1` PARTIELLE (pré-requis humain). `F2.3` est BLOQUÉE mais appartient à **S2**, hors périmètre de ce sprint. |
+| 1 | Toutes les `F` de **S1** ✅ | ✅ | F1.2→F1.8 reconfirmées (rejeu 2026-10-05) ; **`F1.1` débloquée le 2026-10-06** (2 variables Vercel posées, prod servant 6/6 citations cloud). `F2.3` appartient à **S2**, hors périmètre. |
 | 2 | CI verte sur `dev` et sur la PR de release | ✅ | re-vérifié à chaud sur `19c8ea6` : 2 check-runs `success` (PR #7 comprise) |
 | 3 | `tsc` / `eslint` / build 0 erreur | ✅ | CI + local (`tsc` 0, `eslint` 0 erreur / 20 warnings préexistants) |
 | 4 | Critères d'acceptation rejoués | ✅ | **rejeu complet 2026-10-05** (section ci-dessus) : F1.2→F1.8 reconfirmées, preuves jointes |
@@ -60,9 +61,9 @@ Sprint en cours : S1 — phase : 3 — dernière mise à jour : 2026-10-05
 | 7 | Aucun secret dans le diff | ✅ | scan sur 773 lignes de `git diff origin/main...origin/dev` : 0 secret (la clé `publishable` locale n'est pas versionnée) |
 | 8 | Migrations additives, `db reset` rejoué | ✅ | **rejoué 2026-10-05** : `supabase db reset` exit 0 (2 migrations + 2 seeds) ; aucune migration destructive |
 | 9 | RLS anon → 0 ligne sur le non publié | ✅ | **rejoué 2026-10-05 en local ET cloud** : `vina-io` → `[]`, 3 publiés visibles, INSERT anon `401 42501`. |
-| 10 | Aucun pré-requis humain en attente | ❌ | `F1.1` + décisions §10 non tranchées |
+| 10 | Aucun pré-requis humain en attente | ✅ | Pré-requis **Vercel levé** (2 variables posées + prod redéployée). Restent, **hors périmètre S1** (hygiène/ops, non bloquants) : révocation de la clé secrète exposée, suppression de la ligne de test `contact_messages`, `supabase link`/`db repair`. Décisions §10 couvertes par les hypothèses par défaut. |
 
-**Conclusion** : une seule action — `F1.1` — tient les deux conditions en échec. Les décisions §10 restent couvertes par les hypothèses par défaut du cadre et ne sont pas bloquantes pour la porte.
+**Conclusion** : **10/10** — les deux conditions qui échouaient (`F1.1`) sont levées. La PR de release `dev` → `main` (**#7**) est désormais fusionnable sous `AUTO_MERGE_MAIN = true`.
 
 ## Vérification S1 rejouée le 2026-10-05 (preuves fraîches)
 
@@ -88,15 +89,17 @@ Contexte : rejeu complet de S1 sur `dev` = `19c8ea6`, arbre de travail propre, s
 | Secrets | scan diff `main...dev` + `git grep` historique | 0 valeur de secret ; `.env.local` gitignoré |
 | CI | `gh pr checks 7` | « Types, lint et build » **pass** |
 | Vercel Git | preview de la PR #14 | **auto-déployée** (`Ready`) → dépôt Git **connecté** |
-| Vercel env | `vercel env ls` | **0 variable** |
-| Prod publique | `jtnova-madagascar.vercel.app` | `200` mais **0/6 citation cloud** → repli local |
+| Vercel env | `vercel env ls` | **0 variable** (constat 2026-10-05, corrigé ci-dessous) |
+| Prod publique | `jtnova-madagascar.vercel.app` | `200` mais **0/6 citation cloud** → repli local (constat 2026-10-05) |
+| Vercel env (2026-10-06) | API Vercel / `vercel env ls` | **2 variables** × {preview, production}, toutes branches |
+| Prod publique (2026-10-06) | `vercel --prod` + alias | **8/8 routes `200`**, accueil **6/6 citations cloud** (0/6 avant) |
 | Preview | URL de déploiement brut | **302 → Vercel SSO** (non publique) |
 
-Résultat : **F1.2 → F1.8 reconfirmées** (F1.8 désormais complète en local). `F1.1` reste PARTIELLE : pré-requis humaines Vercel/Git ci-dessous. Porte de merge inchangée : **8/10**.
+Résultat : **F1.2 → F1.8 reconfirmées** (F1.8 désormais complète en local). **`F1.1` débloquée le 2026-10-06** (2 variables Vercel + redéploiement prod vérifié). Porte de merge : **10/10**.
 
 ## Bloquants et pré-requis humains en attente
 
-- **S1 (F1.1)** : **le dépôt Git est connecté** (vérifié 2026-10-05 : preview auto déployée par la PR #14). Reste **à poser les 2 variables** `NEXT_PUBLIC_SUPABASE_URL` = URL du projet et `NEXT_PUBLIC_SUPABASE_ANON_KEY` = clé publishable, pour **Preview + Production**, et **redeployer**. Sans elles, preview et production restent sur repli local (vérifié : prod = 0/6 citation cloud) et le site ne lit pas Supabase. Toujours à faire : **révoquer la clé secrète `default`** exposée dans la conversation ; supprimer la ligne de test `Test RLS` dans `contact_messages`.
+- **S1 (F1.1) — ✅ LEVÉE le 2026-10-06** : dépôt Git connecté **et** 2 variables posées (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, Preview + Production) ; production redéployée et vérifiée (accueil = 6/6 citations cloud). **Restent à faire par l'humain (hygiène, hors périmètre S1)** : **révoquer la clé secrète `default`** exposée dans la conversation ; supprimer la ligne de test `Test RLS` dans `contact_messages`.
 - **S1 (opérationnel)** : après un jour où le projet cloud sera lié, lancer `supabase db repair --status applied 20261005082253 --status applied 20261005083000` pour resynchroniser `supabase_migrations` avec ce qui a été appliqué via l'éditeur SQL. Sans cela, le prochain `db push` échouera sur « table already exists ».
   - Puis, dans cet ordre : `npx supabase db push` (**sans** `--include-seed`) pour les migrations additives, et chargement de `supabase/seed.sql` via l'éditeur SQL du dashboard pour les contenus. Après cela l'agent rejoue la Porte de merge et peut enfin fusionner la PR #7.
 - **Décisions §10** en attente, hypothèses par défaut appliquées : connexion admin **e-mail + mot de passe** · personnalisation **tout le site** · hébergement **Vercel Hobby** temporaire + plan Cloudflare en S7 · dépôt **inchangé**.
