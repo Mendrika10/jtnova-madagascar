@@ -320,6 +320,25 @@
   color: #070d1a;
 }
 
+.ctaActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+.ctaBtnGhost {
+  border-color: color-mix(in srgb, var(--color-accent) 55%, transparent);
+  color: var(--color-accent);
+}
+
+.ctaBtnGhost:hover {
+  background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
 /* -- Marquee -- */
 .marqueeSection {
   border-top: 1px solid rgba(255, 255, 255, 0.06);

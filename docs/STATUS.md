@@ -1,6 +1,8 @@
 # STATUS
 
-Sprint en cours : S4bis — **terminé et publié** (release #38, `78ff057`) — dernière mise à jour : 2026-10-06
+Sprint en cours : S5 — **Admin : personnalisation complète du site** (Phase 1, non publié) — dernière mise à jour : 2026-10-06
+
+Sprint précédent : S4bis — **terminé et publié** (release #38, `78ff057`)
 
 ## État des sprints
 
@@ -48,6 +50,8 @@ Sprint en cours : S4bis — **terminé et publié** (release #38, `78ff057`) —
 | F4bis.9 | DOC | ✅ | — | `docs/EXPLOITATION-IMAGES.md` : où sont les images (ImageKit / `project_images` / bucket `projects` conservé), fonctionnement de l'ajout, suppression (fichier distant conservé), changement de compte ImageKit, quota atteint (purge / retour `old_url` / changement d'offre), rotation de clé privée. |
 
 ## Journal des décisions prises seul
+
+- 2026-10-06 — **S5 Phase 1 : personnalisation de bout en bout, un bug réel corrigé par la vérification.** Le câblage front-public couvre les 8 sections (Hero, À propos, Services, Témoignages, FAQ, CTA & réseaux, SEO, Identité). Tout est prouvé par E2E HTTP local (voir la section S5). Points de conception : (1) **`updateTag("site-settings")`** remplace `revalidateTag` — en Next 16, `revalidateTag` exige un 2ᵉ argument (`profile`), `updateTag` est l'API immédiate pour les Server Actions ; (2) l'identité (logo, favicon, couleur d'accent) et les réseaux sociaux sont lus dans le **layout racine** et traversent `SiteChrome` (enveloppe cliente) vers `Navbar`/`Footer` ; (3) la couleur d'accent est injectée via `<style>` sur `:root` (valeur **validée `#rrggbb`** côté serveur avant écriture → pas d'injection CSS) ; (4) le titre du Hero est rendu **mot par mot** avec mise en accent des mots listés dans `title_accent` — le `<br>` manuel du titre d'origine a été retiré au profit d'un flux naturel (léger changement visuel assumé) ; (5) un **bouton secondaire** du Hero (colonne droite) rend `cta_secondary` visible, et le CTA affiche désormais l'e-mail/le lieu/la disponibilité issus de `contact_info` ; (6) les icônes de réseaux sociaux du CTA sont remplacées par des libellés (les réglages ne portent que `label`/`href`) ; (7) `og_image` est désormais bien transmis au schéma SEO (**bug** : il était omis, l'écriture SEO échouait toujours).
 
 - 2026-10-06 — **Variables Vercel Preview posées : le « blocage CLI » était un faux diagnostic.** Les 3 variables ImageKit ont été créées sur **Preview** par l'API REST (`POST /v10/.../env` → **201**, puis lecture : 6 entrées ImageKit = 3 production + 3 preview). Le 403 `invalidToken` constaté la veille en écriture venait de l'**absence du paramètre `teamId`** dans l'URL, pas d'un refus de jeton ; la « question de branche non résoluble » de la CLI ne concernait que le mode interactif (l'argument `git-branch` positionnel existait). Leçon : avant de classer un outil « inutilisable en non-interactif », relire sa syntaxe complète (`--help`) et isoler la cause réelle d'un 403.
 - 2026-10-06 — **F4bis.7 close + correction d'une erreur d'interprétation de l'agent.** En classant les 20 lignes `project_images` cloud, l'agent avait d'abord opposé « Storage » à « ImageKit » et qualifié les 19 lignes restantes de « déjà ImageKit » — **erreur** : ce sont des **chemins statiques du dépôt** (`/images/ImagesProjetDetail/...`), servis par Vercel depuis `public/`, et non des uploads. Corollaire retiré : la conclusion « l'humain a uploadé 19 images depuis l'admin de production après la release » était **infondée** — aucune nouvelle image téléversée n'est apparue en base depuis la release ; la seule image téléversée connue reste celle de WhatsApp (déposée depuis l'admin avant le correctif, cf. audit). Le chemin d'upload ImageKit de production reste donc prouvé **structurellement** (code identique à l'E2E local, variables vérifiées, route de signature en prod), pas par un envoi post-release — la confirmation fonctionnelle reste à un prochain envoi réel de l'humain. Migration achevée : la seule image téléversée (WhatsApp) a été **uploadée vers ImageKit par l'agent** (JPEG 1280×1254, 122 332 o, lecture publique `200`, taille identique) et l'humain a exécuté le bloc SQL (`old_url` + `UPDATE`) — vérifié par lecture API : `url` = ImageKit, `old_url` = ancienne URL Storage conservée, ancienne URL toujours servie (`200`, retour arrière possible), **0 URL Storage restante** en base. Les 19 images statiques du dépôt restent **volontairement** hors migration (parade documentée : fichiers sources dans le dépôt).
@@ -148,6 +152,28 @@ Contexte : stack Docker locale up (compte `admin@jtnova.local`), périmètre AUT
 **F3.1 levée le 2026-10-06** : compte admin cloud créé + profil `admin`. La Porte de merge S3 est donc **10/10**.
 
 **Release S3 fusionnée** : PR **#23** (`dev` → `main`) mergée le 2026-10-06 (`mergeCommit` = `9dcfd57`). **Smoke test production** : `/`, `/projets`, `/projects/julia`, `/services`, `/contact` → `200` ; `/admin` et `/admin/realisations` (anonyme) → `307 → /admin/login?redirect=…` ; `/admin/login` → `200`. Le middleware fonctionne en production. L'humain confirme la connexion réelle avec le compte admin.
+
+## S5 — Admin : personnalisation complète du site (Phase 1, 2026-10-06)
+
+Contexte : stack Docker locale **réinitialisée** (`supabase db reset`, compte `admin@jtnova.local`), serveur `next start -p 3110`, Server Actions `useActionState` rejouées par HTTP — les champs d'action progressifs (`$ACTION_REF_n`, `$ACTION_n:0`, `$ACTION_n:1`, `$ACTION_KEY`) sont **rejoués à l'identique** depuis le formulaire rendu, avec une session admin réelle. `.env.local` basculé sur la base locale pour le test puis **restauré** (cloud).
+
+| Preuve | Résultat |
+|---|---|
+| Types / Lint / Build | `tsc` exit 0 · `eslint` 0 erreur / **19** warnings (≤ baseline 20) · `next build` 0 (19 pages) |
+| F5.1 Hero | `saveHeroAction` → `303 ?section=hero&saved=1` ; le titre édité apparaît dans le HTML de `/` |
+| F5.2 À propos | mission + chiffres clés édités → visibles sur `/a-propos` |
+| F5.3 Services | liste remplacée (6 + 1) → le nouveau service est visible sur l'accueil |
+| F5.4 Témoignages | témoignage **publié** visible sur l'accueil, témoignage **non publié absent** |
+| F5.5 FAQ | question ajoutée visible sur l'accueil |
+| F5.6 CTA & réseaux | réseau social édité visible dans le **pied de page** |
+| F5.7 SEO | `<title>` de `/` = titre édité ; `og:title` / `og:description` / `og:image` présents dans la source |
+| F5.8 Identité | `--color-accent` injecté dans `:root` (valeur validée `#rrggbb`) ; logo remplacé dans la navbar (`<img src>`) |
+| Non-régression | `/`, `/a-propos`, `/services`, `/projets`, `/contact`, `/competences`, `/admin/login` → **200** |
+| Nettoyage | env cloud restauré (grep `fvdtbvjogaotawvdfojl` = 1) · `.verify-tmp` supprimé · base locale rendue au seed · arbre propre |
+
+**Bug réel trouvé par l'E2E et corrigé** : `saveSeoAction` omettait `og_image` dans les données soumises au schéma Zod (qui l'exige) → **toute** écriture SEO échouait silencieusement (retour d'état, pas de redirection, base inchangée). Corrigé puis revérifié : `303 ?section=seo&saved=1` et `<title>` à jour. Leçon : un formulaire qui répond `200` au lieu de `303` sur une Server Action signale un échec de validation — l'E2E par HTTP l'a mis en évidence là où une simple inspection du code ne l'aurait pas vu.
+
+**Décisions prises seul (S5)** : aucune migration — les clés `about` / `cta` / `identity` **absentes du seed** sont créées au premier enregistrement par `upsert` ; `contact_info` est **seulement lu** (édition prévue S6) et alimente le CTA (e-mail, lieu, disponibilité) ; les listes (services, témoignages, FAQ) sont **remplacées en bloc** à l'enregistrement (leurs identifiants ne sont référencés nulle part ailleurs — même stratégie que les technologies d'une réalisation en S4) ; `revalidateTag` exige **deux** arguments en Next 16, remplacé par **`updateTag`** (API immédiate réservée aux Server Actions, lecture de ses propres écritures).
 
 ## S4 — Admin : réalisations (vérification 2026-10-06)
 
