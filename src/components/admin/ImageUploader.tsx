@@ -1,14 +1,27 @@
 "use client";
 
 import { useState } from "react";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { addImagesAction } from "@/app/admin/actions";
 import styles from "@/app/admin/admin.module.css";
 
 type Pending = { file: File; alt: string };
 
-// Doit rester aligné sur la limite du bucket Storage `projects`
-// (voir supabase/migrations/20261005083000_rls_policies.sql).
+type ImageKitAuth = {
+  token: string;
+  expire: number;
+  signature: string;
+  publicKey: string;
+  urlEndpoint: string;
+};
+
+// F4bis.3 : envoi DIRECT navigateur → ImageKit (aucun fichier ne traverse le
+// serveur, donc aucune limite liée à une fonction serverless).
+// Endpoint public de l'API d'envoi ImageKit (v1).
+const IMAGEKIT_UPLOAD_URL = "https://upload.imagekit.io/api/v1/files/upload";
+
+// F4bis.4 : garde-fou volontaire. ImageKit ne limite pas la taille, mais 2 Mo
+// suffit largement pour des images de portfolio et protège le stockage du plan
+// gratuit (~3 Go). Formats : PNG, JPEG, WebP ou GIF.
 const MAX_BYTES = 2 * 1024 * 1024;
 const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
 
@@ -58,6 +71,49 @@ export default function ImageUploader({ projectId }: { projectId: string }) {
     setItems((prev) => prev.map((it, i) => (i === index ? { ...it, alt } : it)));
   }
 
+  /**
+   * F4bis.2 : le serveur signe l'envoi. Le token doit être unique par envoi
+   * (exigence ImageKit) → une signature demandée **par fichier**.
+   */
+  async function requestAuthParams(): Promise<ImageKitAuth> {
+    const res = await fetch("/api/imagekit/auth");
+    const body = (await res.json().catch(() => null)) as
+      | (ImageKitAuth & { error?: string })
+      | null;
+    if (!res.ok || !body) {
+      throw new Error(body?.error ?? "Impossible d'obtenir la signature d'upload.");
+    }
+    return body;
+  }
+
+  async function uploadOne(file: File, auth: ImageKitAuth): Promise<string> {
+    const form = new FormData();
+    form.set("file", file);
+    form.set("fileName", file.name);
+    form.set("publicKey", auth.publicKey);
+    form.set("signature", auth.signature);
+    form.set("expire", String(auth.expire));
+    form.set("token", auth.token);
+    // ⚠️ Pas de paramètre `folder` : l'API d'envoi le refuse (« invalid value
+    // for folder parameter »), même pour un dossier à un seul niveau (vérifié
+    // contre le compte). Les fichiers arrivent donc à la racine de la
+    // médiathèque — l'appartenance à une réalisation reste portée par
+    // project_images en base.
+    form.set("useUniqueFileName", "true");
+    form.set("overwriteFile", "false");
+
+    const res = await fetch(IMAGEKIT_UPLOAD_URL, { method: "POST", body: form });
+    const body = (await res.json().catch(() => null)) as
+      | { url?: string; message?: string }
+      | null;
+    if (!res.ok || !body?.url) {
+      throw new Error(
+        body?.message ?? `ImageKit a répondu avec le code ${res.status}.`,
+      );
+    }
+    return body.url;
+  }
+
   async function upload() {
     setError(null);
     if (items.length === 0) return;
@@ -71,32 +127,26 @@ export default function ImageUploader({ projectId }: { projectId: string }) {
       return;
     }
 
-    const supabase = createSupabaseBrowserClient();
-    if (!supabase) {
-      setError("Supabase n'est pas configuré sur cet environnement.");
+    setBusy(true);
+    const entries: { url: string; alt: string }[] = [];
+    try {
+      for (const it of items) {
+        const auth = await requestAuthParams();
+        entries.push({
+          url: await uploadOne(it.file, auth),
+          alt: it.alt.trim(),
+        });
+      }
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "Échec de l'envoi vers ImageKit.",
+      );
+      setBusy(false);
       return;
     }
 
-    setBusy(true);
-    const entries: { url: string; alt: string }[] = [];
-    for (const it of items) {
-      const safe = it.file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-      const path = `${projectId}/${Date.now()}-${Math.random()
-        .toString(36)
-        .slice(2, 8)}-${safe}`;
-      const { error: upErr } = await supabase.storage
-        .from("projects")
-        .upload(path, it.file, { contentType: it.file.type, upsert: false });
-
-      if (upErr) {
-        setError(`Échec de l'envoi (${it.file.name}) : ${upErr.message}`);
-        setBusy(false);
-        return;
-      }
-      const { data } = supabase.storage.from("projects").getPublicUrl(path);
-      entries.push({ url: data.publicUrl, alt: it.alt.trim() });
-    }
-
+    // addImagesAction redirige (NEXT_REDIRECT) : volontairement HORS du
+    // try/catch pour ne pas intercepter la redirection.
     const formData = new FormData();
     formData.set("project_id", projectId);
     formData.set("entries", JSON.stringify(entries));
