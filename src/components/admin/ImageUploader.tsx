@@ -94,7 +94,11 @@ export default function ImageUploader({ projectId }: { projectId: string }) {
     form.set("signature", auth.signature);
     form.set("expire", String(auth.expire));
     form.set("token", auth.token);
-    form.set("folder", `/jtnova/${projectId}`);
+    // ⚠️ Pas de paramètre `folder` : l'API d'envoi le refuse (« invalid value
+    // for folder parameter »), même pour un dossier à un seul niveau (vérifié
+    // contre le compte). Les fichiers arrivent donc à la racine de la
+    // médiathèque — l'appartenance à une réalisation reste portée par
+    // project_images en base.
     form.set("useUniqueFileName", "true");
     form.set("overwriteFile", "false");
 
