@@ -6,7 +6,7 @@ import styles from "./ProjectDetail.module.css";
 import TechBannerImages from "../tech-banner/TechBannerImages";
 import VideoShowcase from "./VideoShowcase";
 
-type ProjectData = {
+export type ProjectData = {
   title: string;
   tag?: string;
   year?: string;
