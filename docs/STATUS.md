@@ -1,6 +1,6 @@
 # STATUS
 
-Sprint en cours : S2 — phase : 1 — dernière mise à jour : 2026-10-06
+Sprint en cours : S3 — phase : 1 — dernière mise à jour : 2026-10-06
 
 ## État des sprints
 
@@ -22,6 +22,12 @@ Sprint en cours : S2 — phase : 1 — dernière mise à jour : 2026-10-06
 | F2.6 | FRONT-PUBLIC | ✅ | #18 | `src/app/projects/[slug]/page.tsx` : serveur, ISR 60 s, `notFound()` si absente/non publiée. **Preuve locale** : `/projects/julia|vitascore|feonix` → `200` ; `/projects/vina-io` (brouillon) et `/projects/inconnu-xyz` → `404`. `generateMetadata` renseigne `<title>`. |
 | F2.7 | DATA | ✅ | #3, #18 | ISR 60 s en place ; hook `revalidatePath` livré (`src/lib/revalidate.ts` : `revalidateProjectPaths`, `revalidateContentPaths`), branché par les mutations en **S4**. **Preuve locale** : le détail dynamique reflète une écriture en base **immédiatement** (sans rebuild). ⚠️ Le critère « édition admin visible < 5 s » sur les pages en cache (`/`, `/projets`) s'exercera **en S4**, aucune mutation n'existant avant l'admin. |
 | F2.8 | FRONT-PUBLIC | ✅ | #3 | Repli gracieux validé : build sans `.env` (données locales) et build avec base. |
+| F3.1 | AUTH (+ humain) | PARTIELLE | #21 | **Compte admin : preuve locale** — `admin@jtnova.local` / rôle `admin` ; connexion réussie (cookie de session + redirection `/admin`). **Cloud : pré-requis humain** — le projet cloud n'a **aucun compte** (`profiles` = `[]`, sign-in admin local → `invalid_credentials`, inscription non auto-confirmée) ; le vrai compte admin se crée dans le dashboard Supabase puis `insert into public.profiles (id,email,role) select id,email,'admin' from auth.users where email='…'`. |
+| F3.2 | AUTH | ✅ | #21 | `/admin/login` (Server Component + Server Action `loginAction`, progression sans JS). **Preuve locale** : mauvais mot de passe → `303 /admin/login?error=invalid` ; bon mot de passe → `303 /admin` + `Set-Cookie sb-…-auth-token`. `logoutAction` déconnecte. Redirection post-login limitée à `/admin` (anti-open-redirect). |
+| F3.3 | AUTH | ✅ | #21 | `middleware.ts` (matcher `/admin/:path*`) : rafraîchit la session et redirige l'anonyme. **Preuve locale** : `GET /admin` sans cookie → `307 → /admin/login?redirect=%2Fadmin` ; `/admin/login` → `200`. Le rôle est vérifié dans le layout (pas dans le middleware) → pas de boucle de redirection. |
+| F3.4 | RLS | ✅ | #3, #21 | Politiques `profiles` inchangées (lecture de son profil ; gestion par admin). **Preuve locale** : compte `editor` (rôle non-admin) → `POST /rest/v1/projects` = **`42501` « new row violates row-level security policy », HTTP 403** ; en UI, `GET /admin` en editor → `307 /admin/login?error=forbidden`. |
+| F3.5 | ADMIN-UI | ✅ | #21 | Coquille admin (`src/app/admin/(dashboard)/layout.tsx`) : navigation latérale **4 sections** (Tableau de bord, Réalisations, Personnalisation, Messages) + barre supérieure (e-mail, déconnexion). **Preuve locale** : `/admin`, `/admin/realisations`, `/admin/personnalisation`, `/admin/messages` → `200`. Navbar/Footer publics masqués sur `/admin` (`SiteChrome`). Réserve : la console navigateur n'a pas pu être inspectée (pas de navigateur headless disponible). |
+| F3.6 | DATA puis ADMIN-UI | ✅ | #21 | Tableau de bord `/admin` avec compteurs. `getDashboardCounts()` (`src/lib/admin-data.ts`, client authentifié → voit brouillons/messages). **Preuve locale** : `3` publiées · `1` brouillon · `0` non lu (conforme à la base locale). |
 
 ## Journal des décisions prises seul
 
@@ -35,6 +41,7 @@ Sprint en cours : S2 — phase : 1 — dernière mise à jour : 2026-10-06
 
 - 2026-10-06 — **F1.8 complétée en cloud : lecture publique d'un objet réel vérifiée.** L'agent ne pouvait pas déposer d'objet (upload réservé à `public.is_admin()` ; le cloud n'a **aucun compte** : sign-in `admin@jtnova.local` → `invalid_credentials`, `profiles` → `[]`, pas de trigger `auth.users` ni de policy d'insert self sur `profiles`). L'humain a donc déposé une image via le dashboard ; la vérification a été faite avec la seule clé publishable : **`GET /storage/v1/object/public/projects/<objet>` → `200`, `image/jpeg`, 122 332 o** (JPEG réel 1280×1254), contre `NoSuchKey` pour un objet absent et `NoSuchBucket` pour un bucket fantôme ; upload anon → `403 AccessDenied`. Seule exposition de la clé secrète cloud : la conversation — **elle n'a jamais été utilisée** pour cette vérification.
 - 2026-10-06 — **Release S1 fusionnée dans `main` (Porte de merge 10/10).** PR #7 (`dev` → `main`) fusionnée par **merge commit** (`7088b43`) après confirmation explicite de l'humain, `AUTO_MERGE_MAIN = true`, CI verte. Smoke test de production post-déploiement : `jtnova-madagascar.vercel.app` → 6/6 routes clés en `200`, accueil servant **6/6** citations cloud. Aucun rollback nécessaire.
+- 2026-10-06 — **S3 : socle admin.** Ajout de `@supabase/ssr` (client SSR officiel Next). `src/lib/supabase/server.ts` expose désormais deux clients : `getSupabasePublicClient()` (anon, sans session, pour le contenu public) et `createSupabaseServerClient()` (lié aux cookies, pour l'admin). `middleware.ts` protège `/admin/**` et rafraîchit la session ; le **rôle** est vérifié dans le layout admin (et non dans le middleware) pour éviter toute boucle de redirection pour un utilisateur connecté non-admin. Le formulaire de connexion est un **Server Component + Server Action** (fonctionne sans JS, testable). La Navbar/Footer publics sont masqués sur `/admin` via `SiteChrome`. **Aucune clé de service utilisée.** Le compte admin cloud reste un **pré-requis humain** (aucun moyen pour l'agent de créer un utilisateur confirmé sans service_role) : F3.1 est donc PARTIELLE (prouvée en local), et la Porte de merge n'est pas entièrement verte.
 - 2026-10-06 — **Release S2 fusionnée dans `main`.** PR #19 (`dev` → `main`) mergée (`a6dbcbf`) après Porte de merge 10/10 (réserve F2.7 documentée) et CI verte. Smoke test production OK, aucun rollback.
 - 2026-10-06 — **S2 : front public dynamique.** Le client Supabase a été découpé (`src/lib/supabase/server.ts` + `client.ts`, l'ancien fichier supprimé) ; `toProjectDetail()` mappe la base vers la forme `ProjectData` du composant public ; la route **`/projects/[slug]`** (serveur, ISR 60 s, `notFound()`) lit la base via `getProjectBySlug`. Les cartes de `/projets` pointent désormais vers `/projects/<slug>`. Les pages statiques `project1-4` sont **conservées** (repli sans base et anciens liens), donc aucun risque de régression. Une note d'implémentation : le mapper `toProjectDetail` lit `project_tech.label` et `project_highlights.text` (noms de colonnes réels), à ne pas confondre avec `tech_banner.name`. Le hook de revalidation `src/lib/revalidate.ts` est livré pour S4 ; en S2 les pages restent rafraîchies par l'ISR, et le détail dynamique reflète toute écriture en base immédiatement (prouvé localement).
 - 2026-10-06 — **F1.1 débloquée : variables Vercel posées et production redéployée.** Les 2 variables publiques (`NEXT_PUBLIC_SUPABASE_URL` = URL du projet, `NEXT_PUBLIC_SUPABASE_ANON_KEY` = clé publishable — **aucune clé de service**) ont été posées sur **Preview + Production**, pour **toutes les branches**. Le prompt CLI *« Add … to which Git branch? »* bloquait en mode non interactif : les previews ont été créées via l'API REST Vercel (`POST /v10/projects/{id}/env`, `target: ["preview"]`, sans `gitBranch`) avec le jeton CLI local ; les cibles Production ont été posées par `vercel env add … production` (stdin). Contrôle API : **4 entrées** (2 clés × {preview, production}), `branch = None`. Puis `vercel --prod --yes` → déploiement `jtnova-madagascar-hl80sjeb9-…` **aliasé** sur `jtnova-madagascar.vercel.app`. Vérification fraîche : **8/8 routes clés en `200`**, et l'accueil sert **6/6** citations de témoignages cloud (chaînes présentes uniquement en base, **0 occurrence dans `src/`**) contre **0/6** avant → la production lit désormais bien Supabase.
@@ -77,6 +84,30 @@ Sprint en cours : S2 — phase : 1 — dernière mise à jour : 2026-10-06
 **S2** : toutes les conditions vertes à l'exception de la réserve documentée sur F2.7 (hook livré, preuve E2E en S4). Aucune migration, aucun secret, aucune écriture hors zone. Gate **10/10** sous réserve F2.7.
 
 **Release S2 fusionnée** : PR **#19** (`dev` → `main`) mergée le 2026-10-06 (`mergeCommit` = `a6dbcbf`). **Smoke test production** : `/`, `/projets`, `/projects/julia|vitascore|feonix`, `/competences`, `/a-propos`, `/contact`, `/services` → `200` ; `/projects/vina-io` (brouillon) et `/projects/inconnu-xyz` → `404` ; `/projects/project1` (statique) → `200` ; les cartes de `/projets` pointent vers `/projects/<slug>` de la base. Aucun rollback nécessaire.
+
+## S3 — Auth & socle admin (vérification 2026-10-06)
+
+Contexte : stack Docker locale up (compte `admin@jtnova.local`), périmètre AUTH + ADMIN-UI.
+
+| Preuve | Commande | Résultat |
+|---|---|---|
+| Types | `npx tsc --noEmit` | exit 0 |
+| Lint | `npx eslint .` | 0 erreur / 20 warnings préexistants |
+| Build (cloud) | `npm run build` (`.env.local`) | exit 0 · routes `/admin*` **dynamiques** + **`Proxy (Middleware)`** |
+| Build (local) | `npm run build` (stack locale 54321) | exit 0 |
+| Anonyme → `/admin` | `GET /admin` sans cookie | `307 → /admin/login?redirect=%2Fadmin` |
+| Page connexion | `GET /admin/login` | `200` |
+| Mauvais mot de passe | POST server action | `303 → /admin/login?error=invalid` |
+| Bon mot de passe | POST server action | `303 → /admin` + `Set-Cookie sb-127-auth-token` |
+| Tableau de bord | `GET /admin` avec session | `200`, compteurs `3 / 1 / 0` |
+| Sections | `/admin/realisations|personnalisation|messages` | `200` |
+| Non-admin (RLS) | compte `editor` → `INSERT projects` | `42501`, HTTP `403` |
+| Non-admin (UI) | `GET /admin` en editor | `307 → /admin/login?error=forbidden` |
+| Nettoyage | compte `editor` supprimé | `profiles` = admin local seul |
+
+**Réserve** : F3.1 (compte admin **cloud**) reste un pré-requis humain → la Porte de merge n'est **pas entièrement verte** ; la release S3 n'est pas fusionnée dans `main`.
+
+**Limitation** : la console navigateur n'a pas été inspectée (aucun navigateur headless installé) ; F3.5 est prouvée par le rendu serveur `200` des 4 sections, pas par une inspection console.
 
 ## Vérification S1 rejouée le 2026-10-05 (preuves fraîches)
 
