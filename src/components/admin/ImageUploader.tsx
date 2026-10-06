@@ -7,6 +7,26 @@ import styles from "@/app/admin/admin.module.css";
 
 type Pending = { file: File; alt: string };
 
+// Doit rester aligné sur la limite du bucket Storage `projects`
+// (voir supabase/migrations/20261005083000_rls_policies.sql).
+const MAX_BYTES = 2 * 1024 * 1024;
+const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
+
+function formatSize(bytes: number): string {
+  return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
+}
+
+/** Retourne un message d'erreur si le fichier est refusé, sinon null. */
+function rejectReason(file: File): string | null {
+  if (!ALLOWED_TYPES.includes(file.type)) {
+    return `${file.name} : format non pris en charge (PNG, JPEG, WebP ou GIF).`;
+  }
+  if (file.size > MAX_BYTES) {
+    return `${file.name} : ${formatSize(file.size)} dépasse la limite de 2 Mo.`;
+  }
+  return null;
+}
+
 export default function ImageUploader({ projectId }: { projectId: string }) {
   const [items, setItems] = useState<Pending[]>([]);
   const [busy, setBusy] = useState(false);
@@ -14,14 +34,24 @@ export default function ImageUploader({ projectId }: { projectId: string }) {
 
   function onFiles(files: FileList | null) {
     if (!files) return;
-    const next = Array.from(files).map((file) => ({
-      file,
-      alt: file.name
-        .replace(/\.[^.]+$/, "")
-        .replace(/[-_]+/g, " ")
-        .trim(),
-    }));
-    setItems((prev) => [...prev, ...next]);
+    const rejected: string[] = [];
+    const next: Pending[] = [];
+    for (const file of Array.from(files)) {
+      const reason = rejectReason(file);
+      if (reason) {
+        rejected.push(reason);
+        continue;
+      }
+      next.push({
+        file,
+        alt: file.name
+          .replace(/\.[^.]+$/, "")
+          .replace(/[-_]+/g, " ")
+          .trim(),
+      });
+    }
+    setError(rejected.length > 0 ? rejected.join(" ") : null);
+    if (next.length > 0) setItems((prev) => [...prev, ...next]);
   }
 
   function setAlt(index: number, alt: string) {
@@ -31,6 +61,11 @@ export default function ImageUploader({ projectId }: { projectId: string }) {
   async function upload() {
     setError(null);
     if (items.length === 0) return;
+    const invalid = items.map((it) => rejectReason(it.file)).find(Boolean);
+    if (invalid) {
+      setError(invalid);
+      return;
+    }
     if (items.some((it) => it.alt.trim() === "")) {
       setError("Un texte alternatif (alt) est obligatoire pour chaque image.");
       return;

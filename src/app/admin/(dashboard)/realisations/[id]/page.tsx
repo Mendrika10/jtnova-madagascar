@@ -19,7 +19,12 @@ export default async function EditProjectPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ saved?: string; created?: string; images?: string }>;
+  searchParams: Promise<{
+    saved?: string;
+    created?: string;
+    images?: string;
+    images_error?: string;
+  }>;
 }) {
   const { id } = await params;
   const flags = await searchParams;
@@ -49,6 +54,11 @@ export default async function EditProjectPage({
       {flags.created && <p className={styles.notice}>Réalisation créée.</p>}
       {flags.saved && <p className={styles.notice}>Modifications enregistrées.</p>}
       {flags.images && <p className={styles.notice}>Images mises à jour.</p>}
+      {flags.images_error && (
+        <p className={styles.error} role="alert">
+          L&apos;enregistrement des images a échoué. Réessayez.
+        </p>
+      )}
 
       <ProjectForm
         initial={{
