@@ -53,16 +53,24 @@ function parseSocials(lines: string): { label: string; href: string }[] {
 
 export function PreviewPanel({
   title,
+  dirty,
   children,
 }: {
   title: string;
+  /** Vrai dès qu'un champ diffère des valeurs enregistrées. */
+  dirty?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <aside className={styles.previewPanel} aria-label={`Aperçu de la section ${title}`}>
       <div className={styles.previewHead}>
         <span>Aperçu</span>
-        <span className={styles.previewHint}>non enregistré · direct</span>
+        <span
+          className={`${styles.previewHint} ${dirty ? styles.previewHintDirty : ""}`}
+          role="status"
+        >
+          {dirty ? "modifications non enregistrées" : "synchronisé"}
+        </span>
       </div>
       <div className={styles.previewBody}>{children}</div>
     </aside>

@@ -587,6 +587,10 @@
   color: #7f93af;
 }
 
+.previewHintDirty {
+  color: #f0c27b;
+}
+
 .previewBody {
   display: flex;
   flex-direction: column;
