@@ -1,16 +1,18 @@
 "use client";
 
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../database.types";
 
 let browserClient: SupabaseClient<Database> | null = null;
 
 /**
- * Client Supabase côté navigateur, clé publique (anon) uniquement.
+ * Client Supabase côté navigateur, clé publique (anon) uniquement, **lié à la
+ * session** via cookies. Utilisé par les composants admin client (S4).
  * Retourne null si les variables d'environnement ne sont pas définies :
  * les composants doivent prévoir ce cas (repli gracieux).
  */
-export function getSupabaseBrowserClient(): SupabaseClient<Database> | null {
+export function createSupabaseBrowserClient(): SupabaseClient<Database> | null {
   if (browserClient) return browserClient;
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -18,7 +20,7 @@ export function getSupabaseBrowserClient(): SupabaseClient<Database> | null {
   if (!url || !key) return null;
 
   try {
-    browserClient = createClient<Database>(url, key);
+    browserClient = createBrowserClient<Database>(url, key);
   } catch {
     return null;
   }
