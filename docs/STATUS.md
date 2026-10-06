@@ -1,6 +1,6 @@
 # STATUS
 
-Sprint en cours : S5 — **Admin : personnalisation complète du site** (Phase 1, non publié) — dernière mise à jour : 2026-10-06
+Sprint en cours : S5 — **Admin : personnalisation complète du site** — **terminé et publié** (release #45, `5caf1f3`) — dernière mise à jour : 2026-10-06
 
 Sprint précédent : S4bis — **terminé et publié** (release #38, `78ff057`)
 
@@ -50,6 +50,10 @@ Sprint précédent : S4bis — **terminé et publié** (release #38, `78ff057`)
 | F4bis.9 | DOC | ✅ | — | `docs/EXPLOITATION-IMAGES.md` : où sont les images (ImageKit / `project_images` / bucket `projects` conservé), fonctionnement de l'ajout, suppression (fichier distant conservé), changement de compte ImageKit, quota atteint (purge / retour `old_url` / changement d'offre), rotation de clé privée. |
 
 ## Journal des décisions prises seul
+
+- 2026-10-06 — **S5+ : bouton « Réinitialiser » (demandé après l'aperçu live).** Réutilise la mécanique existante : `form.reset()` remet chaque champ non contrôlé à sa valeur rendue par le serveur (donc enregistrée), ce qui couvre aussi les cases à cocher via `defaultChecked` ; les listes sont en plus restaurées par `useRows.reset`. Un indicateur d'état (« synchronisé » / « modifications non enregistrées ») compare l'aperçu à la référence **normalisée** — sinon une liste vide en base (l'éditeur synthétise alors une ligne vide) paraîtrait modifiée dès le chargement. Le bouton est désactivé quand rien n'a changé. Vérifié dans un vrai navigateur (19/19) : restauration des champs, de l'aperçu, des lignes et des cases, sans aucune écriture en base. **Correction de test** : le premier échec signalé était une mauvaise assertion (une ligne vide n'est pas une carte dans l'aperçu), l'application était correcte.
+
+- 2026-10-06 — **S5+ : aperçu live dans Personnalisation (demandé après la release).** Choix retenu : ne **pas** convertir les champs en contrôlés (aurait imposé de réécrire tous les éditeurs) mais relire le formulaire via `FormData` à chaque `onInput` et alimenter un aperçu purement local. Les aperçus sont **légers** (pas les animations du site public), avec les images en `background-image` pour rester compatibles avec des URL arbitraires et éviter les avertissements `<img>`. Les Server Actions sont inchangées : l'aperçu ne déclenche aucune écriture, prouvé par lecture base après saisie. Testé dans un **vrai navigateur** (Chrome headless + CDP) car un aperçu client-side ne peut pas être validé par HTTP.
 
 - 2026-10-06 — **S5 Phase 1 : personnalisation de bout en bout, un bug réel corrigé par la vérification.** Le câblage front-public couvre les 8 sections (Hero, À propos, Services, Témoignages, FAQ, CTA & réseaux, SEO, Identité). Tout est prouvé par E2E HTTP local (voir la section S5). Points de conception : (1) **`updateTag("site-settings")`** remplace `revalidateTag` — en Next 16, `revalidateTag` exige un 2ᵉ argument (`profile`), `updateTag` est l'API immédiate pour les Server Actions ; (2) l'identité (logo, favicon, couleur d'accent) et les réseaux sociaux sont lus dans le **layout racine** et traversent `SiteChrome` (enveloppe cliente) vers `Navbar`/`Footer` ; (3) la couleur d'accent est injectée via `<style>` sur `:root` (valeur **validée `#rrggbb`** côté serveur avant écriture → pas d'injection CSS) ; (4) le titre du Hero est rendu **mot par mot** avec mise en accent des mots listés dans `title_accent` — le `<br>` manuel du titre d'origine a été retiré au profit d'un flux naturel (léger changement visuel assumé) ; (5) un **bouton secondaire** du Hero (colonne droite) rend `cta_secondary` visible, et le CTA affiche désormais l'e-mail/le lieu/la disponibilité issus de `contact_info` ; (6) les icônes de réseaux sociaux du CTA sont remplacées par des libellés (les réglages ne portent que `label`/`href`) ; (7) `og_image` est désormais bien transmis au schéma SEO (**bug** : il était omis, l'écriture SEO échouait toujours).
 
@@ -189,7 +193,7 @@ Contexte : stack Docker locale **réinitialisée** (`supabase db reset`, compte 
 | # | Condition | État |
 |---|---|---|
 | 1 | Toutes les `F` ✅ | ✅ F5.1→F5.8 ✅ |
-| 2 | CI verte sur `dev` + PR de release | ✅ (dev) / à confirmer (PR) |
+| 2 | CI verte sur `dev` + PR de release | ✅ (`dev` + PR #45) |
 | 3 | `tsc`/`eslint`/build 0 erreur | ✅ |
 | 4 | Critères rejoués, preuves jointes | ✅ rejoués sur `dev` (local) — preview SSO non atteignable (limitation ci-dessus) |
 | 5 | Pas de régression | ✅ 7 routes `200` |
@@ -198,6 +202,18 @@ Contexte : stack Docker locale **réinitialisée** (`supabase db reset`, compte 
 | 8 | Aucune migration destructive | ✅ aucune migration |
 | 9 | RLS anonyme → 0 ligne non publiée | ✅ `[]` + `INSERT` anon `401` |
 | 10 | Aucun pré-requis humain bloquant ce sprint | ✅ (pré-requis logo = « actuels conservés », appliqué) |
+
+### S5+ — Aperçu live et bouton « Réinitialiser » (2026-10-06)
+
+Ajouts demandés après la release. Chaque onglet de Personnalisation affiche un **panneau d'aperçu** qui suit la saisie **avant** l'enregistrement, et un bouton **« Réinitialiser »** qui restaure les valeurs enregistrées.
+
+- Technique : les champs restent **non contrôlés** ; un `onInput` sur le `<form>` relit les valeurs via `FormData` et alimente l'aperçu local. Dans les éditeurs de liste, l'ajout/retrait/réordonnancement n'émettent pas d'`input` → l'aperçu est rafraîchi par un `useEffect` sur les lignes. **Aucune requête serveur** n'est déclenchée par l'aperçu.
+- **Réinitialisation** : `form.reset()` restaure chaque champ à sa valeur **rendue par le serveur** (= enregistrée), y compris les cases à cocher (`defaultChecked`) ; pour les listes, les lignes sont également ramenées à l'état initial (`useRows.reset`). L'en-tête d'aperçu indique l'état (« synchronisé » / « modifications non enregistrées ») et le bouton est **désactivé** tant que rien n'a changé. La référence de comparaison est la liste **normalisée** (une liste vide en base affiche une ligne vide sans être signalée comme modifiée pour autant).
+- Les images (logo, favicon, image Open Graph) sont posées en `background-image` (pas de `<img>`) pour accepter des URL arbitraires sans alourdir le lint.
+- **Preuves (navigateur réel, Chrome headless + CDP, pile locale)** — aperçu : rendu au chargement, mise à jour **à la saisie**, mots d'accent mis en évidence ; ajout d'une ligne → nouvelle carte (`6 → 7`) ; décochage « Publié » → mention « non publié » ; **base inchangée tant qu'on n'enregistre pas** (lecture REST). Réinitialisation (**19/19**) : état initial « synchronisé » + bouton désactivé ; après saisie → « modifications non enregistrées » + bouton actif ; clic → champ **et** aperçu restaurés, retour à « synchronisé », bouton de nouveau désactivé, **aucune écriture en base** ; ligne ajoutée retirée et formulaire rendu à ses lignes d'origine ; case « Publié » restaurée cochée ; **enregistrement toujours fonctionnel** (clic → `?saved=1`, valeur en base). `tsc` 0 · `eslint` 0 erreur / 19 warnings · `next build` 0.
+- *Note de test* : un premier échec (« ajout non reflété dans l'aperçu ») venait de l'**assertion**, pas du code — une ligne ajoutée **vide** n'est volontairement pas rendue comme carte dans l'aperçu (filtre `title || description`). L'assertion a été corrigée (remplir la ligne avant de compter), pas l'application.
+
+**Release S5 fusionnée** : PR **#45** (`dev` → `main`) fusionnée par **commit de fusion** (`5caf1f3`), `AUTO_MERGE_MAIN = true`, Porte §4ter **10/10**, CI verte. **Smoke test production** (`jtnova-madagascar.vercel.app`) : `/`, `/projets`, `/services`, `/competences`, `/a-propos`, `/contact`, `/admin/login`, `/projects/julia`, `/projects/vitascore` → **200** ; `/admin` anonyme → `307 → /admin/login?redirect=%2Fadmin` ; `/projects/vina-io` (brouillon) → **404**. Discriminateur S5 : la page d'accueil sert désormais `<meta property="og:title">` (absent de l'ancien `layout.tsx`) → le nouveau code est bien déployé. **Aucun rollback.**
 
 ## S4 — Admin : réalisations (vérification 2026-10-06)
 
