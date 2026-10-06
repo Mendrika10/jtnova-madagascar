@@ -219,6 +219,293 @@
   font-size: 0.95rem;
 }
 
+/* ── Listes, formulaires, médias (S4) ─────────────────────────────────────── */
+
+.pageHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.breadcrumb {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+}
+.breadcrumb a {
+  color: #8fa3c0;
+  text-decoration: none;
+}
+.breadcrumb a:hover {
+  color: #eaf2ff;
+}
+
+.primaryBtn,
+.secondaryBtn,
+.linkBtn,
+.dangerBtn,
+.iconBtn {
+  display: inline-block;
+  padding: 0.45rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid rgba(120, 170, 255, 0.25);
+  background: transparent;
+  color: #cfe0f5;
+  font-size: 0.85rem;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.primaryBtn {
+  border: none;
+  background: linear-gradient(135deg, #2a79ff 0%, #00b4d8 100%);
+  color: #fff;
+  font-weight: 600;
+}
+
+.dangerBtn {
+  border-color: rgba(220, 80, 80, 0.4);
+  color: #ffb4b4;
+}
+
+.iconBtn {
+  padding: 0.25rem 0.5rem;
+  line-height: 1;
+}
+
+.iconBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.primaryBtn:hover,
+.secondaryBtn:hover,
+.linkBtn:hover,
+.dangerBtn:hover,
+.iconBtn:not(:disabled):hover {
+  filter: brightness(1.15);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.table th {
+  text-align: left;
+  padding: 0.6rem 0.7rem;
+  color: #8fa3c0;
+  font-weight: 500;
+  border-bottom: 1px solid rgba(120, 170, 255, 0.16);
+}
+
+.table td {
+  padding: 0.6rem 0.7rem;
+  border-bottom: 1px solid rgba(120, 170, 255, 0.08);
+  vertical-align: middle;
+}
+
+.orderCell {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.actionsCell {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.code {
+  font-size: 0.82rem;
+  color: #9fd0ff;
+  background: rgba(80, 150, 255, 0.1);
+  padding: 0.1rem 0.35rem;
+  border-radius: 5px;
+}
+
+.badgeOk,
+.badgeDraft {
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+}
+
+.badgeOk {
+  background: rgba(60, 200, 140, 0.16);
+  color: #7fe0b0;
+}
+
+.badgeDraft {
+  background: rgba(220, 160, 60, 0.16);
+  color: #f0c27b;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  max-width: 900px;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.9rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.fieldLabel {
+  font-size: 0.85rem;
+  color: #a9bbd6;
+}
+
+.textarea {
+  padding: 0.65rem 0.75rem;
+  border-radius: 9px;
+  border: 1px solid rgba(120, 170, 255, 0.22);
+  background: rgba(7, 11, 18, 0.85);
+  color: #eaf2ff;
+  font-size: 0.95rem;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.textarea:focus {
+  outline: 2px solid rgba(80, 150, 255, 0.55);
+  outline-offset: 1px;
+}
+
+.fieldHint {
+  font-size: 0.78rem;
+  color: #7f93af;
+}
+
+.fieldError {
+  font-size: 0.8rem;
+  color: #ffb4b4;
+}
+
+.checkboxRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: #cfe0f5;
+}
+
+.formActions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.notice {
+  margin: 0 0 1rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 9px;
+  font-size: 0.88rem;
+  color: #bfe8d2;
+  background: rgba(60, 200, 140, 0.12);
+  border: 1px solid rgba(60, 200, 140, 0.3);
+  max-width: 900px;
+}
+
+.section {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(120, 170, 255, 0.12);
+  max-width: 900px;
+}
+
+.sectionTitle {
+  margin: 0 0 1rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.imageList {
+  list-style: none;
+  margin: 0 0 1.25rem;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+
+.imageItem {
+  border: 1px solid rgba(120, 170, 255, 0.16);
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(13, 20, 32, 0.9);
+}
+
+.imageThumb {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  display: block;
+}
+
+.imageMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.6rem;
+}
+
+.uploader {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.pendingList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pendingItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.pendingName {
+  font-size: 0.82rem;
+  color: #9fb1cb;
+  flex: 1 1 160px;
+}
+
+.previewBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 9px;
+  background: rgba(80, 150, 255, 0.12);
+  border: 1px solid rgba(80, 150, 255, 0.3);
+  font-size: 0.88rem;
+}
+
+.previewSurface {
+  margin: -1.75rem -1.5rem;
+}
+
 @media (max-width: 720px) {
   .shell {
     grid-template-columns: 1fr;

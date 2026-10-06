@@ -1,6 +1,6 @@
 # STATUS
 
-Sprint en cours : S3 — phase : 1 — dernière mise à jour : 2026-10-06
+Sprint en cours : S4 — phase : 1 — dernière mise à jour : 2026-10-06
 
 ## État des sprints
 
@@ -28,6 +28,15 @@ Sprint en cours : S3 — phase : 1 — dernière mise à jour : 2026-10-06
 | F3.4 | RLS | ✅ | #3, #21 | Politiques `profiles` inchangées (lecture de son profil ; gestion par admin). **Preuve locale** : compte `editor` (rôle non-admin) → `POST /rest/v1/projects` = **`42501` « new row violates row-level security policy », HTTP 403** ; en UI, `GET /admin` en editor → `307 /admin/login?error=forbidden`. |
 | F3.5 | ADMIN-UI | ✅ | #21 | Coquille admin (`src/app/admin/(dashboard)/layout.tsx`) : navigation latérale **4 sections** (Tableau de bord, Réalisations, Personnalisation, Messages) + barre supérieure (e-mail, déconnexion). **Preuve locale** : `/admin`, `/admin/realisations`, `/admin/personnalisation`, `/admin/messages` → `200`. Navbar/Footer publics masqués sur `/admin` (`SiteChrome`). Réserve : la console navigateur n'a pas pu être inspectée (pas de navigateur headless disponible). |
 | F3.6 | DATA puis ADMIN-UI | ✅ | #21 | Tableau de bord `/admin` avec compteurs. `getDashboardCounts()` (`src/lib/admin-data.ts`, client authentifié → voit brouillons/messages). **Preuve locale** : `3` publiées · `1` brouillon · `0` non lu (conforme à la base locale). |
+| F4.1 | MUTATIONS → ADMIN-UI | ✅ | #26 | Liste `/admin/realisations` + réordonnancement (↑/↓). `moveProjectAction` renumérote l'ordre complet puis `revalidatePath`. **Preuve locale** : `julia,vitascore,feonix,vina-io` → `vitascore,julia,feonix,vina-io` après « monter » sur vitascore, puis restauration. |
+| F4.2 | MUTATIONS → ADMIN-UI | ✅ | #26 | `createProjectAction` (`/admin/realisations/new`). **Preuve locale** (Server Action rejouée par HTTP) : `303 → /admin/realisations/<id>?created=1` ; ligne créée en base (slug `projet-test-s4`, `published=t`). |
+| F4.3 | MUTATIONS → ADMIN-UI | ✅ | #26 | `saveProjectAction` (édition) + `deleteProjectAction` (confirmation client). **Preuve locale** : édition → `303 ?saved=1` ; suppression → `303 ?deleted=1`, ligne et enfants supprimés (cascade `on delete cascade`). |
+| F4.4 | MUTATIONS → ADMIN-UI | ✅ | #26 | `ImageUploader` (client) : envoi vers le bucket `projects` puis `addImagesAction`. Alt **obligatoire** (bloqué côté client et filtré côté serveur). **Preuve locale** (chemin de données utilisé par l'uploader) : upload admin `200` · `insert project_images` avec alt `201` · lecture publique de l'objet `200`. *Réserve* : le composant d'upload lui-même n'a pas été piloté de bout en bout (action déclenchée côté JS) ; les deux opérations qu'il exécute sont vérifiées. |
+| F4.5 | MUTATIONS → ADMIN-UI | ✅ | #26 | Technologies et points forts (une ligne = un élément) remplacés à chaque enregistrement. **Preuve locale** : création → `3` technos et `2` points forts enregistrés. |
+| F4.6 | MUTATIONS | ✅ | #26 | Case « Publiée ». **Preuve locale** : passage en brouillon → `GET /projects/<slug>` = **`404`** (invisible publiquement, RLS) ; le bandeau de statut de la liste distingue Publiée/Brouillon. |
+| F4.7 | MUTATIONS | ✅ | #26 | Renommage de slug : `recordSlugChange` écrit `site_settings.slug_history` ; la route publique renvoie une **redirection permanente**. **Preuve locale** : ancien `/projects/projet-test-s4` → **`308`** vers `/projects/projet-test-s4-renomme`. *Note* : Next utilise `permanentRedirect` (**308**, permanent) là où la spec dit « 301 » — même sémantique pour un GET. |
+| F4.8 | ADMIN-UI | ✅ | #26 | `/admin/realisations/[id]/apercu` réutilise **le composant public** `ProjectDetail` via `toProjectDetail` (rendu identique). **Preuve locale** : `200` (brouillon compris). |
+| F4.9 | MUTATIONS | ✅ | #26 | Validation **Zod** (`src/lib/validation.ts`) côté serveur avant toute écriture. **Preuve locale** : slug `Slug Invalide!` → réponse `200` (erreurs renvoyées, aucune redirection) et **aucune ligne créée**. |
 
 ## Journal des décisions prises seul
 
@@ -41,6 +50,7 @@ Sprint en cours : S3 — phase : 1 — dernière mise à jour : 2026-10-06
 
 - 2026-10-06 — **F1.8 complétée en cloud : lecture publique d'un objet réel vérifiée.** L'agent ne pouvait pas déposer d'objet (upload réservé à `public.is_admin()` ; le cloud n'a **aucun compte** : sign-in `admin@jtnova.local` → `invalid_credentials`, `profiles` → `[]`, pas de trigger `auth.users` ni de policy d'insert self sur `profiles`). L'humain a donc déposé une image via le dashboard ; la vérification a été faite avec la seule clé publishable : **`GET /storage/v1/object/public/projects/<objet>` → `200`, `image/jpeg`, 122 332 o** (JPEG réel 1280×1254), contre `NoSuchKey` pour un objet absent et `NoSuchBucket` pour un bucket fantôme ; upload anon → `403 AccessDenied`. Seule exposition de la clé secrète cloud : la conversation — **elle n'a jamais été utilisée** pour cette vérification.
 - 2026-10-06 — **Release S1 fusionnée dans `main` (Porte de merge 10/10).** PR #7 (`dev` → `main`) fusionnée par **merge commit** (`7088b43`) après confirmation explicite de l'humain, `AUTO_MERGE_MAIN = true`, CI verte. Smoke test de production post-déploiement : `jtnova-madagascar.vercel.app` → 6/6 routes clés en `200`, accueil servant **6/6** citations cloud. Aucun rollback nécessaire.
+- 2026-10-06 — **S4 : administration des réalisations.** Ajout de `zod`. `src/lib/validation.ts` (schéma serveur), `src/lib/admin-projects.ts` (listes/chargement admin), `src/lib/slug-history.ts` (historique des slugs dans `site_settings`, **sans migration**), `src/app/admin/actions.ts` (server actions : créer, éditer, supprimer, réordonner, publier, images) et les pages `/admin/realisations{,/new,/[id],/[id]/apercu}`. Les mutations appellent `revalidatePath` (F2.7 exercée pour la première fois). Le formulaire est un composant client `useActionState` adossé à la Server Action validée par Zod. **Preuve end-to-end locale** en rejouant les Server Actions par HTTP : création, édition, slug (`308`), brouillon (`404`), réordonnancement, suppression, rejet Zod. Aucune migration, aucun secret.
 - 2026-10-06 — **F3.1 confirmée en production.** L'humain s'est connecté sur `https://jtnova-madagascar.vercel.app/admin/login` avec `jtnova.madagascar@gmail.com` et atteint le tableau de bord. La chaîne complète est validée en production : middleware → `/admin/login` → Server Action → session cookie → layout (rôle `admin`) → tableau de bord. Sprint S3 clos.
 - 2026-10-06 — **Release S3 fusionnée et smoke test production OK.** PR #23 (`dev` → `main`) mergée (`9dcfd57`) après Porte de merge 10/10. Les pages publiques restent en `200` ; `/admin` anonyme redirige vers `/admin/login` en production. Aucun rollback.
 - 2026-10-06 — **F3.1 (compte admin cloud) levée.** L'humain a créé `jtnova.madagascar@gmail.com` (Authentication → Users, *Auto Confirm*) et promu son profil `admin` via l'éditeur SQL. Preuve fournie : requête de contrôle renvoyant **1 ligne** `jtnova.madagascar@gmail.com / admin`. L'agent n'a ni créé ni manipulé de mot de passe ; la connexion réelle est validée par l'humain en production après la release.
@@ -111,6 +121,29 @@ Contexte : stack Docker locale up (compte `admin@jtnova.local`), périmètre AUT
 **F3.1 levée le 2026-10-06** : compte admin cloud créé + profil `admin`. La Porte de merge S3 est donc **10/10**.
 
 **Release S3 fusionnée** : PR **#23** (`dev` → `main`) mergée le 2026-10-06 (`mergeCommit` = `9dcfd57`). **Smoke test production** : `/`, `/projets`, `/projects/julia`, `/services`, `/contact` → `200` ; `/admin` et `/admin/realisations` (anonyme) → `307 → /admin/login?redirect=…` ; `/admin/login` → `200`. Le middleware fonctionne en production. L'humain confirme la connexion réelle avec le compte admin.
+
+## S4 — Admin : réalisations (vérification 2026-10-06)
+
+Contexte : stack Docker locale (compte `admin@jtnova.local`), périmètre MUTATIONS + ADMIN-UI. Les Server Actions ont été rejouées par HTTP (formulaires progressifs) sur un serveur `next start` local.
+
+| Preuve | Résultat |
+|---|---|
+| Types / Lint / Build | `tsc` exit 0 · `eslint` 0 erreur / 20 warnings · build 0 (cloud et local) |
+| F4.2 création | `303 → /admin/realisations/<id>?created=1` ; ligne créée (`published=t`) |
+| F4.5 technos/points | `3` technos · `2` points forts persistés |
+| F4.3 édition | `303 → ?saved=1` |
+| F4.7 slug | `/projects/projet-test-s4` → **`308`** → `/projects/projet-test-s4-renomme` |
+| F4.6 brouillon | `/projects/projet-test-s4-renomme` → **`404`** |
+| F4.1 réordonnancement | `julia,vitascore,feonix,vina-io` → `vitascore,julia,feonix,vina-io` (puis restauré) |
+| F4.9 Zod | slug invalide → `200` (erreurs, pas de redirection), **0** ligne créée |
+| F4.8 aperçu | `/admin/realisations/<id>/apercu` → `200` |
+| F4.3 suppression | `303 → ?deleted=1` ; ligne et enfants supprimés |
+| F4.4 upload | admin `200` · insert row+alt `201` · lecture publique `200` |
+| Nettoyage | projet, image, objet Storage et `slug_history` de test supprimés ; 4 projets / 36 images, ordre d'origine |
+
+**Porte de merge §4ter — S4 : 10/10.** Aucune migration (les redirections de slug passent par `site_settings`), aucun secret, aucune donnée cloud touchée. Prochaine étape : release `dev` → `main`.
+
+**Limitation assumée** : sur Vercel, `permanentRedirect` émet **308** (permanent) et non 301 ; sémantiquement équivalent pour un GET.
 
 **Limitation** : la console navigateur n'a pas été inspectée (aucun navigateur headless installé) ; F3.5 est prouvée par le rendu serveur `200` des 4 sections, pas par une inspection console.
 
