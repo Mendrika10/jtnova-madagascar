@@ -230,8 +230,17 @@ export async function addImagesAction(formData: FormData): Promise<void> {
         sort_order: ++order,
       }));
 
+    // Des entrées ont été envoyées mais aucune n'est valide : ne pas afficher
+    // un faux « Images mises à jour. ».
+    if (entries.length > 0 && rows.length === 0) {
+      redirect(`${ADMIN_LIST}/${projectId}?images_error=1`);
+    }
+
     if (rows.length > 0) {
-      await supabase.from("project_images").insert(rows);
+      const { error } = await supabase.from("project_images").insert(rows);
+      if (error) {
+        redirect(`${ADMIN_LIST}/${projectId}?images_error=1`);
+      }
       const { data: project } = await supabase
         .from("projects")
         .select("slug")
