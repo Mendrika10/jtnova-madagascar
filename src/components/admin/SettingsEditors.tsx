@@ -56,6 +56,37 @@ function Submit({ pending, label = "Enregistrer" }: { pending: boolean; label?: 
   );
 }
 
+/**
+ * Boutons d'un éditeur : enregistrer, ou revenir aux valeurs enregistrées.
+ * Le bouton « Réinitialiser » est désactivé tant que rien n'a changé.
+ */
+function Actions({
+  pending,
+  dirty,
+  onReset,
+  label = "Enregistrer",
+}: {
+  pending: boolean;
+  dirty: boolean;
+  onReset: () => void;
+  label?: string;
+}) {
+  return (
+    <div className={styles.formActions}>
+      <Submit pending={pending} label={label} />
+      <button
+        type="button"
+        className={styles.secondaryBtn}
+        onClick={onReset}
+        disabled={pending || !dirty}
+        title="Restaurer les valeurs enregistrées"
+      >
+        Réinitialiser
+      </button>
+    </div>
+  );
+}
+
 function TextField({
   name,
   label,
@@ -115,7 +146,22 @@ function useLivePreview<T>(build: (formData: FormData) => T, initial: T) {
     const form = formRef.current;
     if (form) setDraft(build(new FormData(form)));
   }, [build]);
-  return { draft, formRef, refresh };
+  /**
+   * Restaure les champs du formulaire à leur valeur par défaut (celle rendue
+   * par le serveur, donc « enregistrée ») puis relit l'aperçu. `form.reset()`
+   * couvre aussi les cases à cocher (`defaultChecked`). Pour les éditeurs de
+   * liste, l'appelant doit en plus restaurer les lignes (`useRows.reset`).
+   */
+  const resetForm = useCallback(() => {
+    const form = formRef.current;
+    if (!form) return;
+    form.reset();
+    setDraft(build(new FormData(form)));
+  }, [build]);
+  // Les formes sont construites de façon déterministe (mêmes clés, même ordre)
+  // donc la comparaison JSON est fiable et sert d'indicateur « non enregistré ».
+  const dirty = JSON.stringify(draft) !== JSON.stringify(initial);
+  return { draft, dirty, formRef, refresh, resetForm };
 }
 
 export type HeroValues = {
@@ -142,7 +188,7 @@ const buildHero = (fd: FormData): HeroValues => ({
 
 export function HeroEditor({ values }: { values: HeroValues }) {
   const [state, action, pending] = useActionState(saveHeroAction, INITIAL);
-  const { draft, formRef, refresh } = useLivePreview(buildHero, values);
+  const { draft, dirty, formRef, refresh, resetForm } = useLivePreview(buildHero, values);
   return (
     <div className={styles.editorSplit}>
       <form ref={formRef} onInput={refresh} action={action} className={styles.form}>
@@ -169,9 +215,9 @@ export function HeroEditor({ values }: { values: HeroValues }) {
           <TextField name="cta_secondary_label" label="Bouton secondaire — libellé" defaultValue={values.cta_secondary_label} error={state.errors.cta_secondary_label} />
           <TextField name="cta_secondary_href" label="Bouton secondaire — lien" defaultValue={values.cta_secondary_href} error={state.errors.cta_secondary_href} />
         </div>
-        <Submit pending={pending} />
+        <Actions pending={pending} dirty={dirty} onReset={resetForm} />
       </form>
-      <PreviewPanel title="Hero">
+      <PreviewPanel title="Hero" dirty={dirty}>
         <HeroPreview values={draft} />
       </PreviewPanel>
     </div>
@@ -196,7 +242,7 @@ const buildAbout = (fd: FormData): AboutValues => ({
 
 export function AboutEditor({ values }: { values: AboutValues }) {
   const [state, action, pending] = useActionState(saveAboutAction, INITIAL);
-  const { draft, formRef, refresh } = useLivePreview(buildAbout, values);
+  const { draft, dirty, formRef, refresh, resetForm } = useLivePreview(buildAbout, values);
   return (
     <div className={styles.editorSplit}>
       <form ref={formRef} onInput={refresh} action={action} className={styles.form}>
@@ -215,9 +261,9 @@ export function AboutEditor({ values }: { values: AboutValues }) {
           hint="Une ligne par chiffre, format « 50+ | Projets livrés »."
           error={state.errors.stats}
         />
-        <Submit pending={pending} />
+        <Actions pending={pending} dirty={dirty} onReset={resetForm} />
       </form>
-      <PreviewPanel title="À propos">
+      <PreviewPanel title="À propos" dirty={dirty}>
         <AboutPreview values={draft} />
       </PreviewPanel>
     </div>
@@ -244,7 +290,7 @@ const buildCta = (fd: FormData): CtaValues => ({
 
 export function CtaEditor({ values }: { values: CtaValues }) {
   const [state, action, pending] = useActionState(saveCtaAction, INITIAL);
-  const { draft, formRef, refresh } = useLivePreview(buildCta, values);
+  const { draft, dirty, formRef, refresh, resetForm } = useLivePreview(buildCta, values);
   return (
     <div className={styles.editorSplit}>
       <form ref={formRef} onInput={refresh} action={action} className={styles.form}>
@@ -266,9 +312,9 @@ export function CtaEditor({ values }: { values: CtaValues }) {
           hint="Une ligne par réseau, format « LINKEDIN | https://… ». Lien vide = réseau masqué."
           error={state.errors.socials}
         />
-        <Submit pending={pending} />
+        <Actions pending={pending} dirty={dirty} onReset={resetForm} />
       </form>
-      <PreviewPanel title="CTA & réseaux">
+      <PreviewPanel title="CTA & réseaux" dirty={dirty}>
         <CtaPreview values={draft} />
       </PreviewPanel>
     </div>
@@ -293,7 +339,7 @@ const buildSeo = (fd: FormData): SeoValues => ({
 
 export function SeoEditor({ values }: { values: SeoValues }) {
   const [state, action, pending] = useActionState(saveSeoAction, INITIAL);
-  const { draft, formRef, refresh } = useLivePreview(buildSeo, values);
+  const { draft, dirty, formRef, refresh, resetForm } = useLivePreview(buildSeo, values);
   return (
     <div className={styles.editorSplit}>
       <form ref={formRef} onInput={refresh} action={action} className={styles.form}>
@@ -311,9 +357,9 @@ export function SeoEditor({ values }: { values: SeoValues }) {
           hint="Chemin interne (/images/…) ou URL https:// complète."
           error={state.errors.og_image}
         />
-        <Submit pending={pending} />
+        <Actions pending={pending} dirty={dirty} onReset={resetForm} />
       </form>
-      <PreviewPanel title="SEO">
+      <PreviewPanel title="SEO" dirty={dirty}>
         <SeoPreview values={draft} />
       </PreviewPanel>
     </div>
@@ -334,7 +380,7 @@ const buildIdentity = (fd: FormData): IdentityValues => ({
 
 export function IdentityEditor({ values }: { values: IdentityValues }) {
   const [state, action, pending] = useActionState(saveIdentityAction, INITIAL);
-  const { draft, formRef, refresh } = useLivePreview(buildIdentity, values);
+  const { draft, dirty, formRef, refresh, resetForm } = useLivePreview(buildIdentity, values);
   return (
     <div className={styles.editorSplit}>
       <form ref={formRef} onInput={refresh} action={action} className={styles.form}>
@@ -354,9 +400,9 @@ export function IdentityEditor({ values }: { values: IdentityValues }) {
           hint="Format #rrggbb (ex. #00b4d8)."
           error={state.errors.accent_color}
         />
-        <Submit pending={pending} />
+        <Actions pending={pending} dirty={dirty} onReset={resetForm} />
       </form>
-      <PreviewPanel title="Identité">
+      <PreviewPanel title="Identité" dirty={dirty}>
         <IdentityPreview values={draft} />
       </PreviewPanel>
     </div>
@@ -378,8 +424,12 @@ function useRows<T>(
   empty: () => T,
 ) {
   const seq = useRef(0);
+  // Liste « enregistrée » de référence : si la base est vide, l'éditeur
+  // affiche quand même une ligne vide. Elle sert aussi de comparaison pour
+  // l'indicateur « non enregistré » (sinon une liste vide paraîtrait modifiée).
+  const initialRows = initial.length > 0 ? initial : [empty()];
   const [rows, setRows] = useState<Row<T>[]>(() =>
-    (initial.length > 0 ? initial : [empty()]).map((data, i) => ({
+    initialRows.map((data, i) => ({
       key: `init-${i}`,
       data,
     })),
@@ -399,7 +449,11 @@ function useRows<T>(
       return next;
     });
   }
-  return { rows, add, remove, move };
+  /** Restaure la liste initiale (ajouts/retraits/ordre annulés). */
+  function reset() {
+    setRows(initialRows.map((data, i) => ({ key: `init-${i}`, data })));
+  }
+  return { rows, add, remove, move, reset, initialRows };
 }
 
 /**
@@ -464,12 +518,16 @@ const buildServices = (fd: FormData): ServiceRow[] => {
 
 export function ServicesEditor({ initial }: { initial: ServiceRow[] }) {
   const [state, action, pending] = useActionState(saveServicesAction, INITIAL);
-  const { rows, add, remove, move } = useRows<ServiceRow>(
+  const { rows, add, remove, move, reset: resetRows, initialRows } = useRows<ServiceRow>(
     initial,
     () => ({ title: "", description: "", icon: "" }),
   );
-  const { draft, formRef, refresh } = useLivePreview(buildServices, initial);
+  const { draft, dirty, formRef, refresh, resetForm } = useLivePreview(buildServices, initialRows);
   useRowsPreviewRefresh(rows, refresh);
+  const handleReset = useCallback(() => {
+    resetForm();
+    resetRows();
+  }, [resetForm, resetRows]);
 
   return (
     <div className={styles.editorSplit}>
@@ -509,9 +567,9 @@ export function ServicesEditor({ initial }: { initial: ServiceRow[] }) {
         <button type="button" className={styles.secondaryBtn} onClick={add}>
           + Ajouter un service
         </button>
-        <Submit pending={pending} label="Enregistrer les services" />
+        <Actions pending={pending} dirty={dirty} onReset={handleReset} label="Enregistrer les services" />
       </form>
-      <PreviewPanel title="Services">
+      <PreviewPanel title="Services" dirty={dirty}>
         <ServicesPreview rows={draft} />
       </PreviewPanel>
     </div>
@@ -543,12 +601,16 @@ const buildTestimonials = (fd: FormData): TestimonialRow[] => {
 
 export function TestimonialsEditor({ initial }: { initial: TestimonialRow[] }) {
   const [state, action, pending] = useActionState(saveTestimonialsAction, INITIAL);
-  const { rows, add, remove, move } = useRows<TestimonialRow>(
+  const { rows, add, remove, move, reset: resetRows, initialRows } = useRows<TestimonialRow>(
     initial,
     () => ({ name: "", role: "", text: "", linkedin_url: "", published: true }),
   );
-  const { draft, formRef, refresh } = useLivePreview(buildTestimonials, initial);
+  const { draft, dirty, formRef, refresh, resetForm } = useLivePreview(buildTestimonials, initialRows);
   useRowsPreviewRefresh(rows, refresh);
+  const handleReset = useCallback(() => {
+    resetForm();
+    resetRows();
+  }, [resetForm, resetRows]);
 
   return (
     <div className={styles.editorSplit}>
@@ -605,9 +667,9 @@ export function TestimonialsEditor({ initial }: { initial: TestimonialRow[] }) {
         <button type="button" className={styles.secondaryBtn} onClick={add}>
           + Ajouter un témoignage
         </button>
-        <Submit pending={pending} label="Enregistrer les témoignages" />
+        <Actions pending={pending} dirty={dirty} onReset={handleReset} label="Enregistrer les témoignages" />
       </form>
-      <PreviewPanel title="Témoignages">
+      <PreviewPanel title="Témoignages" dirty={dirty}>
         <TestimonialsPreview rows={draft} />
       </PreviewPanel>
     </div>
@@ -630,12 +692,16 @@ const buildFaqs = (fd: FormData): FaqRow[] => {
 
 export function FaqEditor({ initial }: { initial: FaqRow[] }) {
   const [state, action, pending] = useActionState(saveFaqsAction, INITIAL);
-  const { rows, add, remove, move } = useRows<FaqRow>(
+  const { rows, add, remove, move, reset: resetRows, initialRows } = useRows<FaqRow>(
     initial,
     () => ({ question: "", answer: "" }),
   );
-  const { draft, formRef, refresh } = useLivePreview(buildFaqs, initial);
+  const { draft, dirty, formRef, refresh, resetForm } = useLivePreview(buildFaqs, initialRows);
   useRowsPreviewRefresh(rows, refresh);
+  const handleReset = useCallback(() => {
+    resetForm();
+    resetRows();
+  }, [resetForm, resetRows]);
 
   return (
     <div className={styles.editorSplit}>
@@ -668,9 +734,9 @@ export function FaqEditor({ initial }: { initial: FaqRow[] }) {
         <button type="button" className={styles.secondaryBtn} onClick={add}>
           + Ajouter une question
         </button>
-        <Submit pending={pending} label="Enregistrer la FAQ" />
+        <Actions pending={pending} dirty={dirty} onReset={handleReset} label="Enregistrer la FAQ" />
       </form>
-      <PreviewPanel title="FAQ">
+      <PreviewPanel title="FAQ" dirty={dirty}>
         <FaqPreview rows={draft} />
       </PreviewPanel>
     </div>
