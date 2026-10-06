@@ -175,6 +175,30 @@ Contexte : stack Docker locale **réinitialisée** (`supabase db reset`, compte 
 
 **Décisions prises seul (S5)** : aucune migration — les clés `about` / `cta` / `identity` **absentes du seed** sont créées au premier enregistrement par `upsert` ; `contact_info` est **seulement lu** (édition prévue S6) et alimente le CTA (e-mail, lieu, disponibilité) ; les listes (services, témoignages, FAQ) sont **remplacées en bloc** à l'enregistrement (leurs identifiants ne sont référencés nulle part ailleurs — même stratégie que les technologies d'une réalisation en S4) ; `revalidateTag` exige **deux** arguments en Next 16, remplacé par **`updateTag`** (API immédiate réservée aux Server Actions, lecture de ses propres écritures).
 
+### S5 Phase 2 — intégration sur `dev` (2026-10-06)
+
+- Arbre de `dev` **identique** au commit vérifié (`git diff d4f71ed 00e9d4e` vide) ; CI GitHub Actions sur `dev` = **success**.
+- `tsc` exit 0 · `eslint` 0 erreur / 19 warnings · `next build` 0 (19 pages).
+- Critères d'acceptation **rejoués sur `dev`** via la pile locale (`supabase db reset`, `next start -p 3110`) : **20/20** (F5.1→F5.8 + 7 routes clés en `200`). Environnement cloud restauré après le test, base locale rendue au seed.
+- RLS anonyme : témoignage `published=false` inséré côté base → anon `[]` (non publié invisible) ; `INSERT` anon sur `site_settings` → **401**. Ligne de test supprimée.
+- Secrets : scan du diff `origin/main..dev` (**17 fichiers**, `src/` + `docs/` uniquement) → **aucun secret** ; **aucune migration**.
+- **Limitation assumée** : la preview `dev` est protégée par l'authentification Vercel (SSO) → non atteignable par l'agent, et sa base est la **production** (aucune écriture sans accord). Le replay d'acceptation a donc été fait **en local sur `dev`**, comme en S4/S4bis.
+
+### Porte de merge §4ter — S5 (2026-10-06)
+
+| # | Condition | État |
+|---|---|---|
+| 1 | Toutes les `F` ✅ | ✅ F5.1→F5.8 ✅ |
+| 2 | CI verte sur `dev` + PR de release | ✅ (dev) / à confirmer (PR) |
+| 3 | `tsc`/`eslint`/build 0 erreur | ✅ |
+| 4 | Critères rejoués, preuves jointes | ✅ rejoués sur `dev` (local) — preview SSO non atteignable (limitation ci-dessus) |
+| 5 | Pas de régression | ✅ 7 routes `200` |
+| 6 | Verdict ✅, écritures dans la zone | ✅ diff `src/` + `docs/` uniquement |
+| 7 | Aucun secret | ✅ |
+| 8 | Aucune migration destructive | ✅ aucune migration |
+| 9 | RLS anonyme → 0 ligne non publiée | ✅ `[]` + `INSERT` anon `401` |
+| 10 | Aucun pré-requis humain bloquant ce sprint | ✅ (pré-requis logo = « actuels conservés », appliqué) |
+
 ## S4 — Admin : réalisations (vérification 2026-10-06)
 
 Contexte : stack Docker locale (compte `admin@jtnova.local`), périmètre MUTATIONS + ADMIN-UI. Les Server Actions ont été rejouées par HTTP (formulaires progressifs) sur un serveur `next start` local.
