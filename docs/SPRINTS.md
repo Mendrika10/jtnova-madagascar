@@ -84,6 +84,36 @@ Convention d'identifiant : `F<sprint>.<n>` (fonctionnalité). Chaque fonctionnal
 
 ---
 
+## S4bis — Médias externes : images via ImageKit
+*But : les images des réalisations sont hébergées et optimisées par **ImageKit** (CDN, formats modernes), le bucket Supabase Storage n'étant plus alimenté par ce flux. Sprint **hors plan initial**, ajouté à la demande de l'humain le 2026-10-06. La **vidéo reste hors périmètre** : elle continue de passer par le champ `video_url` (URL externe), déjà rendu par `VideoShowcase`.*
+
+| ID | Fonctionnalité | Rôle | Critère d'acceptation |
+|---|---|---|---|
+| F4bis.1 | Variables ImageKit (URL endpoint, clé publique, clé privée) posées côté hébergeur | DevOps (+ humain) | Les 3 variables existent en **Production et Preview** ; **sans elles l'application démarre quand même** et l'uploader affiche un message clair (jamais de crash) ; `.env.example` les liste **sans valeur** |
+| F4bis.2 | `GET /api/imagekit/auth` délivrant `token` + `expire` + `signature` | AUTH → DATA | Anonyme → **401**, aucune signature délivrée ; session `admin` → **200** avec les 3 paramètres ; la clé privée n'apparaît dans **aucune** réponse HTTP ni dans le bundle client |
+| F4bis.3 | Envoi direct navigateur → ImageKit depuis `/admin/realisations/[id]` | MUTATIONS → ADMIN-UI | 5 images envoyées, présentes dans la médiathèque ImageKit, redirection `?images=1`, et `project_images.url` contient bien l'URL ImageKit |
+| F4bis.4 | Garde-fous de validation conservés | ADMIN-UI | Un fichier de 3 Mo est refusé **avant tout envoi** (message en français, **0 requête réseau**) ; un format non pris en charge est refusé de même |
+| F4bis.5 | Affichage public inchangé | FRONT-PUBLIC | `/projects/<slug>` sert les images ImageKit en **200**, aucune image cassée, `alt` toujours renseigné |
+| F4bis.6 | Suppression d'une image | MUTATIONS | Supprimer une image retire bien la ligne et l'image disparaît du projet ; **le fichier distant n'est pas supprimé** (aucun appel destructif en v1) — comportement documenté |
+| F4bis.7 | Migration des images existantes des réalisations vers ImageKit | DATA (+ humain) | Les images de réalisations publiées en production pointent vers ImageKit ; l'**ancienne URL est conservée** jusqu'à validation visuelle ; la migration est **idempotente et rejouable** |
+| F4bis.8 | Non-régression si ImageKit est indisponible ou mal configuré | FRONT-PUBLIC | Une URL d'image inaccessible ne casse ni la page détail ni la liste ; sans variables ImageKit, l'uploader affiche une erreur au lieu de planter |
+| F4bis.9 | Documentation d'exploitation | DOC | Un tiers peut dire **où sont stockées les images**, comment changer de compte ImageKit et quoi faire si un quota est atteint |
+
+**Pré-requis humains (Phase 0)** — repris dans `AGENTS.md` §4bis :
+1. Créer le compte **ImageKit (gratuit)** et relever l'**URL endpoint**, la **clé publique** et la **clé privée**.
+2. Poser les 3 variables dans Vercel (**Production + Preview**) : `NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT`, `NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY`, `IMAGEKIT_PRIVATE_KEY`. La clé privée **ne doit jamais** transiter par le chat ni par le dépôt ; en local, uniquement dans `.env.local` (déjà gitignoré).
+3. Pour F4bis.7 : autoriser l'exécution de la migration (procédure fournie par l'agent). **Aucune écriture en production sans cet accord.**
+
+**Hors périmètre** : la vidéo (reste sur `video_url`, URL externe) · la table `media` (non utilisée en v1) · la suppression des fichiers distants · les transformations d'URL avancées (backlog).
+
+**Risques et parades**
+- *Quota* : le plan gratuit offre environ **20 Go de bande passante/mois** et **3 Go de stockage** ; au-delà la diffusion s'arrête → parades : surveiller la consommation, garder les fichiers sources des images statiques dans le dépôt, et pouvoir revenir à l'ancienne URL (conservée par F4bis.7).
+- *Second secret* : la clé privée ImageKit est un secret de plus à protéger et à pouvoir révoquer.
+- *Dépendance externe* : le service n'est pas couvert par la RLS Supabase → le contrôle d'accès repose **entièrement** sur la route F4bis.2 (session admin).
+- *Sortie du flux Supabase Storage* : le bucket `projects` reste en place mais n'est plus alimenté ; sa suppression éventuelle fera l'objet d'un sprint ultérieur, jamais d'un effet de bord de S4bis.
+
+---
+
 ## S5 — Admin : personnalisation complète du site
 *But : « personnaliser tout le côté client » — sans code.*
 

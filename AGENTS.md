@@ -262,6 +262,7 @@ Quand toutes les `F` sont ✅ ou BLOQUÉES : sur `dev` (preview Vercel), **rejou
 | S2 | Rien de nouveau (vérifier que les variables sont présentes en Preview) |
 | S3 | Créer le compte admin (e-mail + mot de passe saisis par l'humain, jamais dans le chat) ; ajouter `SUPABASE_SERVICE_ROLE_KEY` dans Vercel |
 | S4 | Rien |
+| S4bis | Créer le compte **ImageKit (free)** ; poser `NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT`, `NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY` et `IMAGEKIT_PRIVATE_KEY` dans Vercel (Production + Preview) — la clé privée **jamais dans le chat ni dans le dépôt** ; autoriser la migration des images existantes (aucune écriture en production sans accord) |
 | S5 | Logo / favicon éventuels (sinon les actuels sont conservés) |
 | S6 | Clé Resend, e-mail destinataire (`CONTACT_TO_EMAIL`), domaine d'envoi (ou adresse de test Resend) |
 | S7 | `CRON_SECRET`, compte de monitoring gratuit, décision d'hébergement (§10) |
@@ -411,6 +412,22 @@ En mode autonome (§4bis), ces points **ne bloquent pas le sprint** : l'agent s'
 | F4.7 | Slug + redirection 301 | MUTATIONS | ancien slug redirige |
 | F4.8 | Prévisualisation | ADMIN-UI | rendu identique au public |
 | F4.9 | Validation Zod | MUTATIONS | invalide → rien en base |
+
+### S4bis — Médias externes : images via ImageKit
+
+> Sprint **hors plan initial**, ajouté à la demande de l'humain le 2026-10-06. La vidéo reste hors périmètre (champ `video_url` externe). Détail complet et risques : `docs/SPRINTS.md`.
+
+| ID | Fonctionnalité | Agents (dans l'ordre) | Critère d'acceptation |
+|---|---|---|---|
+| F4bis.1 | Variables ImageKit (3) | DEVOPS (+ humain) | présentes en Production et Preview ; sans elles l'app démarre |
+| F4bis.2 | `/api/imagekit/auth` (signature serveur) | AUTH → DATA | anonyme → 401 ; session admin → 200 ; clé privée jamais exposée |
+| F4bis.3 | Envoi direct navigateur → ImageKit | MUTATIONS → ADMIN-UI | 5 images ; `project_images.url` = URL ImageKit |
+| F4bis.4 | Garde-fous format / taille | ADMIN-UI | 3 Mo refusé avant envoi, 0 requête réseau |
+| F4bis.5 | Affichage public | FRONT-PUBLIC | images en 200, aucune cassée |
+| F4bis.6 | Suppression d'une image | MUTATIONS | ligne supprimée ; fichier distant conservé (documenté) |
+| F4bis.7 | Migration des images existantes | DATA (+ humain) | images de production sur ImageKit, ancienne URL conservée |
+| F4bis.8 | Non-régression / repli | FRONT-PUBLIC | URL inaccessible ne casse pas la page |
+| F4bis.9 | Documentation d'exploitation | DOC | où sont les images, changer de compte, que faire si quota |
 
 ### S5 — Admin : personnalisation
 
