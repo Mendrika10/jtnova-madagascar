@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useState, useEffect } from "react";
+import Image from "next/image";
 import {
   motion,
   useMotionValue,
@@ -10,6 +11,7 @@ import {
 } from "framer-motion";
 import styles from "./ProjectDetail.module.css";
 import videoStyles from "./VideoShowcase.module.css";
+import { shouldSkipOptimizer } from "@/lib/images";
 
 type Props = {
   video?: { src: string; poster?: string } | null;
@@ -139,10 +141,16 @@ export default function VideoShowcase({ video, particleCount = 55 }: Props) {
                   aria-label="Lire la démo"
                 >
                   {video.poster ? (
-                    <img
+                    /* F7.4 — affiche de la démo optimisée (WebP) : la hauteur
+                       suit le ratio naturel de l'image, sans recadrage. */
+                    <Image
                       src={video.poster}
-                      alt={`${"Poster"}`}
+                      alt="Aperçu de la démo vidéo"
                       className={videoStyles.posterImg}
+                      width={0}
+                      height={0}
+                      sizes="(max-width: 900px) 100vw, 900px"
+                      unoptimized={shouldSkipOptimizer(video.poster)}
                     />
                   ) : (
                     <div

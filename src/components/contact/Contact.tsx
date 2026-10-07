@@ -5,38 +5,16 @@ import {
   submitContactAction,
   type ContactFormState,
 } from "@/app/contact/actions";
+import type { ContactInfoSetting } from "@/lib/site-settings";
 import { motion } from "framer-motion";
 import styles from "./Contact.module.css";
 import StarField from "../accueil/StarField";
 
-function createShooter(container: HTMLDivElement) {
-  if (!container || !container.isConnected) return;
-  const el = document.createElement("span");
-  el.className = styles.shooter;
-  const startX = Math.random() * 80;
-  const startY = Math.random() * 40;
-  const angle = 28 + Math.random() * 22;
-  const length = 100 + Math.random() * 130;
-  const delay = Math.random() * 1.5;
-  const dur = 0.8 + Math.random() * 0.5;
-  el.style.setProperty("--sx", `${startX}%`);
-  el.style.setProperty("--sy", `${startY}%`);
-  el.style.setProperty("--angle", `${angle}deg`);
-  el.style.setProperty("--len", `${length}px`);
-  el.style.animationDelay = `${delay}s`;
-  el.style.animationDuration = `${dur}s`;
-  container.appendChild(el);
-  const total = (delay + dur + 0.1) * 1000;
-  setTimeout(
-    () => {
-      el.remove();
-      if (container.isConnected) createShooter(container);
-    },
-    total + 5000 + Math.random() * 9000,
-  );
-}
-
-export default function Contact() {
+export default function Contact({ contact }: { contact?: ContactInfoSetting }) {
+  // F7.3 — réseaux sociaux issus des réglages : plus de `href="#"` (lien mort).
+  // Si une URL n'est pas renseignée, l'icône reste décorative (sans href).
+  const githubUrl = contact?.github?.trim() || undefined;
+  const linkedinUrl = contact?.linkedin?.trim() || undefined;
   const [form, setForm] = useState({ name: "", email: "", message: "" });
   // S6 — soumission réelle : Server Action validée par Zod, insertion en base,
   // anti-spam (honeypot + débit) et e-mails. `state.ok` remplace l'ancien
@@ -68,36 +46,6 @@ export default function Contact() {
     visible: { opacity: 1, y: 0 },
   };
 
-  // Étoiles déterministes
-  const seed = (n: number) => {
-    const x = Math.sin(n + 1) * 10000;
-    return x - Math.floor(x);
-  };
-  const r = (n: number, d = 4) => parseFloat(n.toFixed(d));
-  const STARS = Array.from({ length: 80 }, (_, i) => ({
-    id: i,
-    x: r(seed(i * 2.9) * 100),
-    y: r(seed(i * 4.7) * 100),
-    size: r(seed(i * 8.3) * 1.5 + 0.4),
-    delay: r(seed(i * 11.7) * 7),
-    duration: r(seed(i * 14.1) * 3 + 2),
-    bright: i % 13 === 0,
-  }));
-  const shooterRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const el = shooterRef.current;
-    if (!el) return;
-    const timers: number[] = [];
-    for (let i = 0; i < 3; i++) {
-      timers.push(window.setTimeout(() => createShooter(el), i * 2400));
-    }
-    return () => {
-      timers.forEach(clearTimeout);
-      if (el) el.innerHTML = "";
-    };
-  }, []);
-
   return (
     <motion.section
       id="contact"
@@ -106,31 +54,15 @@ export default function Contact() {
       animate="visible"
       variants={containerVariants}
     >
-      {/* Étoiles */}
-      <div className={styles.starsLayer} aria-hidden="true">
-        {STARS.map((s) => (
-          <span
-            key={s.id}
-            className={`${styles.star} ${s.bright ? styles.starBright : ""}`}
-            style={{
-              left: `${s.x}%`,
-              top: `${s.y}%`,
-              width: `${s.size}px`,
-              height: `${s.size}px`,
-              animationDelay: `${s.delay}s`,
-              animationDuration: `${s.duration}s`,
-            }}
-          />
-        ))}
-        <div ref={shooterRef} className={styles.shooterContainer} />
-      </div>
+      {/* F7.5 — étoiles : géométrie en CSS (`stars.css`), plus de styles inline. */}
+      <StarField count={80} offset={200} shooters={0} />
       <div className={styles.bg} aria-hidden="true" />
       <div className={styles.container}>
         <StarField />
         <div className={styles.content}>
           <motion.div className={styles.header} variants={itemVariants}>
             <span className={styles.label}>Contact</span>
-            <h2 className={styles.title}>Travaillons ensemble.</h2>
+            <h1 className={styles.title}>Travaillons ensemble.</h1>
             <p className={styles.subtitle}>
               Un projet en tête ? Parlons-en et construisons quelque chose
               d&apos;exceptionnel.
@@ -241,9 +173,9 @@ export default function Contact() {
               {/* Réseaux sociaux */}
               <motion.div className={styles.socials} variants={itemVariants}>
                 <a
-                  href="#"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href={githubUrl}
+                  target={githubUrl ? "_blank" : undefined}
+                  rel={githubUrl ? "noopener noreferrer" : undefined}
                   className={styles.social}
                   aria-label="GitHub"
                 >
@@ -257,7 +189,13 @@ export default function Contact() {
                     <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
                   </svg>
                 </a>
-                <a href="#" className={styles.social} aria-label="LinkedIn">
+                <a
+                  href={linkedinUrl}
+                  target={linkedinUrl ? "_blank" : undefined}
+                  rel={linkedinUrl ? "noopener noreferrer" : undefined}
+                  className={styles.social}
+                  aria-label="LinkedIn"
+                >
                   <svg
                     aria-hidden="true"
                     width="20"

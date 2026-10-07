@@ -7,6 +7,7 @@ import {
   cubicBezier,
   type Variants,
 } from "framer-motion";
+import Image from "next/image";
 import styles from "./FAQ.module.css";
 import type { FaqItem } from "@/lib/content";
 
@@ -346,11 +347,14 @@ export default function FAQ({ items }: FaqProps = {}) {
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
             >
               <div className={styles.logoImgWrap}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                {/* F7.4 — logo optimisé (WebP + largeur adaptée). */}
+                <Image
                   src="/images/logo.png"
                   alt="Jtnova logo"
                   className={styles.logoImg}
+                  width={732}
+                  height={231}
+                  sizes="290px"
                 />
               </div>
             </motion.div>

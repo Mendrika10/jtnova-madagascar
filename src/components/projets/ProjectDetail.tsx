@@ -1,10 +1,13 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useRef } from "react";
+import Image from "next/image";
 import { cubicBezier, motion, useInView, Variants } from "framer-motion";
 import styles from "./ProjectDetail.module.css";
 import TechBannerImages from "../tech-banner/TechBannerImages";
 import VideoShowcase from "./VideoShowcase";
+import StarField from "@/components/accueil/StarField";
+import { shouldSkipOptimizer } from "@/lib/images";
 
 export type ProjectData = {
   title: string;
@@ -41,47 +44,6 @@ const fadeRight: Variants = {
   show: { opacity: 1, x: 0, transition: { duration: 0.75, ease: expo } },
 };
 
-// Étoiles déterministes
-const seed = (n: number) => {
-  const x = Math.sin(n + 1) * 10000;
-  return x - Math.floor(x);
-};
-const r = (n: number, d = 4) => parseFloat(n.toFixed(d));
-const STARS = Array.from({ length: 80 }, (_, i) => ({
-  id: i,
-  x: r(seed(i * 2.9) * 100),
-  y: r(seed(i * 4.7) * 100),
-  size: r(seed(i * 8.3) * 1.5 + 0.4),
-  delay: r(seed(i * 11.7) * 7),
-  duration: r(seed(i * 14.1) * 3 + 2),
-  bright: i % 13 === 0,
-}));
-function createShooter(container: HTMLDivElement) {
-  if (!container || !container.isConnected) return;
-  const el = document.createElement("span");
-  el.className = styles.shooter;
-  const startX = Math.random() * 80;
-  const startY = Math.random() * 40;
-  const angle = 28 + Math.random() * 22;
-  const length = 100 + Math.random() * 130;
-  const delay = Math.random() * 1.5;
-  const dur = 0.8 + Math.random() * 0.5;
-  el.style.setProperty("--sx", `${startX}%`);
-  el.style.setProperty("--sy", `${startY}%`);
-  el.style.setProperty("--angle", `${angle}deg`);
-  el.style.setProperty("--len", `${length}px`);
-  el.style.animationDelay = `${delay}s`;
-  el.style.animationDuration = `${dur}s`;
-  container.appendChild(el);
-  const total = (delay + dur + 0.1) * 1000;
-  setTimeout(
-    () => {
-      el.remove();
-      if (container.isConnected) createShooter(container);
-    },
-    total + 5000 + Math.random() * 9000,
-  );
-}
 function AnimBlock({
   children,
   className,
@@ -129,41 +91,12 @@ export default function ProjectDetail({ data }: { data: ProjectData }) {
     hidden: {},
     show: { transition: { staggerChildren: 0.09, delayChildren: 0.78 } },
   };
-  const shooterRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const el = shooterRef.current;
-    if (!el) return;
-    const timers: number[] = [];
-    for (let i = 0; i < 3; i++) {
-      timers.push(window.setTimeout(() => createShooter(el), i * 2400));
-    }
-    return () => {
-      timers.forEach(clearTimeout);
-      if (el) el.innerHTML = "";
-    };
-  }, []);
 
   return (
     <section className={styles.detail}>
       <div className={styles.cardDetail}>
-        <div className={styles.starsLayer} aria-hidden="true">
-          {STARS.map((s) => (
-            <span
-              key={s.id}
-              className={`${styles.star} ${s.bright ? styles.starBright : ""}`}
-              style={{
-                left: `${s.x}%`,
-                top: `${s.y}%`,
-                width: `${s.size}px`,
-                height: `${s.size}px`,
-                animationDelay: `${s.delay}s`,
-                animationDuration: `${s.duration}s`,
-              }}
-            />
-          ))}
-          <div ref={shooterRef} className={styles.shooterContainer} />
-        </div>
+        {/* F7.5 — étoiles : géométrie en CSS (`stars.css`), plus de styles inline. */}
+        <StarField count={80} offset={200} />
         <div className={styles.bg} aria-hidden="true" />
         <div className={styles.bottomRow}>
           <div className={styles.leftCol}>
@@ -285,10 +218,17 @@ export default function ProjectDetail({ data }: { data: ProjectData }) {
           >
             {data.images?.[0] ? (
               <div className={styles.mediaWrap}>
-                <img
+                {/* F7.4 — visuel principal : WebP à la bonne largeur (~40 Ko
+                    au lieu de ~500 Ko en PNG), chargé sans attendre (LCP). */}
+                <Image
                   src={data.images[0]}
                   alt={data.title}
                   className={styles.heroImg}
+                  width={0}
+                  height={0}
+                  priority
+                  sizes="(max-width: 560px) 100vw, 520px"
+                  unoptimized={shouldSkipOptimizer(data.images[0])}
                   onError={(e) =>
                     ((e.target as HTMLImageElement).style.display = "none")
                   }

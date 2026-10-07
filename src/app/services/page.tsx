@@ -13,5 +13,6 @@ export const revalidate = 60;
 
 export default async function ServicesPage() {
   const services = await getServices();
-  return <Services items={services ?? undefined} />;
+  // F7.3 — la page dédiée porte le titre principal de niveau h1.
+  return <Services items={services ?? undefined} titleAs="h1" />;
 }

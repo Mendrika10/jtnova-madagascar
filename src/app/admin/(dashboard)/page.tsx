@@ -12,6 +12,7 @@ const EMPTY: DashboardCounts = {
   publishedProjects: 0,
   draftProjects: 0,
   unreadMessages: 0,
+  unresolvedErrors: 0,
 };
 
 export default async function AdminDashboardPage() {
@@ -22,6 +23,8 @@ export default async function AdminDashboardPage() {
     { label: "Réalisations publiées", value: counts.publishedProjects },
     { label: "Brouillons", value: counts.draftProjects },
     { label: "Messages non lus", value: counts.unreadMessages },
+    // F7.8 — visible dès le tableau de bord, détail sur la page « Santé ».
+    { label: "Erreurs à traiter", value: counts.unresolvedErrors },
   ];
 
   return (

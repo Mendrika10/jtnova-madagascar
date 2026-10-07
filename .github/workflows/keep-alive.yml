@@ -1,0 +1,57 @@
+name: Keep-alive Supabase
+
+# F7.6 — éviter la mise en pause de la base Supabase gratuite (inactivité > 7 j).
+# Tous les 3 jours, on appelle /api/cron/keep-alive (protégé par CRON_SECRET).
+# En cas d'échec (base en pause, point d'entrée cassé, secret périmé), une
+# alerte est ouverte en issue : c'est le canal d'alerte, en plus de l'e-mail
+# d'échec de workflow envoyé par GitHub.
+on:
+  schedule:
+    - cron: "0 6 */3 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  keep-alive:
+    name: Réveiller la base
+    runs-on: ubuntu-latest
+    env:
+      SITE_URL: ${{ vars.SITE_URL || 'https://jtnova-madagascar.vercel.app' }}
+    steps:
+      - name: Appeler le point d'entrée keep-alive
+        id: ping
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "::error::Le secret CRON_SECRET n'est pas défini dans les secrets GitHub du dépôt."
+            exit 1
+          fi
+          code=$(curl -sS -o response.json -w "%{http_code}" \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            --max-time 30 \
+            "$SITE_URL/api/cron/keep-alive")
+          echo "HTTP $code"
+          cat response.json
+          echo
+          if [ "$code" != "200" ]; then
+            echo "::error::Keep-alive en échec (HTTP $code)."
+            exit 1
+          fi
+
+      - name: Ouvrir une alerte si le keep-alive échoue
+        if: failure()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue create \
+            --title "Keep-alive Supabase en échec — $(date -u +%Y-%m-%d)" \
+            --body "Le workflow **Keep-alive Supabase** a échoué. La base est peut-être en pause, ou le point d'entrée \`/api/cron/keep-alive\` ne répond plus.
+
+          - Run : ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          - Vérifier : \`curl -i -H \"Authorization: Bearer \$CRON_SECRET\" $SITE_URL/api/cron/keep-alive\`
+          - Si la base est en pause : la réveiller depuis le tableau de bord Supabase, puis relancer ce workflow."

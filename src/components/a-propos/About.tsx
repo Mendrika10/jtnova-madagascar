@@ -1,7 +1,9 @@
 ﻿"use client";
 import { useRef, useEffect, useState } from "react";
+import Image from "next/image";
 import { motion, useInView, cubicBezier, type Variants } from "framer-motion";
 import Link from "next/link";
+import { shouldSkipOptimizer } from "@/lib/images";
 import styles from "./About.module.css";
 import StarField from "@/components/accueil/StarField";
 import FloatingLogos from "@/components/accueil/FloatingLogos";
@@ -510,11 +512,17 @@ export default function About({ setting }: { setting: AboutSetting }) {
           {/* LEFT — glass card */}
           <motion.div className={styles.heroLeft} variants={heroCardVariant}>
             <div className={styles.glassCard}>
-              {/* Image de fond */}
-              <img
+              {/* Image de fond — F7.4 : optimisée si l'hôte est déclaré,
+                  rendue brute sinon (aucune page ne doit casser). */}
+              <Image
                 src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=900&q=85"
                 alt="Code — développement web moderne"
                 className={styles.glassImg}
+                fill
+                sizes="(max-width: 900px) 90vw, 392px"
+                unoptimized={shouldSkipOptimizer(
+                  "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=900&q=85",
+                )}
               />
 
               {/* Overlay glassmorphism */}

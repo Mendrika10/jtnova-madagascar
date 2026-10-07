@@ -9,12 +9,12 @@
   border: 1px solid rgba(255, 255, 255, 0.03);
 }
 
+/* F7.4 — `height: auto` : la hauteur suit le ratio naturel de l'image
+   (l'ancien `height: 100%` d'un parent auto se résolvait à zéro). */
 .posterImg {
   display: block;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
+  height: auto;
 }
 
 .playOverlay {

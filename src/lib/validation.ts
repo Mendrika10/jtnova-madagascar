@@ -202,3 +202,21 @@ export type MessageStatus = (typeof MESSAGE_STATUSES)[number];
 export const messageNoteSchema = z.object({
   notes: z.string().trim().max(4000, "Note : maximum 4000 caractères"),
 });
+
+/* ── S7 : journal d'erreurs (F7.8) ──────────────────────────────────────── */
+
+/** Niveaux acceptés par la politique RLS d'insertion de `error_logs`. */
+export const ERROR_LEVELS = ["error", "warn", "info"] as const;
+export type ErrorLevel = (typeof ERROR_LEVELS)[number];
+
+/** Source de l'erreur : bornes alignées sur la politique RLS. */
+export const errorLogSchema = z.object({
+  level: z.enum(ERROR_LEVELS).default("error"),
+  source: z.string().trim().min(1).max(40).default("client"),
+  message: z.string().trim().min(1, "Message requis").max(2000),
+  stack: z.string().max(8000).optional(),
+  path: z.string().max(500).optional(),
+  context: z.record(z.string(), z.unknown()).optional(),
+});
+
+export type ErrorLogInput = z.infer<typeof errorLogSchema>;

@@ -435,9 +435,12 @@
   margin-bottom: 22px;
 }
 
+/* F7.4 — `width: auto` : avec `next/image` (attributs width/height),
+   `width: 100%` dans un conteneur auto se résolvait à 0 (logo invisible).
+   On s'appuie sur la taille intrinsèque, bornée par `max-width`. */
 .logoImg {
   display: block;
-  width: 100%;
+  width: auto;
   max-width: 290px;
   height: auto;
   object-fit: contain;

@@ -126,45 +126,6 @@ export default function Testimonials({ items }: TestimonialsProps = {}) {
   const displayText =
     needsTruncate && !expanded ? t.text.slice(0, MAX_CHARS) : t.text;
 
-  // Étoiles déterministes
-  const seed = (n: number) => {
-    const x = Math.sin(n) * 10000;
-    return x - Math.floor(x);
-  };
-  const STARS = Array.from({ length: 70 }, (_, i) => ({
-    left: `${(seed(i * 3.1) * 100).toFixed(2)}%`,
-    top: `${(seed(i * 5.7) * 100).toFixed(2)}%`,
-    size: parseFloat((seed(i * 2.3) * 2 + 1).toFixed(2)),
-    dur: `${(seed(i * 1.7) * 3 + 2).toFixed(2)}s`,
-    delay: `${(seed(i * 4.1) * 3).toFixed(2)}s`,
-    bright: seed(i * 6.3) > 0.82,
-  }));
-
-  const SHOOTING_COUNT = 3;
-  const shooterRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const container = shooterRef.current;
-    if (!container) return;
-    const create = () => {
-      const el = document.createElement("div");
-      el.className = styles.shooter;
-      const angle = 25 + Math.random() * 20;
-      el.style.setProperty("--sx", `${10 + Math.random() * 70}%`);
-      el.style.setProperty("--sy", `${Math.random() * 40}%`);
-      el.style.setProperty("--len", `${120 + Math.random() * 100}px`);
-      el.style.setProperty("--angle", `${angle}deg`);
-      el.style.animationDuration = `${0.8 + Math.random() * 0.6}s`;
-      el.style.animationDelay = `${Math.random() * 8}s`;
-      container.appendChild(el);
-      el.addEventListener("animationend", () => el.remove(), { once: true });
-    };
-    const ids = Array.from({ length: SHOOTING_COUNT }, (_, i) =>
-      setInterval(create, 3000 + i * 1700),
-    );
-    return () => ids.forEach(clearInterval);
-  }, []);
-
   return (
     <section
       id="temoignages"
