@@ -139,7 +139,7 @@ Convention d'identifiant : `F<sprint>.<n>` (fonctionnalité). Chaque fonctionnal
 | F6.2 | Boîte de réception (liste, filtre par statut, recherche) | Frontend | Filtrage `new` fonctionnel |
 | F6.3 | Détail d'un message + statuts (nouveau/lu/répondu/archivé) | Frontend | Changement de statut persisté |
 | F6.4 | Notes internes | Frontend | Note enregistrée et rechargée |
-| F6.5 | Notification e-mail via Resend | Backend | Un envoi déclenche un e-mail reçu dans la boîte cible |
+| F6.5 | Notification e-mail via **Gmail SMTP** *(choix de l'humain du 2026-10-07, en remplacement de Resend)* | Backend | Un envoi déclenche un e-mail reçu dans la boîte cible |
 | F6.6 | Accusé de réception à l'expéditeur (option) | Backend | L'expéditeur reçoit un e-mail de confirmation |
 | F6.7 | Anti-spam : honeypot + limitation de débit + hachage IP | Sécurité | 10 envois automatisés → bloqués après le seuil |
 | F6.8 | Export CSV de la boîte de réception | Frontend | Fichier CSV téléchargé et lisible |
