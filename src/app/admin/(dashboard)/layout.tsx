@@ -10,6 +10,7 @@ const NAV = [
   { href: "/admin/realisations", label: "Réalisations" },
   { href: "/admin/personnalisation", label: "Personnalisation" },
   { href: "/admin/messages", label: "Messages" },
+  { href: "/admin/sante", label: "Santé" },
 ];
 
 export default async function AdminLayout({
@@ -38,7 +39,15 @@ export default async function AdminLayout({
   // F6.9 — compteur de messages non lus, affiché sur l'entrée « Messages »
   // de la navigation. Le layout étant dynamique (cookies), il est re-rendu
   // à chaque navigation : le badge suit l'état de la base.
+  // F7.8 — même principe pour les erreurs non traitées (« Santé »).
   const counts = await getDashboardCounts(supabase);
+
+  const badgeFor = (href: string) =>
+    href === "/admin/messages"
+      ? { count: counts.unreadMessages, noun: "message" }
+      : href === "/admin/sante"
+        ? { count: counts.unresolvedErrors, noun: "erreur" }
+        : null;
 
   return (
     <div className={styles.shell}>
@@ -47,19 +56,22 @@ export default async function AdminLayout({
           Jtnova <span className={styles.brandAccent}>Admin</span>
         </div>
         <nav className={styles.nav} aria-label="Navigation administration">
-          {NAV.map((item) => (
-            <Link key={item.href} href={item.href} className={styles.navLink}>
-              {item.label}
-              {item.href === "/admin/messages" && counts.unreadMessages > 0 && (
-                <span
-                  className={styles.navBadge}
-                  aria-label={`${counts.unreadMessages} message${counts.unreadMessages > 1 ? "s" : ""} non lu${counts.unreadMessages > 1 ? "s" : ""}`}
-                >
-                  {counts.unreadMessages}
-                </span>
-              )}
-            </Link>
-          ))}
+          {NAV.map((item) => {
+            const badge = badgeFor(item.href);
+            return (
+              <Link key={item.href} href={item.href} className={styles.navLink}>
+                {item.label}
+                {badge && badge.count > 0 && (
+                  <span
+                    className={styles.navBadge}
+                    aria-label={`${badge.count} ${badge.noun}${badge.count > 1 ? "s" : ""} à traiter`}
+                  >
+                    {badge.count}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
         </nav>
       </aside>
       <div className={styles.main}>

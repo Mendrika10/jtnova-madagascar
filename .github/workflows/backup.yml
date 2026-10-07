@@ -1,0 +1,54 @@
+name: Sauvegarde des contenus
+
+# F7.7 — export hebdomadaire des contenus publics + script SQL rejouable.
+# Le contenu est produit par le site lui-même (/api/export, protégé par
+# CRON_SECRET) : aucun identifiant Supabase n'est stocké dans la CI.
+on:
+  schedule:
+    - cron: "0 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sauvegarde:
+    name: Exporter et archiver
+    runs-on: ubuntu-latest
+    env:
+      SITE_URL: ${{ vars.SITE_URL || 'https://jtnova-madagascar.vercel.app' }}
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v7
+
+      - name: Installer Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Télécharger la sauvegarde
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "::error::Le secret CRON_SECRET n'est pas défini dans les secrets GitHub du dépôt."
+            exit 1
+          fi
+          node scripts/backup-content.mjs --out=.backups
+
+      - name: Archiver les fichiers produits
+        uses: actions/upload-artifact@v4
+        with:
+          name: sauvegarde-contenus-${{ github.run_id }}
+          path: .backups/
+          retention-days: 90
+          if-no-files-found: error
+
+      - name: Rappeler la procédure de rejeu
+        if: always()
+        run: |
+          echo "Rejeu d'une sauvegarde :" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo 'psql "$DATABASE_URL" -f restore-<date>.sql' >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "Voir docs/GUIDE-ADMIN.md — « Sauvegarde et restauration »." >> "$GITHUB_STEP_SUMMARY"

@@ -55,8 +55,11 @@
   flex: 0 0 auto;
 }
 
+/* F7.4 — largeur explicite : la vignette est désormais remplie par un
+   `next/image` en `fill` (l'ancien `<img>` imposait sa largeur naturelle). */
 .thumbWrap {
-  width: 100%;
+  width: 426px;
+  max-width: 78vw;
   height: 221px;
   border-radius: 12px;
   overflow: hidden;

@@ -1,6 +1,8 @@
 # STATUS
 
-Sprint en cours : S6 — **Admin : gestion des contacts** — code terminé (PR #51, `ed0fcc0`), Phase 2 (replay sur `dev`) réussie 26/26 — dernière mise à jour : 2026-10-07
+Sprint en cours : S7 — **Finitions pro & durcissement** — **Phase 1 vérifiée et fusionnée** (PR #55, `4d8aae5` dans `dev`) — dernière mise à jour : 2026-10-07
+
+Sprint précédent : S6 — **terminé et publié** (release #53, `c3622e7`)
 
 Sprint précédent : S5 — **terminé et publié** (release #45, `5caf1f3`) puis S5+ (release #49)
 
@@ -52,6 +54,10 @@ Sprint précédent : S4bis — **terminé et publié** (release #38, `78ff057`)
 | F4bis.9 | DOC | ✅ | — | `docs/EXPLOITATION-IMAGES.md` : où sont les images (ImageKit / `project_images` / bucket `projects` conservé), fonctionnement de l'ajout, suppression (fichier distant conservé), changement de compte ImageKit, quota atteint (purge / retour `old_url` / changement d'offre), rotation de clé privée. |
 
 ## Journal des décisions prises seul
+
+- 2026-10-07 — **S7 Phase 1 vérifiée et fusionnée (PR #55, squash `4d8aae5`).** Les 10 fonctionnalités livrées avec preuve locale (voir section S7). Décisions notables : (1) **étoiles** = feuille générée `stars.css` + `<i class="jt-sN">` — le composant ne rend plus **aucun** style inline, positions vérifiées au runtime avec Chrome headless+CDP (toutes visibles, `jt-twinkle` actif) ; (2) **export côté serveur** — `/api/export` produit JSON et SQL, la CI ne stocke donc que `CRON_SECRET` (aucune clé Supabase dans GitHub) ; (3) **backup « published »** — le SQL de restauration ne remplace que les lignes publiées (brouillons préservés), rejoué 2× après sabotage volontaire : restauration intégrale ; (4) **monitoring maison** — `error_logs` (migration additive, RLS à la `contact_messages`) + `logError()` jamais lancé + frontière d'erreur racine + page `/admin/sante` avec badge ; (5) **liens morts** — un `href` de bouchon `#` rend un **libellé non cliquable** plutôt qu'un faux lien (les données réelles viennent des réglages) ; (6) `CRON_SECRET` généré et posé par l'agent (Vercel Prod+Preview + GitHub secret) — il n'apparaît jamais dans une URL. Enseignement technique récurrent : sous Vercel, une `<Image fill>` dans un conteneur **sans taille explicite** a une hauteur nulle — deux variantes de correctif utilisées : ratio/parent dimensionné (lightbox, vignettes) ou `width/height={0}` + style `auto` (image au ratio naturel).
+
+- 2026-10-07 — **Release S6 fusionnée (Porte 10/10) + preuves d'envoi réel.** PR **#53** (`dev` → `main`) mergée par **merge commit** (`c3622e7`) après CI verte et `MERGEABLE/CLEAN`. **Variables SMTP posées par l'agent** : 4/4 (`SMTP_USER` + `SMTP_PASS` × Production + Preview, `Encrypted`) — le prompt de branche de `vercel env add … preview` n'accepte ni stdin ni `--value` seul, la solution est **l'argument positionnel `git-branch ""`** (toutes branches Preview) — nouvelle confirmation de la leçon S4bis : relire le `--help` complet avant de conclure à une impossibilité. **Preuve d'envoi réel (F6.5/F6.6)** : soumission locale → 0 erreur applicative sur les 2 e-mails, `nodemailer.verify()` OK, `250 2.0.0 OK … gsmtp` (Gmail accepte), puis **envoi réel depuis la production** → `200 / ok:true` en 2,7 s. Le mot de passe d'application a transité par le chat (**variante A' assumée par l'humain**) → **rotation recommandée après la démo** ; il n'est stocké nulle part ailleurs (`git check-ignore .env.local` vérifié, 0 occurrence dans le diff).
 
 - 2026-10-07 — **S6 : l'humain remplace Resend par Gmail SMTP (décision explicite).** F6.5/F6.6 passent par `smtp.gmail.com:465` (nodemailer, dépendance ajoutée) avec un **mot de passe d'application Google** — aucun domaine à vérifier, 0 €/mois, expéditeur réel `jtnova.madagascar@gmail.com`. `docs/SPRINTS.md` F6.5 mis à jour, `.env.example` documente les variables `SMTP_*` **sans valeur** (`RESEND_API_KEY` retiré, jamais implémenté). Sans `SMTP_USER`/`SMTP_PASS` ou en cas d'échec SMTP, la soumission reste un succès (message en base), l'e-mail sauté est journalisé — **jamais de crash** (modèle F4bis.8).
 
@@ -256,6 +262,54 @@ Contexte Phase 2 : arbre de `dev` = `ed0fcc0` (PR #51), même pile locale, rejou
 **Décisions prises seul (S6)** : Gmail SMTP à la demande de l'humain (`SPRINTS.md` F6.5 mis à jour, `.env.example` documenté sans valeur) ; rate limit en mémoire process (la RLS interdit le comptage anonyme en base) — compteur **par instance**, consigné ; hachage IP `SHA-256(salt|ip|jour)` tronqué 16 hex ; passage `new → read` au rendu du détail **sans** `revalidatePath` (interdit pendant le rendu) ; recherche en mémoire (zéro requête PostgREST interpolée) ; export CSV `,` + BOM + neutralisation des formules.
 
 **Pré-requis humain S6** : poser `SMTP_USER`/`SMTP_PASS` (mot de passe d'application Google) dans Vercel Production + Preview → ensuite seulement, preuve d'envoi réel (F6.5/F6.6 en production).
+
+### Porte de merge §4ter — S6 (2026-10-07)
+
+| # | Condition | État | Preuve |
+|---|---|---|---|
+| 1 | Toutes les F de S6 ✅ | ✅ | F6.1→F6.9 prouvées : E2E **26/26** (Phase 1 sur `feat`, Phase 2 sur `dev`). F6.5/F6.6 : envoi réel prouvé (0 erreur applicative + `verify()` + `250 OK` Gmail) + envoi réel prod `200/ok:true` ; confirmation de réception demandée à l'humain. |
+| 2 | CI verte sur `dev` et la PR de release | ✅ | runs `success` sur `dev` + PR #53 `pass` ×2 + Vercel preview `pass` ; `MERGEABLE / CLEAN` |
+| 3 | `tsc` / `eslint` / build 0 | ✅ | `tsc` 0 · `eslint` 0 erreur / 19 warnings (≤ baseline 20) · `next build` 0 (23 routes) |
+| 4 | Critères rejoués, preuves jointes | ✅ | **26/26** rejoués en local sur `dev` (preview Vercel protégée par SSO — méthode acceptée depuis S4) |
+| 5 | Non-régression | ✅ | 8/8 routes clés `200` · `/admin` anon `307` · RLS anon `SELECT → []` / `INSERT → 201` |
+| 6 | Verdict REVIEWER, zone respectée | ✅ | diff `main…dev` = 17 fichiers, zones `src/**` + `docs/**` + `.env.example` + `package.json`, aucun hors zone |
+| 7 | Aucun secret dans le diff | ✅ | scan `grsrvufj\|SMTP_PASS=…` → 0 occurrence ; `.env.local` gitignoré (`git check-ignore` OK) |
+| 8 | Aucune migration destructive | ✅ | **0 fichier `supabase/migrations`** dans le diff ; `db reset` rejoué (Phase 2) |
+| 9 | RLS anon → 0 ligne non publiée | ✅ | `SELECT contact_messages` anon → `[]` (la boîte reste privée) |
+| 10 | Aucun pré-requis humain en attente | ✅ | **variables SMTP posées par l'agent** (4/4 Vercel) ; preuve locale réalisée — reste la confirmation de réception (demandée à l'humain) |
+
+**Conclusion : 10/10** → auto-merge exécuté.
+
+### Release S6 fusionnée + smoke test production (2026-10-07)
+
+- **PR #53** (`dev` → `main`) mergée par **merge commit** → `main` = **`c3622e7`**. CI verte, aucune exception invoquée, aucun rollback.
+- **Smoke test prod** (`https://jtnova-madagascar.vercel.app`) : `/`, `/projets`, `/services`, `/competences`, `/a-propos`, `/contact`, `/projects/julia`, `/admin/login` → **8/8 `200`** ; `/admin`, `/admin/messages`, `/admin/messages/export` anonymes → **`307`** (middleware) ; honeypot `name="website"` **présent** sur `/contact` (**0 occurrence avant S6** — discriminateur du nouveau code servi, accessible anonymement). Les classes CSS admin (`navBadge`…) sont code-splittées côté dashboard (protégé) : non discriminantes en anon, la preuve repose sur le SHA déployé `c3622e7` + la CI.
+- **Envoi réel prod (F6.5/F6.6)** : `POST /contact` depuis la prod → `200`, `ok:true`, 2,7 s (transaction SMTP complète, variables `SMTP_*` en prod actives). **Réception des 2 e-mails à confirmer par l'humain**.
+- **Hygiène** : `.env.local` restauré (cloud), base locale rendue au seed, temporaires supprimés, port 3110 libre.
+
+## S7 — Finitions pro & durcissement (Phase 1, vérification 2026-10-07)
+
+Contexte : pile locale (base seedée, `next start -p 3110`, `CRON_SECRET` local). Mesures page réelles via Chrome headless + CDP (`Network`/`Performance`, cache désactivé). Les Server Actions sont rejouées par HTTP.
+
+| Preuve | Résultat |
+|---|---|
+| **F7.1** — `/sitemap.xml` | **9 `<loc>`** : 6 routes statiques + `julia`, `vitascore`, `feonix` (brouillon `vina-io` exclu) ; `/robots.txt` **200** (`Allow: /`, `Disallow: /admin`, `Disallow: /api/`, `Sitemap` + `Host`) |
+| **F7.2** — OG par réalisation | `og:title`/`og:image` **uniques par slug** et absolus (`og:image` = 1ʳᵉ image ou `seo.og_image`, rendue absolue via `site-url.ts`) ; `twitter:card` + `alternates.canonical` |
+| **F7.3** — h1 + liens morts | **8/8 pages publiques `h1:1`** (les 4 fautives `/projets`, `/services`, `/competences`, `/contact` corrigées) ; `href="#"` **0 occurrence** (8 pages) — maquettes rendues en libellé non cliquable, liens réels issus de `contact_info`/réglages (`src/lib/links.ts`) |
+| **F7.4** — images optimisées | **3 pages détail < 500 Ko mesurées** : julia **436** · vitascore **415** · feonix **403 Ko** (référence avant : julia **3 335 Ko**) — `next/image` partout (vignettes galerie, visuel principal `priority`, affiches vidéo, logos, lightbox), **0 image cassée** (CDP), logos visibles corrigés (logo FAQ `max-width` ratio conservé) |
+| **F7.5** — étoiles hors HTML | HTML `/` **150 Ko** (réf. **201 Ko**, −51 Ko) ; `/contact` 29 Ko (réf. 68 Ko) ; `/a-propos` 115 Ko (réf. 143 Ko) ; `stars.css` généré (45,8 Ko, 495 étoiles, 2 décimales, classes compactes). **Vérification runtime CDP** : 6 pages, 495 `<i>` portant `jt-s<idx>`, `getComputedStyle` → `animation jt-twinkle`, position/taille non nulles ; **0 style inline d'étoile** restant (les 16 `animation-delay` restants sont les floats du bandeau logo, préexistants) |
+| **F7.6** — keep-alive | `/api/cron/keep-alive` : **401** sans jeton, **401** mauvais jeton, **200 `"ok":true,latencyMs:34`** avec `Authorization: Bearer $CRON_SECRET` ; sans `CRON_SECRET` configuré → **503** explicite (pas de faux succès) ; workflow `keep-alive.yml` (cron /3 j, issue d'alerte si échec) ; `CRON_SECRET` posé **Vercel Production + Preview** et **GitHub secret** (par l'agent) |
+| **F7.7** — export rejouable | `/api/export` Bearer → **JSON 26 Ko** (9 tables : projets 3, images 27, highlights 11, tech 16, services 6, témoignages 6, FAQ 6, techs 13, réglages 3) + **SQL 24 Ko** (`?format=sql`, transactionnel, brouillons conservés). **Rejeu prouvé** : sabotage (titre écrasé, FAQ et image supprimées) → psql restore → **comptes identiques avant/après** ; rejoué 2× (idempotent). `scripts/backup-content.mjs` (0 identifiant Supabase requis) ; workflow `backup.yml` hebdo, artefacts 90 j |
+| **F7.8** — monitoring | Migration **additive** `20261007090000_error_logs.sql` (RLS : insertion publique contrôlée, SELECT/UPDATE admin) ; types régénérés incl. `error_logs` ; `POST /api/log-error` → **400** invalide / **204** valide ; témoin inséré depuis l'API visible dans **`/admin/sante` (HTTP 200, motif présent)** + badge « Erreurs à traiter » au tableau de bord ; frontière d'erreur racine `src/app/error.tsx` remonte au serveur ; RLS vérifiée : anon SELECT `[]`, anon INSERT **201**, anon re-lecture `[]`, anon UPDATE sans effet (`resolved=false`), ligne visible côté admin |
+| **F7.9** — doc d'exploitation | `docs/GUIDE-ADMIN.md` (174 lignes) : pas-à-pas publication (brouillon→aperçu→publication→OG), modération messages, page Santé, sauvegarde/restauration, routine ; README mis à jour (stack, automatisations, table d'exploitation) |
+| **F7.10** — plan de sortie hébergement | `docs/DEPLOIEMENT-CLOUDFLARE.md` (98 lignes) : déclencheurs, build `next-on-pages` (+ repli `opennextjs-cloudflare`), variables à recréer, bascule DNS, points testés en local, rollback |
+| **Non-régression** | 11 routes publiques **200** (`/`, `/a-propos`, `/services`, `/projets`, `/competences`, `/contact`, 3 détails, sitemap, robots) ; `/admin/*` anonyme **307** ; `/api/export` anonyme **401** ; E2E contact HTTP (Server Action `$ACTION_*`) → **écran succès**, message visible dans `/admin/messages` ; honeypot présent |
+| **Qualité** | `tsc` **0** · `eslint` **0 erreur** / 9 warnings (baseline ≤ 20) · `next build` **0**, **29 routes** (26 + `sante`, `log-error`, `export`, `cron/keep-alive` ; `error.tsx` non routé) ; 2 workflows yaml parsés (js-yaml) |
+| **Hygiène** | scan diff **0 secret** ; migration **additive** (12 tables existantes intactes) ; `supabase db reset` final rejoué (3 migrations + seeds) ; base rendue au seed ; arbre propre |
+
+**Décisions S7** : étoiles = classes CSS générées (0 aléatoire, pas de mismatch d'hydratation) ; export **côté serveur** via `/api/export` (la CI ne détient aucun identifiant Supabase, seulement `CRON_SECRET`) ; monitoring **maison** `error_logs` + page Santé (Sentry optionnel, non requis) ; migration `error_logs` **additive** ; un `href` de bouchon `#` rend un libellé non cliquable plutôt qu'un lien mort. Cloud : la migration `error_logs` et `NEXT_PUBLIC_SITE_URL` restent à poser côté instance cloud (voir §4bis S7).
+
+**Pré-requis humain S7 (restants, non bloquants)** : (1) appliquer la migration `error_logs` sur l'instance cloud (bloc SQL fourni dans `supabase/migrations/20261007090000_error_logs.sql`, voie éditeur SQL) ; poser `NEXT_PUBLIC_SITE_URL=https://jtnova-madagascar.vercel.app` (Production + Preview) pour que les workflows pointent la bonne URL ; (2) lernen lien Login GitHub↔Vercel pour déployements auto si souhaité (= pré-clos S6).
 
 ## S4 — Admin : réalisations (vérification 2026-10-06)
 

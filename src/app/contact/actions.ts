@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { getSupabasePublicClient } from "@/lib/supabase/server";
 import { contactMessageSchema } from "@/lib/validation";
 import { sendContactAutoreply, sendContactNotification } from "@/lib/email";
+import { logError } from "@/lib/observability";
 
 export type ContactFormState = { ok: boolean; error: string | null };
 
@@ -127,6 +128,14 @@ export async function submitContactAction(
 
   if (error) {
     console.error("[contact] insertion refusée :", error.message);
+    // F7.8 — une soumission perdue est une erreur de production : elle doit
+    // apparaître dans la page admin « Santé ».
+    await logError({
+      message: `Insertion d'un message de contact refusée : ${error.message}`,
+      source: "contact",
+      path: "/contact",
+      context: { code: error.code ?? null },
+    });
     return {
       ok: false,
       error: "Votre message n'a pas pu être enregistré. Merci de réessayer.",
