@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import type { Transporter } from "nodemailer";
+import { CONTACT_MAIL_HEADER, contactMailMessageId } from "./contact-mail";
 
 /**
  * F6.5/F6.6 — e-mails du formulaire de contact via **Gmail SMTP**
@@ -19,7 +20,24 @@ export type MailPayload = {
   subject: string;
   html: string;
   replyTo?: string;
+  headers?: Record<string, string>;
+  messageId?: string;
 };
+
+/**
+ * S8 — destinataires de la notification : `CONTACT_TO_EMAIL` accepte
+ * **plusieurs adresses** séparées par des virgules ou des points-virgules
+ * (« jtnova@…, admin@… »). Sans valeur, on retombe sur le compte SMTP lui-même.
+ */
+export function contactRecipients(): string[] {
+  const list = (process.env.CONTACT_TO_EMAIL ?? "")
+    .split(/[,;]/)
+    .map((value) => value.trim())
+    .filter(Boolean);
+  if (list.length > 0) return list;
+  const fallback = process.env.SMTP_USER?.trim();
+  return fallback ? [fallback] : [];
+}
 
 export function smtpConfigured(): boolean {
   return Boolean(process.env.SMTP_USER && process.env.SMTP_PASS);
@@ -99,25 +117,32 @@ function mailShell(title: string, bodyHtml: string): string {
 </html>`;
 }
 
-/** F6.5 — notification adressée à l'administrateur. Destinataire :
- * `CONTACT_TO_EMAIL`, sinon le compte SMTP lui-même (le Gmail de l'humain). */
+/** F6.5 — notification adressée aux administrateurs. Destinataires :
+ * `CONTACT_TO_EMAIL` (une ou plusieurs adresses), sinon le compte SMTP lui-même.
+ *
+ * S8 — la notification porte l'identifiant du message de contact
+ * (`X-Jtnova-Contact-Id`), ce qui permet ensuite de la retrouver dans la
+ * boîte et de passer le message en « lu » (`src/lib/mail-sync.ts`). */
 export async function sendContactNotification(message: {
+  id: string;
   name: string;
   email: string;
   message: string;
 }): Promise<{ sent: boolean; reason?: string }> {
-  const to = process.env.CONTACT_TO_EMAIL || process.env.SMTP_USER;
-  if (!to) return { sent: false, reason: "no-recipient" };
+  const recipients = contactRecipients();
+  if (recipients.length === 0) return { sent: false, reason: "no-recipient" };
   const body = `
     <p style="margin:0 0 12px;">Nouvelle demande de contact reçue sur le site.</p>
     <p style="margin:0 0 4px;"><strong>Nom :</strong> ${escapeHtml(message.name)}</p>
     <p style="margin:0 0 12px;"><strong>E-mail :</strong> ${escapeHtml(message.email)}</p>
     <div style="background:#0b0d17;border:1px solid #2a2f52;border-radius:8px;padding:12px;white-space:pre-wrap;">${escapeHtml(message.message)}</div>`;
   return sendMail({
-    to,
+    to: recipients.join(", "),
     replyTo: message.email,
     subject: `Contact — ${message.name}`,
     html: mailShell("Nouvelle demande de contact", body),
+    headers: { [CONTACT_MAIL_HEADER]: message.id },
+    messageId: contactMailMessageId(message.id),
   });
 }
 

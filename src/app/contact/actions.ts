@@ -1,6 +1,6 @@
 "use server";
 
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { headers } from "next/headers";
 import { getSupabasePublicClient } from "@/lib/supabase/server";
 import { contactMessageSchema } from "@/lib/validation";
@@ -14,9 +14,14 @@ export type ContactFormState = { ok: boolean; error: string | null };
  *
  * Chaîne : honeypot (F6.7) → validation Zod (contraintes alignées sur la
  * politique RLS) → limitation de débit par IP hachée (F6.7) → insertion via
- * le client **public** (la politique RLS « insertion publique contrôlée »
+ * le client * * public** (la politique RLS « insertion publique contrôlée »
  * autorise l'écriture anonyme, F6.1) → e-mails (F6.5 notification admin,
  * F6.6 accusé de réception — jamais bloquants).
+ *
+ * S8 — l'identifiant du message est **généré ici** et inséré explicitement :
+ * la notification peut ainsi porter cet identifiant (`X-Jtnova-Contact-Id`)
+ * et l'admin savoir, plus tard, si l'e-mail correspondant a été lu dans la
+ * boîte (aucune relecture de la ligne insérée n'est possible en anonyme).
  */
 
 /* ── F6.7 : limitation de débit en mémoire process ─────────────────────────
@@ -114,11 +119,13 @@ export async function submitContactAction(
 
   // SANS `.select()` : avec `return=representation`, PostgREST devrait relire
   // la ligne insérée — or la politique SELECT est réservée aux admins (RLS),
-  // ce qui ferait échouer toute insertion anonyme. L'id n'est pas nécessaire
-  // (les e-mails ne portent pas de lien de détail).
+  // ce qui ferait échouer toute insertion anonyme. L'identifiant est donc
+  // choisi côté serveur et fourni explicitement.
+  const messageId = randomUUID();
   const { error } = await supabase
     .from("contact_messages")
     .insert({
+      id: messageId,
       name: parsed.data.name,
       email: parsed.data.email,
       message: parsed.data.message,
@@ -144,7 +151,7 @@ export async function submitContactAction(
 
   // F6.5/F6.6 — e-mails : un échec est journalisé mais ne remet jamais en
   // cause la soumission (le message est déjà en base : rien n'est perdu).
-  await sendContactNotification({ ...parsed.data });
+  await sendContactNotification({ id: messageId, ...parsed.data });
   await sendContactAutoreply({
     name: parsed.data.name,
     email: parsed.data.email,
