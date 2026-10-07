@@ -1,6 +1,6 @@
 # STATUS
 
-Sprint en cours : S7 — **Finitions pro & durcissement** — **Phase 1 vérifiée et fusionnée** (PR #55, `4d8aae5` dans `dev`) — dernière mise à jour : 2026-10-07
+Sprint en cours : S7 — **Finitions pro & durcissement** — **terminé et publié** (release #57 merge commit **`b99685a`**, `main` à jour) — dernière mise à jour : 2026-10-07
 
 Sprint précédent : S6 — **terminé et publié** (release #53, `c3622e7`)
 
@@ -264,7 +264,6 @@ Contexte Phase 2 : arbre de `dev` = `ed0fcc0` (PR #51), même pile locale, rejou
 **Pré-requis humain S6** : poser `SMTP_USER`/`SMTP_PASS` (mot de passe d'application Google) dans Vercel Production + Preview → ensuite seulement, preuve d'envoi réel (F6.5/F6.6 en production).
 
 ### Porte de merge §4ter — S6 (2026-10-07)
-
 | # | Condition | État | Preuve |
 |---|---|---|---|
 | 1 | Toutes les F de S6 ✅ | ✅ | F6.1→F6.9 prouvées : E2E **26/26** (Phase 1 sur `feat`, Phase 2 sur `dev`). F6.5/F6.6 : envoi réel prouvé (0 erreur applicative + `verify()` + `250 OK` Gmail) + envoi réel prod `200/ok:true` ; confirmation de réception demandée à l'humain. |
@@ -279,6 +278,37 @@ Contexte Phase 2 : arbre de `dev` = `ed0fcc0` (PR #51), même pile locale, rejou
 | 10 | Aucun pré-requis humain en attente | ✅ | **variables SMTP posées par l'agent** (4/4 Vercel) ; preuve locale réalisée — reste la confirmation de réception (demandée à l'humain) |
 
 **Conclusion : 10/10** → auto-merge exécuté.
+
+### Phase 2 S7 — replay sur `dev` (2026-10-07)
+
+- CI `dev` = success sur #55 et #56 ; `tsc` 0 · `eslint` 0 erreur / 9 warnings · build 0 (29 routes).
+- Replay scripté des critères sur la pile locale : **24/24 OK** (F7.1 sitemap 9 url + robots · F7.2 OG ×3 · F7.3 h1/0 lien mort ×7 pages · F7.4 optimiseur ×3 + WebP/AVIF · F7.5 150 Ko + 0 style inline · F7.6 401/401/200 · F7.7 export SQL · F7.8 log-error 400/204 + témoin en base + page Santé admin · contact E2E succès + boîte admin · 10 routes 200 · 4 admin 307 · export anonyme 401 · RLS `error_logs` anon SELECT `[]` / INSERT 201).
+- Note : le harnais a d'abord affiché « contact KO » — cause : le rate-limit mémoire 5/15 min (F6.7) fonctionnait **trop bien** après les replays ; correction du harnais (relance du serveur), pas du code. Enseignement : un garde anti-spam peut faire échouer un test de non-régression, c'est attendu.
+- **Hygiène** : `.verify-tmp` supprimé, `supabase db reset` final (3 migrations, dont `error_logs`), port 3110 libre, arbre propre, `.env.local` sur cloud (contrôle restauration : `fvdtbvjogaotawvdfojl` ×0).
+
+### Porte de merge §4ter — release S7 (2026-10-07)
+
+| # | Condition | État | Preuve |
+|---|---|---|---|
+| 1 | Toutes les F de S7 ✅ | ✅ | F7.1→F7.10 prouvées (section S7) |
+| 2 | CI verte sur `dev` et la PR | ✅ | runs success sur `dev` ; PR #57 checks pass ×2 + Vercel `pass`, `MERGEABLE / CLEAN` |
+| 3 | `tsc` / `eslint` / build 0 | ✅ | 0 / 0 (9 warnings ≤ baseline) / 0 (29 routes) |
+| 4 | Critères rejoués | ✅ | **24/24** (Phase 2 sur `dev`, pile locale) |
+| 5 | Non-régression | ✅ | routes publiques 200, admin anon 307, contact E2E, RLS anon |
+| 6 | Zones respectées | ✅ | `src/**`, `docs/**`, `scripts/**`, `.github/workflows/**`, `next.config.ts`, migration additive, `README.md` |
+| 7 | 0 secret dans le diff | ✅ | scan 0 occurrence ; `.env.local` gitignoré |
+| 8 | 0 migration destructive | ✅ | 1 migration **additive** (`error_logs`) |
+| 9 | RLS anon 0 ligne non publiée | ✅ | anon SELECT `error_logs` → `[]` ; INSERT contrôlé ; UPDATE anonyme sans effet |
+| 10 | 0 pré-requis humain bloquant | ✅ | `CRON_SECRET` posé par l'agent (Vercel Prod+Preview + GitHub) ; documentation des restants (non bloquants) dans STATUS |
+
+**Conclusion : 10/10** → release fusionnée.
+
+### Release S7 fusionnée + smoke test production (2026-10-07)
+
+- **PR #57** (`release/S7` → `main`) mergée par **merge commit** → `main` = **`b99685a`**. CI `main` = success. Aucune exception invoquée, aucun rollback.
+- **Smoke test prod** : `/`, `/projets`, `/services`, `/competences`, `/a-propos`, `/contact`, `/projects/julia`, `/sitemap.xml`, `/robots.txt`, `/admin/login` → **10/10 `200`** ; `/admin`, `/admin/messages`, `/admin/sante` → **307** ; `/api/export` → **401** ; `/api/cron/keep-alive` anonyme → **401** ; `/api/log-error` invalide → **400**.
+- **Discriminateurs S7 en prod (servi anonymement)** : `jt-star` présent + **0 style inline d'étoile** ; `_next/image` présent ; `robots.txt` contient `Disallow: /admin` ; sitemap **8 `<loc>`** (brouillon `vina-io` exclu — 1 réalisé de moins qu'en local, conforme aux données cloud) ; HTML `/` prod = **147 Ko** (réf. 201 Ko avant S7).
+- **Reste à poser côté cloud (documenté, non bloquant)** : migration `error_logs` (fichier `supabase/migrations/20261007090000_error_logs.sql`, voie éditeur SQL) puis `NEXT_PUBLIC_SITE_URL=https://jtnova-madagascar.vercel.app` (Vercel Prod+Preview) — tant que ce n'est pas posé, `/sitemap.xml` et l'export annotent des URL factices de repli identiques au domaine actuel (aucun impact fonctionnel visible).
 
 ### Release S6 fusionnée + smoke test production (2026-10-07)
 
