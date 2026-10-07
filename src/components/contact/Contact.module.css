@@ -483,3 +483,22 @@
   pointer-events: none;
   z-index: 0;
 }
+
+/* S6 — soumission réelle (erreur visible) + honeypot anti-spam */
+.hpField {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.formError {
+  margin: 0;
+  padding: 0.65rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 93, 93, 0.4);
+  background: rgba(255, 93, 93, 0.12);
+  color: #ffb3b3;
+  font-size: 0.88rem;
+}

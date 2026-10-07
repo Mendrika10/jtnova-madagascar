@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getDashboardCounts } from "@/lib/admin-data";
 import { logoutAction } from "../login/actions";
 import styles from "../admin.module.css";
 
@@ -34,6 +35,11 @@ export default async function AdminLayout({
 
   if (profile?.role !== "admin") redirect("/admin/login?error=forbidden");
 
+  // F6.9 — compteur de messages non lus, affiché sur l'entrée « Messages »
+  // de la navigation. Le layout étant dynamique (cookies), il est re-rendu
+  // à chaque navigation : le badge suit l'état de la base.
+  const counts = await getDashboardCounts(supabase);
+
   return (
     <div className={styles.shell}>
       <aside className={styles.sidebar}>
@@ -44,6 +50,14 @@ export default async function AdminLayout({
           {NAV.map((item) => (
             <Link key={item.href} href={item.href} className={styles.navLink}>
               {item.label}
+              {item.href === "/admin/messages" && counts.unreadMessages > 0 && (
+                <span
+                  className={styles.navBadge}
+                  aria-label={`${counts.unreadMessages} message${counts.unreadMessages > 1 ? "s" : ""} non lu${counts.unreadMessages > 1 ? "s" : ""}`}
+                >
+                  {counts.unreadMessages}
+                </span>
+              )}
             </Link>
           ))}
         </nav>

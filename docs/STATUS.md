@@ -1,6 +1,8 @@
 # STATUS
 
-Sprint en cours : S5 — **Admin : personnalisation complète du site** — **terminé et publié** (release #45, `5caf1f3`) — dernière mise à jour : 2026-10-06
+Sprint en cours : S6 — **Admin : gestion des contacts** — code terminé (PR #51, `ed0fcc0`), Phase 2 (replay sur `dev`) réussie 26/26 — dernière mise à jour : 2026-10-07
+
+Sprint précédent : S5 — **terminé et publié** (release #45, `5caf1f3`) puis S5+ (release #49)
 
 Sprint précédent : S4bis — **terminé et publié** (release #38, `78ff057`)
 
@@ -50,6 +52,18 @@ Sprint précédent : S4bis — **terminé et publié** (release #38, `78ff057`)
 | F4bis.9 | DOC | ✅ | — | `docs/EXPLOITATION-IMAGES.md` : où sont les images (ImageKit / `project_images` / bucket `projects` conservé), fonctionnement de l'ajout, suppression (fichier distant conservé), changement de compte ImageKit, quota atteint (purge / retour `old_url` / changement d'offre), rotation de clé privée. |
 
 ## Journal des décisions prises seul
+
+- 2026-10-07 — **S6 : l'humain remplace Resend par Gmail SMTP (décision explicite).** F6.5/F6.6 passent par `smtp.gmail.com:465` (nodemailer, dépendance ajoutée) avec un **mot de passe d'application Google** — aucun domaine à vérifier, 0 €/mois, expéditeur réel `jtnova.madagascar@gmail.com`. `docs/SPRINTS.md` F6.5 mis à jour, `.env.example` documente les variables `SMTP_*` **sans valeur** (`RESEND_API_KEY` retiré, jamais implémenté). Sans `SMTP_USER`/`SMTP_PASS` ou en cas d'échec SMTP, la soumission reste un succès (message en base), l'e-mail sauté est journalisé — **jamais de crash** (modèle F4bis.8).
+
+- 2026-10-07 — **S6 : bug réel bloquant trouvé par l'E2E et corrigé — l'insertion anonyme exigeait un droit de relecture.** L'action de contact demandait `.select("id").single()` après l'`insert` : PostgREST envoie alors `Prefer: return=representation` et **re-lit la ligne insérée**, ce que la politique SELECT de `contact_messages` interdit aux non-admins → `42501 new row violates row-level security policy` sur **toute** soumission. Le code passait par cinq versions de test avant que curl n'isole la cause : POST direct → **201**, POST + `Prefer: return=representation` → **401/42501**. Corrigé : insertion **sans RETURNING** (l'id n'était de toute façon pas utilisé — les e-mails ne portent pas de lien). Leçon : tester l'insertion REST seule ne suffit pas, il faut rejouer le **flux exact** du client (headers `Prefer` compris).
+
+- 2026-10-07 — **S6 : limitations de débit et hachage d'IP en mémoire, assumées.** La RLS rend impossible le comptage anonyme en base (une lecture anon renvoie 0 ligne) : le seuil **5 envois / 15 min** est tenu dans une `Map` du process serveur — compteur **par instance** (suffisant contre un script simple, pas contre un réseau distribué). L'IP est pseudonymisée `SHA-256(salt | ip | jour)` tronquée à 16 hex (`CONTACT_IP_SALT` ou dérivé du jour) : un hachage ne ré-identifie pas une IP au-delà du jour. `ip_hash`/`user_agent` sont stockés en base (colonnes S1 déjà présentes : **aucune migration**).
+
+- 2026-10-07 — **S6 : le passage `new → read` se fait au rendu du détail, sans `revalidatePath`.** Next interdit les appels de revalidation **pendant le rendu** : l'update est donc faite directement (client authentifié) et le badge de la navigation se met à jour à la **navigation suivante** (le layout est dynamique : cookies). Comportement vérifié : visite d'un message → compteur décrémenté (5 → 4).
+
+- 2026-10-07 — **S6 : export CSV en mémoire requête, pas de route générée côté client.** Le CSV est produit en bulk (`limit 5000`, colonnes listées, jamais `select="*"` dynamique) avec BOM UTF-8 (lisible Excel/LibreOffice), guillemets doublés et **neutralisation des formules** (champ commençant par `=`/`+`/`-`/`@` préfixé d'une apostrophe — anti CSV-injection). La route handler est sous `/admin/**` (middleware) mais **un layout ne protège pas les route handlers** : session **et** rôle `admin` sont revérifiés dans la route (401/403), comme `/api/imagekit/auth`.
+
+- 2026-10-07 — **S6 : recherche en mémoire, pas de requête PostgREST construite dynamiquement.** La boîte de réception est filtrée **en base** pour le statut (correct au-delà de la limite 200) et **en mémoire** pour la recherche `q` : volumes faibles, et aucun `.or()` interpolé (zéro injection). La recherche couvre nom, e-mail, sujet et corps, insensible à la casse.
 
 - 2026-10-06 — **S5+ : bouton « Réinitialiser » (demandé après l'aperçu live).** Réutilise la mécanique existante : `form.reset()` remet chaque champ non contrôlé à sa valeur rendue par le serveur (donc enregistrée), ce qui couvre aussi les cases à cocher via `defaultChecked` ; les listes sont en plus restaurées par `useRows.reset`. Un indicateur d'état (« synchronisé » / « modifications non enregistrées ») compare l'aperçu à la référence **normalisée** — sinon une liste vide en base (l'éditeur synthétise alors une ligne vide) paraîtrait modifiée dès le chargement. Le bouton est désactivé quand rien n'a changé. Vérifié dans un vrai navigateur (19/19) : restauration des champs, de l'aperçu, des lignes et des cases, sans aucune écriture en base. **Correction de test** : le premier échec signalé était une mauvaise assertion (une ligne vide n'est pas une carte dans l'aperçu), l'application était correcte.
 
@@ -213,7 +227,35 @@ Ajouts demandés après la release. Chaque onglet de Personnalisation affiche un
 - **Preuves (navigateur réel, Chrome headless + CDP, pile locale)** — aperçu : rendu au chargement, mise à jour **à la saisie**, mots d'accent mis en évidence ; ajout d'une ligne → nouvelle carte (`6 → 7`) ; décochage « Publié » → mention « non publié » ; **base inchangée tant qu'on n'enregistre pas** (lecture REST). Réinitialisation (**19/19**) : état initial « synchronisé » + bouton désactivé ; après saisie → « modifications non enregistrées » + bouton actif ; clic → champ **et** aperçu restaurés, retour à « synchronisé », bouton de nouveau désactivé, **aucune écriture en base** ; ligne ajoutée retirée et formulaire rendu à ses lignes d'origine ; case « Publié » restaurée cochée ; **enregistrement toujours fonctionnel** (clic → `?saved=1`, valeur en base). `tsc` 0 · `eslint` 0 erreur / 19 warnings · `next build` 0.
 - *Note de test* : un premier échec (« ajout non reflété dans l'aperçu ») venait de l'**assertion**, pas du code — une ligne ajoutée **vide** n'est volontairement pas rendue comme carte dans l'aperçu (filtre `title || description`). L'assertion a été corrigée (remplir la ligne avant de compter), pas l'application.
 
+**Release S5+ fusionnée** : PR **#49** (`dev` → `main`) fusionnée par **commit de fusion** (`61c65ec`), Porte §4ter **10/10**, CI verte (2 runs), `AUTO_MERGE_MAIN = true`. **Smoke test production** : `/`, `/projets`, `/services`, `/competences`, `/a-propos`, `/contact`, `/admin/login`, `/projects/julia`, `/projects/vitascore` → **200** ; `/admin` anonyme → `307 → /admin/login` ; `/projects/vina-io` → **404**. **Discriminateur S5+** : le CSS servi en production contient les classes `editorSplit`, `previewPanel` et `previewHintDirty` — **0 occurrence** dans `admin.module.css` à la release #45 (contrôle négatif) → le nouveau code est bien déployé. Limitation assumée : le **texte** du panneau vit dans le payload RSC authentifié (route protégée) et les chunks de la page Personnalisation ne sont pas référencés par `/admin/login` anonyme — la preuve passe donc par le CSS, plus le comportement déjà prouvé au navigateur sur la pile locale. **Aucun rollback.**
+
 **Release S5 fusionnée** : PR **#45** (`dev` → `main`) fusionnée par **commit de fusion** (`5caf1f3`), `AUTO_MERGE_MAIN = true`, Porte §4ter **10/10**, CI verte. **Smoke test production** (`jtnova-madagascar.vercel.app`) : `/`, `/projets`, `/services`, `/competences`, `/a-propos`, `/contact`, `/admin/login`, `/projects/julia`, `/projects/vitascore` → **200** ; `/admin` anonyme → `307 → /admin/login?redirect=%2Fadmin` ; `/projects/vina-io` (brouillon) → **404**. Discriminateur S5 : la page d'accueil sert désormais `<meta property="og:title">` (absent de l'ancien `layout.tsx`) → le nouveau code est bien déployé. **Aucun rollback.**
+
+## S6 — Admin : gestion des contacts (Phase 1 + Phase 2, 2026-10-07)
+
+But : **ne plus jamais perdre une demande**. Le formulaire public écrit en base (F6.1), la boîte de réception admin centralise le tout (F6.2→F6.4, F6.8, F6.9), l'anti-spam protège la boîte (F6.7) et les e-mails partent via **Gmail SMTP** (F6.5/F6.6 — choix de l'humain remplaçant Resend). **Aucune migration** : les colonnes `status`/`notes`/`ip_hash`/`user_agent` existaient depuis S1.
+
+Contexte Phase 1 : stack Docker locale réinitialisée (`db reset`, `contact_messages` = 0), serveur `next start -p 3110`, Server Actions rejouées par HTTP (champs `$ACTION_*` extraits du HTML rendu), `.env.local` basculé sur la base locale puis restauré.
+
+Contexte Phase 2 : arbre de `dev` = `ed0fcc0` (PR #51), même pile locale, rejou complet des 26 vérifications.
+
+| Preuve | Résultat |
+|---|---|
+| Types / Lint / Build | `tsc` exit 0 · `eslint` 0 erreur / **19** warnings (≤ baseline 20) · `next build` 0 (**23 routes**, dont `/admin/messages`, `/admin/messages/[id]`, `/admin/messages/export` en dynamique) |
+| E2E anonyme (F6.1, F6.7) | **8/8** — soumission valide → `ok:true` ; honeypot rempli → succès **factice** sans insertion ; nom invalide → `ok:false` + message français ; envois 1-5 acceptés puis **6ᵉ bloqué** (« Trop de messages… »). Base : 5 lignes, `ip_hash` et `user_agent` remplis 5/5 |
+| E2E admin (F6.2→F6.4, F6.8, F6.9) | **18/18** — login `303` + cookie · liste 5 messages · **badge nav = 5 non lus** · filtre `?status=new` → 5, `?status=read` → 0 · recherche `q` → 1 résultat (unique, insensible à la casse) · détail 200 · **visite → `read` persisté, badge 5 → 4** · statut `replied` → `303 ?saved=1` + base · note → `303 ?noted=1` + base + rechargée · CSV : `200`, **BOM `EF BB BF`**, en-tête, 5 lignes, `replied` + note présents |
+| Résilience SMTP (F6.5/F6.6) | serveur démarré avec `SMTP_USER`/`SMTP_PASS` **factices** → soumission `ok:true`, insertion **6ᵉ ligne** en base, log `[email] envoi SMTP échoué : Invalid login: 535` ×2 (notification + accusé) — l'échec mail ne bloque jamais l'enregistrement |
+| RLS (anon) | `SELECT contact_messages` → `[]` (boîte privée) · `INSERT` → `201` (public contrôlé) · export CSV anonyme → `307` (middleware) |
+| Non-régression | `/`, `/projets`, `/services`, `/competences`, `/a-propos`, `/contact`, `/projects/julia`, `/admin/login` → **8/8 `200`** · `/admin` anonyme → `307` |
+| CI / merge | PR **#51** : « Types, lint et build » **pass** + Vercel preview pass · `MERGEABLE / CLEAN` · squash → `dev` = `ed0fcc0` |
+| Phase 2 (replay sur `dev`) | **26/26** rejoués sur `ed0fcc0` + `tsc` 0 + `eslint` 0 erreur + build 0 + 8/8 routes 200 + RLS anon (`[]` / `201`) |
+| Hygiène | `.env.local` restauré (grep `fvdtbvjogaotawvdfojl` = 1) · base locale rendue au seed (`contact_messages` = 0) · `.verify-tmp` supprimé · port 3110 libre · arbre propre |
+
+**Bug réel trouvé par l'E2E et corrigé** : toute soumission anonyme échouait en `42501` car l'action demandait `.select("id")` après l'`insert` → PostgREST re-lit la ligne (`Prefer: return=representation`) alors que la politique SELECT est réservée aux admins. Confirmé par : POST direct → `201`, POST + `Prefer: return=representation` → `401/42501`. Corrigé par une insertion **sans RETURNING** (l'id n'était pas utilisé).
+
+**Décisions prises seul (S6)** : Gmail SMTP à la demande de l'humain (`SPRINTS.md` F6.5 mis à jour, `.env.example` documenté sans valeur) ; rate limit en mémoire process (la RLS interdit le comptage anonyme en base) — compteur **par instance**, consigné ; hachage IP `SHA-256(salt|ip|jour)` tronqué 16 hex ; passage `new → read` au rendu du détail **sans** `revalidatePath` (interdit pendant le rendu) ; recherche en mémoire (zéro requête PostgREST interpolée) ; export CSV `,` + BOM + neutralisation des formules.
+
+**Pré-requis humain S6** : poser `SMTP_USER`/`SMTP_PASS` (mot de passe d'application Google) dans Vercel Production + Preview → ensuite seulement, preuve d'envoi réel (F6.5/F6.6 en production).
 
 ## S4 — Admin : réalisations (vérification 2026-10-06)
 
@@ -314,6 +356,8 @@ Contexte : S1 publiée ; travail S2 sur branche `feat/S2-detail-dynamique`, arbr
 **Lecture cloud vs repli** : la route `[slug]` n'existe pas en statique et n'a **aucun repli local** dans le code (`getProjectBySlug` → `null` → `notFound()`). Un `200` sur `/projects/<slug>` prouve donc la lecture base ; le brouillon `vina-io` renvoyant `404` confirme le respect de `published = true` (RLS).
 
 ## Bloquants et pré-requis humains en attente
+
+- **S6 — pré-requis humain restant (2026-10-07, non bloquant)** : poser les **2 variables `SMTP_USER` + `SMTP_PASS`** (mot de passe d'application Google — 2FA requise, [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)) dans Vercel **Production + Preview** (et `.env.local` pour un test local) : le mot de passe **ne doit jamais transiter par le chat**. Après la pose : un envoi réel depuis `/contact` = preuve finale de F6.5 (notification admin) et F6.6 (accusé de réception). Optionnel : `CONTACT_TO_EMAIL` (défaut : le compte SMTP lui-même), `CONTACT_AUTOREPLY=0` pour désactiver l'accusé.
 
 - **S4bis — pré-requis de phase 0 LEVÉS (2026-10-06)** : compte ImageKit créé, clé privée **valide** (vérifiée API), 3 variables posées sur **Production** (vérifiées). **Restent à faire par l'humain** : (1) ~~les 3 variables ImageKit sur Preview~~ **✅ posées par l'agent** (API, `teamId` corrigé) ; (2) ~~F4bis.7~~ **✅ close** (SQL exécuté par l'humain, vérifié) ; (3) **rotation de la clé privée ImageKit recommandée** (elle a transité par le chat ; l'humain a dit « pas de souci », la rotation reste une bonne pratique) ; (4) **un prochain upload réel** depuis `/admin/realisations` en production = confirmation fonctionnelle finale du flux ImageKit en prod.
 - **Rappel 2026-10-06 — 3 actions humaines en attente (aucune ne bloque le code)** : (1) **révoquer la clé secrète `sb_secret_…`** exposée dans la conversation (Settings → API Keys) ; (2) **supprimer la ligne de test `Test RLS` / `test@example.com`** dans `contact_messages` (insupprimable par l'agent : c'est la preuve du verrouillage RLS) ; (3) **`supabase db repair --status applied 20261005082253 --status applied 20261005083000`** avant tout futur `db push`. Confirmés par l'humain le 2026-10-06.
