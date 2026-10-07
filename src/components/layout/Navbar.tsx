@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, cubicBezier, type Variants } from "framer-motion";
-import { PiSun, PiMoon } from "react-icons/pi";
+import { Moon, Sun } from "@deemlol/next-icons";
 import { shouldSkipOptimizer } from "@/lib/images";
 import styles from "./Navbar.module.css";
 
@@ -142,7 +142,7 @@ export default function Navbar({ logoUrl }: { logoUrl?: string }) {
               exit={{ opacity: 0, rotate: 30, scale: 0.7 }}
               transition={{ duration: 0.3, ease: expo }}
             >
-              {dark ? <PiMoon size={20} /> : <PiSun size={20} />}
+              {dark ? <Moon size={20} /> : <Sun size={20} />}
             </motion.span>
           </button>
         </motion.div> */}
