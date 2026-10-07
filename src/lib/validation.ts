@@ -167,3 +167,38 @@ export function parseStatLine(line: string): { num: string; label: string } | nu
   if (!num || rest.length === 0 || !rest.join("|")) return null;
   return { num, label: rest.join("|").trim() };
 }
+
+/* ── S6 : messages de contact ───────────────────────────────────────────── */
+
+/** F6.1/F6.7 — soumission publique du formulaire de contact. Contraintes
+ * alignées sur la politique RLS « insertion publique contrôlée »
+ * (name 2-120, message 10-5000). */
+export const contactMessageSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, "Le nom doit contenir au moins 2 caractères")
+    .max(120, "Nom : maximum 120 caractères"),
+  email: z
+    .string()
+    .trim()
+    .max(200, "E-mail trop long")
+    .regex(/^[^@\s]+@[^@\s]+\.[^@\s]+$/, "Adresse e-mail invalide"),
+  message: z
+    .string()
+    .trim()
+    .min(10, "Message trop court (10 caractères minimum)")
+    .max(5000, "Message : maximum 5000 caractères"),
+});
+
+export type ContactMessageInput = z.infer<typeof contactMessageSchema>;
+
+/** F6.3 — statuts d'un message (mêmes valeurs que le `check` en base). */
+export const MESSAGE_STATUSES = ["new", "read", "replied", "archived"] as const;
+export const messageStatusSchema = z.enum(MESSAGE_STATUSES);
+export type MessageStatus = (typeof MESSAGE_STATUSES)[number];
+
+/** F6.4 — note interne d'un message. */
+export const messageNoteSchema = z.object({
+  notes: z.string().trim().max(4000, "Note : maximum 4000 caractères"),
+});

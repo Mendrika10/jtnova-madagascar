@@ -1,6 +1,10 @@
 ﻿"use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useActionState } from "react";
+import {
+  submitContactAction,
+  type ContactFormState,
+} from "@/app/contact/actions";
 import { motion } from "framer-motion";
 import styles from "./Contact.module.css";
 import StarField from "../accueil/StarField";
@@ -34,13 +38,18 @@ function createShooter(container: HTMLDivElement) {
 
 export default function Contact() {
   const [form, setForm] = useState({ name: "", email: "", message: "" });
-  const [sent, setSent] = useState(false);
-  const [loading, setLoading] = useState(false);
+  // S6 — soumission réelle : Server Action validée par Zod, insertion en base,
+  // anti-spam (honeypot + débit) et e-mails. `state.ok` remplace l'ancien
+  // envoi simulé (setTimeout), `pending` l'ancien état `loading`.
+  const [state, formAction, pending] = useActionState<ContactFormState, FormData>(
+    submitContactAction,
+    { ok: false, error: null },
+  );
   const successRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (sent) successRef.current?.focus?.();
-  }, [sent]);
+    if (state.ok) successRef.current?.focus?.();
+  }, [state.ok]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -48,16 +57,6 @@ export default function Contact() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    // simulate async send; replace with real API call
-    setTimeout(() => {
-      setSent(true);
-      setForm({ name: "", email: "", message: "" });
-      setLoading(false);
-    }, 700);
-  };
 
   const containerVariants = {
     hidden: {},
@@ -275,7 +274,7 @@ export default function Contact() {
 
             {/* Formulaire droite */}
             <motion.div className={styles.formWrap} variants={itemVariants}>
-              {sent ? (
+              {state.ok ? (
                 <div
                   className={styles.success}
                   role="status"
@@ -289,7 +288,7 @@ export default function Contact() {
                 </div>
               ) : (
                 <motion.form
-                  onSubmit={handleSubmit}
+                  action={formAction}
                   className={styles.form}
                   variants={itemVariants}
                 >
@@ -340,12 +339,29 @@ export default function Contact() {
                       className={styles.textarea}
                     />
                   </div>
+                  {state.error && (
+                    <p className={styles.formError} role="alert">
+                      {state.error}
+                    </p>
+                  )}
+                  {/* F6.7 — honeypot : invisible pour un humain, rempli par
+                      les robots → succès factice côté serveur. */}
+                  <div className={styles.hpField} aria-hidden="true">
+                    <label htmlFor="website">Site web</label>
+                    <input
+                      id="website"
+                      type="text"
+                      name="website"
+                      tabIndex={-1}
+                      autoComplete="off"
+                    />
+                  </div>
                   <button
                     type="submit"
                     className={styles.submit}
-                    disabled={loading}
+                    disabled={pending}
                   >
-                    {loading ? (
+                    {pending ? (
                       <>
                         <span>Envoi...</span>
                         <span className={styles.spinner} aria-hidden="true" />
