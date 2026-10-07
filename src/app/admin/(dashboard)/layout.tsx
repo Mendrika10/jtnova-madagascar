@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getDashboardCounts } from "@/lib/admin-data";
+import { syncContactReadStatuses } from "@/lib/mail-sync";
 import { logoutAction } from "../login/actions";
 import styles from "../admin.module.css";
 
@@ -40,6 +41,11 @@ export default async function AdminLayout({
   // de la navigation. Le layout étant dynamique (cookies), il est re-rendu
   // à chaque navigation : le badge suit l'état de la base.
   // F7.8 — même principe pour les erreurs non traitées (« Santé »).
+  // S8 — avant de compter, on aligne les statuts sur la boîte mail : un
+  // message dont l'e-mail a été lu passe automatiquement en « lu ». L'appel
+  // est partagé avec la liste des messages (une seule connexion IMAP par
+  // rendu) et limité dans le temps ; une boîte injoignable n'a aucun effet.
+  await syncContactReadStatuses(supabase);
   const counts = await getDashboardCounts(supabase);
 
   const badgeFor = (href: string) =>

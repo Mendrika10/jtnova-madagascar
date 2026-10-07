@@ -1,6 +1,8 @@
 # STATUS
 
-Sprint en cours : S7 — **Finitions pro & durcissement** — **Phase 1 vérifiée et fusionnée** (PR #55, `4d8aae5` dans `dev`) — dernière mise à jour : 2026-10-07
+Sprint en cours : S7 — **Finitions pro & durcissement** — **terminé et publié** (release #57 merge commit **`b99685a`**, `main` à jour)
+
+Incrément en cours : **S8 — Statut « lu » synchronisé avec la boîte mail** (demande de l'humain du 2026-10-07) — **phase 1 vérifiée localement** — dernière mise à jour : 2026-10-07
 
 Sprint précédent : S6 — **terminé et publié** (release #53, `c3622e7`)
 
@@ -52,8 +54,16 @@ Sprint précédent : S4bis — **terminé et publié** (release #38, `78ff057`)
 | F4bis.7 | DATA (+ humain) | ✅ | #38 | Migration des images existantes. **Procédure prouvée en local (2026-10-06)** : 2/2 lignes migrées, `old_url` conservée, **rejeu → 0 candidate (idempotent)**. **En production** : la seule image téléversée (WhatsApp) a été téléchargée (JPEG 1280×1254, 122 332 o) et **uploadée vers ImageKit par l'agent** (`200`, taille identique) ; l'humain a exécuté l'`UPDATE` + la colonne `old_url` (bloc SQL fourni) — **vérifié par lecture API** : `url` = ImageKit, `old_url` = Storage conservée, ancienne URL Storage toujours servie (`200`, rollback possible). **0 URL Storage restante** dans `project_images`. Les **19 autres images sont des chemins statiques du dépôt** (`/images/...`) : hors périmètre par conception (parade « garder les fichiers sources des images statiques dans le dépôt », `docs/SPRINTS.md`). |
 | F4bis.8 | FRONT-PUBLIC | ✅ | #34, #37 | **Preuves (2026-10-06, PR #37)** : une URL volontairement cassée insérée en base → `/projects/julia` **`200`** (l'`<img>` natif se contente d'une image manquante, la page ne casse pas) ; sans variables ImageKit, `/api/imagekit/auth` (admin) → **`503`** avec message français, anonyme → `401`, et les pages publiques (`/`, `/projets`, `/projects/julia`) restent **`200`**. Jamais de crash. |
 | F4bis.9 | DOC | ✅ | — | `docs/EXPLOITATION-IMAGES.md` : où sont les images (ImageKit / `project_images` / bucket `projects` conservé), fonctionnement de l'ajout, suppression (fichier distant conservé), changement de compte ImageKit, quota atteint (purge / retour `old_url` / changement d'offre), rotation de clé privée. |
+| F8.1 | MESSAGERIE | ✅ | #59 | **Destinataires multiples** : `CONTACT_TO_EMAIL` accepte plusieurs adresses (virgule / point-virgule). Preuve locale : l'e-mail de test porte `to: jtnova@test.local, admin@test.local`, **2/2 boîtes servies**. |
+| F8.2 | MESSAGERIE / MUTATIONS | ✅ | #59 | **Corrélation** : l'UUID du message est généré par la Server Action et inséré explicitement ; la notification porte `X-Jtnova-Contact-Id` = cet UUID (plus `Message-ID` `<contact-<uuid>@jtnova-madagascar>`). Vérifié : l'en-tête lu dans la boîte **égale** l'`id` de la ligne. |
+| F8.3 | MESSAGERIE / ADMIN-UI | ✅ | #59 | **Passage automatique en « Lu »** (IMAP, `src/lib/mail-sync.ts`) : e-mail non lu → « Nouveau » ; e-mail `\Seen` → « Lu », base `read`, badge 0. **Cas partiel** : 2 « Nouveau », un seul e-mail lu → `["Nouveau","Lu","Lu"]`, badge 1. Statut manuel (`replied`) jamais écrasé. |
+| F8.4 | MESSAGERIE | ✅ | #59 | **Mode dégradé** : sans `SMTP_*`/`IMAP_*`, le formulaire reste un succès (ligne créée) et `/admin/messages` répond **200** avec statuts intacts, **0 erreur** serveur. |
 
 ## Journal des décisions prises seul
+
+- 2026-10-07 — **S8 Phase 1 vérifiée et fusionnée dans `dev` (PR #59, squash `aeeafcb`).** CI « Types, lint et build » **verte** (54 s) + preview Vercel générée. Preuves complètes et décision « pas de cron » : voir la section S8. **Reste** : (1) pré-requis humain — activer IMAP dans Gmail (non bloquant, la fonctionnalité s'arrête proprement sinon) ; (2) la **release `dev` → `main`**, laissée à la décision de l'humain (la Porte §4ter ne peut pas être verte tant que le pré-requis IMAP est en attente, condition 10).
+
+- 2026-10-07 — **S8 : le statut « lu » suit la boîte Gmail (IMAP), sans nouveau secret.** L'humain demande que « une fois que le mail est lu dans la boîte, le message dans l'admin passe automatiquement en lu ». L'envoi étant en **SMTP** (canal qui n'écoute rien), l'application devait interroger la boîte : `imapflow` (dépendance ajoutée, déclarée en `serverExternalPackages`) + `src/lib/mail-sync.ts`. Chaque notification part désormais avec l'en-tête `X-Jtnova-Contact-Id: <uuid de la ligne>` — l'UUID est **généré par la Server Action** et inséré explicitement, l'insertion anonyme ne pouvant pas relire la ligne ; à l'ouverture de l'admin on recherche cet en-tête et on lit le drapeau `\Seen`. **Décision notable — pas de cron** : un cron devrait écrire en base avec `SUPABASE_SERVICE_ROLE_KEY`, **absente de Vercel** (et non posable par l'agent) ; l'endpoint aurait été invérifiable en production. Le déclenchement se fait donc **au rendu de `/admin`** : instantané, gratuit, aucun secret, mutualisé par une promesse partagée (une seule connexion IMAP par rendu) et espacé par `IMAP_SYNC_MIN_INTERVAL_SEC` (défaut 60 s) ; **aucune connexion n'est ouverte quand plus aucun message n'est « Nouveau »** (mesuré : 0 connexion sur 3 rechargements ; page ≈170 ms contre ≈470-520 ms quand la sonde tourne). Le statut manuel n'est jamais écrasé (`.eq("status","new")`). **Limite documentée** : seule la boîte du compte d'envoi est surveillée. Vérifié de bout en bout avec une vraie boîte IMAP locale (GreenMail) — voir la section S8.
 
 - 2026-10-07 — **S7 Phase 1 vérifiée et fusionnée (PR #55, squash `4d8aae5`).** Les 10 fonctionnalités livrées avec preuve locale (voir section S7). Décisions notables : (1) **étoiles** = feuille générée `stars.css` + `<i class="jt-sN">` — le composant ne rend plus **aucun** style inline, positions vérifiées au runtime avec Chrome headless+CDP (toutes visibles, `jt-twinkle` actif) ; (2) **export côté serveur** — `/api/export` produit JSON et SQL, la CI ne stocke donc que `CRON_SECRET` (aucune clé Supabase dans GitHub) ; (3) **backup « published »** — le SQL de restauration ne remplace que les lignes publiées (brouillons préservés), rejoué 2× après sabotage volontaire : restauration intégrale ; (4) **monitoring maison** — `error_logs` (migration additive, RLS à la `contact_messages`) + `logError()` jamais lancé + frontière d'erreur racine + page `/admin/sante` avec badge ; (5) **liens morts** — un `href` de bouchon `#` rend un **libellé non cliquable** plutôt qu'un faux lien (les données réelles viennent des réglages) ; (6) `CRON_SECRET` généré et posé par l'agent (Vercel Prod+Preview + GitHub secret) — il n'apparaît jamais dans une URL. Enseignement technique récurrent : sous Vercel, une `<Image fill>` dans un conteneur **sans taille explicite** a une hauteur nulle — deux variantes de correctif utilisées : ratio/parent dimensionné (lightbox, vignettes) ou `width/height={0}` + style `auto` (image au ratio naturel).
 
@@ -264,7 +274,6 @@ Contexte Phase 2 : arbre de `dev` = `ed0fcc0` (PR #51), même pile locale, rejou
 **Pré-requis humain S6** : poser `SMTP_USER`/`SMTP_PASS` (mot de passe d'application Google) dans Vercel Production + Preview → ensuite seulement, preuve d'envoi réel (F6.5/F6.6 en production).
 
 ### Porte de merge §4ter — S6 (2026-10-07)
-
 | # | Condition | État | Preuve |
 |---|---|---|---|
 | 1 | Toutes les F de S6 ✅ | ✅ | F6.1→F6.9 prouvées : E2E **26/26** (Phase 1 sur `feat`, Phase 2 sur `dev`). F6.5/F6.6 : envoi réel prouvé (0 erreur applicative + `verify()` + `250 OK` Gmail) + envoi réel prod `200/ok:true` ; confirmation de réception demandée à l'humain. |
@@ -279,6 +288,37 @@ Contexte Phase 2 : arbre de `dev` = `ed0fcc0` (PR #51), même pile locale, rejou
 | 10 | Aucun pré-requis humain en attente | ✅ | **variables SMTP posées par l'agent** (4/4 Vercel) ; preuve locale réalisée — reste la confirmation de réception (demandée à l'humain) |
 
 **Conclusion : 10/10** → auto-merge exécuté.
+
+### Phase 2 S7 — replay sur `dev` (2026-10-07)
+
+- CI `dev` = success sur #55 et #56 ; `tsc` 0 · `eslint` 0 erreur / 9 warnings · build 0 (29 routes).
+- Replay scripté des critères sur la pile locale : **24/24 OK** (F7.1 sitemap 9 url + robots · F7.2 OG ×3 · F7.3 h1/0 lien mort ×7 pages · F7.4 optimiseur ×3 + WebP/AVIF · F7.5 150 Ko + 0 style inline · F7.6 401/401/200 · F7.7 export SQL · F7.8 log-error 400/204 + témoin en base + page Santé admin · contact E2E succès + boîte admin · 10 routes 200 · 4 admin 307 · export anonyme 401 · RLS `error_logs` anon SELECT `[]` / INSERT 201).
+- Note : le harnais a d'abord affiché « contact KO » — cause : le rate-limit mémoire 5/15 min (F6.7) fonctionnait **trop bien** après les replays ; correction du harnais (relance du serveur), pas du code. Enseignement : un garde anti-spam peut faire échouer un test de non-régression, c'est attendu.
+- **Hygiène** : `.verify-tmp` supprimé, `supabase db reset` final (3 migrations, dont `error_logs`), port 3110 libre, arbre propre, `.env.local` sur cloud (contrôle restauration : `fvdtbvjogaotawvdfojl` ×0).
+
+### Porte de merge §4ter — release S7 (2026-10-07)
+
+| # | Condition | État | Preuve |
+|---|---|---|---|
+| 1 | Toutes les F de S7 ✅ | ✅ | F7.1→F7.10 prouvées (section S7) |
+| 2 | CI verte sur `dev` et la PR | ✅ | runs success sur `dev` ; PR #57 checks pass ×2 + Vercel `pass`, `MERGEABLE / CLEAN` |
+| 3 | `tsc` / `eslint` / build 0 | ✅ | 0 / 0 (9 warnings ≤ baseline) / 0 (29 routes) |
+| 4 | Critères rejoués | ✅ | **24/24** (Phase 2 sur `dev`, pile locale) |
+| 5 | Non-régression | ✅ | routes publiques 200, admin anon 307, contact E2E, RLS anon |
+| 6 | Zones respectées | ✅ | `src/**`, `docs/**`, `scripts/**`, `.github/workflows/**`, `next.config.ts`, migration additive, `README.md` |
+| 7 | 0 secret dans le diff | ✅ | scan 0 occurrence ; `.env.local` gitignoré |
+| 8 | 0 migration destructive | ✅ | 1 migration **additive** (`error_logs`) |
+| 9 | RLS anon 0 ligne non publiée | ✅ | anon SELECT `error_logs` → `[]` ; INSERT contrôlé ; UPDATE anonyme sans effet |
+| 10 | 0 pré-requis humain bloquant | ✅ | `CRON_SECRET` posé par l'agent (Vercel Prod+Preview + GitHub) ; documentation des restants (non bloquants) dans STATUS |
+
+**Conclusion : 10/10** → release fusionnée.
+
+### Release S7 fusionnée + smoke test production (2026-10-07)
+
+- **PR #57** (`release/S7` → `main`) mergée par **merge commit** → `main` = **`b99685a`**. CI `main` = success. Aucune exception invoquée, aucun rollback.
+- **Smoke test prod** : `/`, `/projets`, `/services`, `/competences`, `/a-propos`, `/contact`, `/projects/julia`, `/sitemap.xml`, `/robots.txt`, `/admin/login` → **10/10 `200`** ; `/admin`, `/admin/messages`, `/admin/sante` → **307** ; `/api/export` → **401** ; `/api/cron/keep-alive` anonyme → **401** ; `/api/log-error` invalide → **400**.
+- **Discriminateurs S7 en prod (servi anonymement)** : `jt-star` présent + **0 style inline d'étoile** ; `_next/image` présent ; `robots.txt` contient `Disallow: /admin` ; sitemap **8 `<loc>`** (brouillon `vina-io` exclu — 1 réalisé de moins qu'en local, conforme aux données cloud) ; HTML `/` prod = **147 Ko** (réf. 201 Ko avant S7).
+- **Reste à poser côté cloud (documenté, non bloquant)** : migration `error_logs` (fichier `supabase/migrations/20261007090000_error_logs.sql`, voie éditeur SQL) puis `NEXT_PUBLIC_SITE_URL=https://jtnova-madagascar.vercel.app` (Vercel Prod+Preview) — tant que ce n'est pas posé, `/sitemap.xml` et l'export annotent des URL factices de repli identiques au domaine actuel (aucun impact fonctionnel visible).
 
 ### Release S6 fusionnée + smoke test production (2026-10-07)
 
@@ -310,6 +350,34 @@ Contexte : pile locale (base seedée, `next start -p 3110`, `CRON_SECRET` local)
 **Décisions S7** : étoiles = classes CSS générées (0 aléatoire, pas de mismatch d'hydratation) ; export **côté serveur** via `/api/export` (la CI ne détient aucun identifiant Supabase, seulement `CRON_SECRET`) ; monitoring **maison** `error_logs` + page Santé (Sentry optionnel, non requis) ; migration `error_logs` **additive** ; un `href` de bouchon `#` rend un libellé non cliquable plutôt qu'un lien mort. Cloud : la migration `error_logs` et `NEXT_PUBLIC_SITE_URL` restent à poser côté instance cloud (voir §4bis S7).
 
 **Pré-requis humain S7 (restants, non bloquants)** : (1) appliquer la migration `error_logs` sur l'instance cloud (bloc SQL fourni dans `supabase/migrations/20261007090000_error_logs.sql`, voie éditeur SQL) ; poser `NEXT_PUBLIC_SITE_URL=https://jtnova-madagascar.vercel.app` (Production + Preview) pour que les workflows pointent la bonne URL ; (2) lernen lien Login GitHub↔Vercel pour déployements auto si souhaité (= pré-clos S6).
+
+## S8 — Statut « lu » synchronisé avec la boîte mail (vérification 2026-10-07) — **fusionné dans `dev`** (PR #59, squash `aeeafcb`)
+
+Demande de l'humain (2026-10-07) : « une fois que le mail est lu dans la boîte mail, le message dans l'admin passe automatiquement en lu ». Voie retenue (son choix) : **IMAP + mot de passe d'application Gmail existant**, sans nouveau secret.
+
+Chaîne : le formulaire de contact insère la ligne avec un **UUID choisi côté serveur** → la notification part (SMTP) vers **une ou plusieurs** adresses avec l'en-tête `X-Jtnova-Contact-Id: <uuid>` → à l'ouverture de l'espace admin, `src/lib/mail-sync.ts` recherche cet en-tête en IMAP et lit le drapeau `\Seen` → les messages correspondants passent en « Lu ».
+
+### Preuves S8 (local, boîte IMAP réelle)
+
+Banc d'essai : **GreenMail 2.1.3** (Docker, IMAP 3143 / SMTP 3025, utilisateurs `jtnova@test.local` + `admin@test.local`), Supabase local, `next start -p 3110`, formulaire de contact et session admin rejoués en **HTTP** (champs `$ACTION_*`).
+
+| Preuve | Méthode | Résultat |
+|---|---|---|
+| Envoi + corrélation | formulaire `POST /contact` | base : 1 ligne (`new`) · boîte : 1 e-mail, `X-Jtnova-Contact-Id` = id de la ligne |
+| Deux destinataires | idem | `to: jtnova@test.local, admin@test.local`, **2/2 boîtes** |
+| Pas de faux positif | `/admin/messages` avec e-mail **non lu** | « Nouveau », base `new`, badge 1 |
+| Bascule | e-mail marqué `\Seen` puis rechargement | « Lu », base `read`, badge 0 |
+| Bascule partielle | 2 « Nouveau », 1 seul e-mail lu | `["Nouveau","Lu","Lu"]`, badge 1 |
+| Statut manuel préservé | message passé « Répondu », puis e-mail lu + rechargement | reste **`replied`** (`.eq("status","new")`) |
+| Chemin rapide | 3 rechargements avec 0 message « Nouveau » | **0 connexion IMAP** (salutations GreenMail : 13 → 13) |
+| Coût mesuré | `GET /admin/messages` ×7 | **≈470–520 ms** avec sonde (1 « Nouveau ») contre **≈160–230 ms** sans → surcoût ≈300 ms, nul dès que la boîte est alignée |
+| Mode dégradé | serveur **sans** `SMTP_*`/`IMAP_*` | formulaire → **200**, ligne créée ; `/admin/messages` → **200**, statut intact ; **0 erreur** serveur |
+| Non-régression | 9 routes publiques, 5 routes admin, E2E contact, filtres de statut, export CSV, F6.9 (détail → « Lu ») | tout **200**, comportements inchangés |
+| Qualité | `tsc` · `eslint` · `next build` | **0** · **0 erreur** / 9 warnings (baseline) · **0**, **29 routes** |
+
+**Décisions S8** : (1) **pas de cron** — écrire en base depuis un cron exigerait `SUPABASE_SERVICE_ROLE_KEY`, absente de Vercel et non posable par l'agent : l'endpoint aurait été invérifiable en production. Déclenchement **au rendu de `/admin`**, instantané et gratuit, mutualisé par une promesse partagée (une connexion IMAP par rendu) et espacé par `IMAP_SYNC_MIN_INTERVAL_SEC` (défaut 60 s). (2) **Corrélation par en-tête `X-*`** plutôt que par `Message-ID` : un relais peut réécrire le `Message-ID`, pas un en-tête `X-`. (3) **UUID généré par la Server Action** : l'insertion anonyme ne peut pas relire la ligne (`return=representation` refusé par la RLS), l'identifiant doit donc être choisi avant l'insertion — **aucune migration** nécessaire. (4) **`CONTACT_TO_EMAIL` en liste** plutôt qu'une nouvelle variable.
+
+**Pré-requis humain S8 (un seul, non bloquant)** : activer **IMAP** dans Gmail (Paramètres → Transfert et POP/IMAP → *Activer IMAP*) sur le compte d'envoi ; les identifiants sont ceux de l'envoi (`SMTP_USER`/`SMTP_PASS`), rien à créer. Sans cela la fonctionnalité s'arrête proprement (statuts inchangés, aucune erreur). `IMAP_USER`/`IMAP_PASS`/`IMAP_HOST`/`IMAP_PORT` permettent de viser une autre boîte.
 
 ## S4 — Admin : réalisations (vérification 2026-10-06)
 
@@ -410,6 +478,8 @@ Contexte : S1 publiée ; travail S2 sur branche `feat/S2-detail-dynamique`, arbr
 **Lecture cloud vs repli** : la route `[slug]` n'existe pas en statique et n'a **aucun repli local** dans le code (`getProjectBySlug` → `null` → `notFound()`). Un `200` sur `/projects/<slug>` prouve donc la lecture base ; le brouillon `vina-io` renvoyant `404` confirme le respect de `published = true` (RLS).
 
 ## Bloquants et pré-requis humains en attente
+
+- **S8 — pré-requis humain (2026-10-07, non bloquant)** : activer **IMAP** dans Gmail (Paramètres → *Transfert et POP/IMAP* → *Activer IMAP*) sur le compte d'envoi `jtnova.madagascar@gmail.com`. Les identifiants IMAP sont ceux déjà posés pour l'envoi (`SMTP_USER`/`SMTP_PASS`) — **aucune variable ni secret à ajouter**. Sans cette activation, le passage automatique en « Lu » reste inactif mais rien ne casse : les statuts se comportent comme avant S8. Variable optionnelle pour viser une autre boîte : `IMAP_USER` / `IMAP_PASS` / `IMAP_HOST` / `IMAP_PORT` (voir `.env.example`).
 
 - **S6 — pré-requis humain restant (2026-10-07, non bloquant)** : poser les **2 variables `SMTP_USER` + `SMTP_PASS`** (mot de passe d'application Google — 2FA requise, [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)) dans Vercel **Production + Preview** (et `.env.local` pour un test local) : le mot de passe **ne doit jamais transiter par le chat**. Après la pose : un envoi réel depuis `/contact` = preuve finale de F6.5 (notification admin) et F6.6 (accusé de réception). Optionnel : `CONTACT_TO_EMAIL` (défaut : le compte SMTP lui-même), `CONTACT_AUTOREPLY=0` pour désactiver l'accusé.
 

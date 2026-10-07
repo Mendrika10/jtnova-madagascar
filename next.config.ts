@@ -2,6 +2,13 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /**
+   * S8 — `imapflow` (lecture de la boîte Gmail pour le passage automatique en
+   * « lu ») est un paquet Node natif côté serveur : il est résolu à
+   * l'exécution, hors bundling, ce qui évite les faux positifs de l'analyseur
+   * sur ses dépendances (`pino`, sockets TLS).
+   */
+  serverExternalPackages: ["imapflow"],
+  /**
    * F7.4 — images optimisées : `next/image` sert automatiquement du WebP
    * (repli AVIF→WebP selon le navigateur), à la bonne largeur et en différé.
    * Les captures de réalisations font ~500 Ko chacune en PNG ; affichées en
