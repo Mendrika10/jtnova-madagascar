@@ -2,7 +2,9 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
+import Image from "next/image";
 import styles from "./ImageLightbox.module.css";
+import { shouldSkipOptimizer } from "@/lib/images";
 
 type Props = {
   images: string[];
@@ -63,10 +65,16 @@ export default function ImageLightbox({ images, startIndex, onClose }: Props) {
         </button>
 
         <div className={styles.imgWrap}>
-          <img
+          {/* F7.4 — image affichée optimisée (WebP), jamais le PNG d'origine. */}
+          <Image
             src={images[index]}
             alt={`Image ${index + 1}`}
             className={styles.image}
+            width={0}
+            height={0}
+            sizes="90vw"
+            style={{ width: "auto", height: "auto" }}
+            unoptimized={shouldSkipOptimizer(images[index])}
           />
         </div>
 

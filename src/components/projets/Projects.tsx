@@ -1,55 +1,14 @@
 ﻿"use client";
 
-import { useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion, cubicBezier, type Variants } from "framer-motion";
 import styles from "./Projects.module.css";
 import type { ProjectCardItem } from "@/lib/content";
+import StarField from "@/components/accueil/StarField";
+import { shouldSkipOptimizer } from "@/lib/images";
 
 const expo = cubicBezier(0.16, 1, 0.3, 1);
-
-// Étoiles déterministes
-const seed = (n: number) => {
-  const x = Math.sin(n + 1) * 10000;
-  return x - Math.floor(x);
-};
-const r = (n: number, d = 4) => parseFloat(n.toFixed(d));
-const STARS = Array.from({ length: 80 }, (_, i) => ({
-  id: i,
-  x: r(seed(i * 2.9) * 100),
-  y: r(seed(i * 4.7) * 100),
-  size: r(seed(i * 8.3) * 1.5 + 0.4),
-  delay: r(seed(i * 11.7) * 7),
-  duration: r(seed(i * 14.1) * 3 + 2),
-  bright: i % 13 === 0,
-}));
-
-function createShooter(container: HTMLDivElement) {
-  if (!container || !container.isConnected) return;
-  const el = document.createElement("span");
-  el.className = styles.shooter;
-  const startX = Math.random() * 80;
-  const startY = Math.random() * 40;
-  const angle = 28 + Math.random() * 22;
-  const length = 100 + Math.random() * 130;
-  const delay = Math.random() * 1.5;
-  const dur = 0.8 + Math.random() * 0.5;
-  el.style.setProperty("--sx", `${startX}%`);
-  el.style.setProperty("--sy", `${startY}%`);
-  el.style.setProperty("--angle", `${angle}deg`);
-  el.style.setProperty("--len", `${length}px`);
-  el.style.animationDelay = `${delay}s`;
-  el.style.animationDuration = `${dur}s`;
-  container.appendChild(el);
-  const total = (delay + dur + 0.1) * 1000;
-  setTimeout(
-    () => {
-      el.remove();
-      if (container.isConnected) createShooter(container);
-    },
-    total + 5000 + Math.random() * 9000,
-  );
-}
 
 const headerContainerVar: Variants = {
   hidden: {},
@@ -157,10 +116,14 @@ function DeviceFrame({
       <div className={styles.deviceMobile}>
         <div className={styles.deviceNotch} />
         <div className={styles.deviceScreen}>
-          <img
+          {/* F7.4 — aperçu de réalisation optimisé (WebP, ~420 px de large). */}
+          <Image
             src={image}
             alt={title}
             className={styles.deviceImg}
+            fill
+            sizes="(max-width: 900px) 90vw, 420px"
+            unoptimized={shouldSkipOptimizer(image)}
             onError={(e) => {
               (e.target as HTMLImageElement).style.display = "none";
             }}
@@ -198,10 +161,14 @@ function DeviceFrame({
         </span>
       </div> */}
       <div className={styles.deviceScreen}>
-        <img
+        {/* F7.4 — aperçu de réalisation optimisé (WebP, ~420 px de large). */}
+        <Image
           src={image}
           alt={title}
           className={styles.deviceImg}
+          fill
+          sizes="(max-width: 900px) 90vw, 420px"
+          unoptimized={shouldSkipOptimizer(image)}
           onError={(e) => {
             (e.target as HTMLImageElement).style.display = "none";
           }}
@@ -214,9 +181,12 @@ function DeviceFrame({
 type ProjectsProps = {
   /** Réalisations publiées depuis Supabase ; absent → repli sur les données locales. */
   items?: ProjectCardItem[];
+  /** F7.3 — niveau du titre de section : `h1` sur la page dédiée, `h2` sur l'accueil. */
+  titleAs?: "h1" | "h2";
 };
 
-export default function Projects({ items }: ProjectsProps = {}) {
+export default function Projects({ items, titleAs = "h2" }: ProjectsProps = {}) {
+  const Title = titleAs === "h1" ? motion.h1 : motion.h2;
   const projects =
     items && items.length > 0
       ? items.map((it) => ({
@@ -227,41 +197,10 @@ export default function Projects({ items }: ProjectsProps = {}) {
         }))
       : projectsFallback;
 
-  const shooterRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const el = shooterRef.current;
-    if (!el) return;
-    const timers: number[] = [];
-    for (let i = 0; i < 3; i++) {
-      timers.push(window.setTimeout(() => createShooter(el), i * 2400));
-    }
-    return () => {
-      timers.forEach(clearTimeout);
-      if (el) el.innerHTML = "";
-    };
-  }, []);
-
   return (
     <section id="projects" className={styles.section}>
-      {/* Étoiles */}
-      <div className={styles.starsLayer} aria-hidden="true">
-        {STARS.map((s) => (
-          <span
-            key={s.id}
-            className={`${styles.star} ${s.bright ? styles.starBright : ""}`}
-            style={{
-              left: `${s.x}%`,
-              top: `${s.y}%`,
-              width: `${s.size}px`,
-              height: `${s.size}px`,
-              animationDelay: `${s.delay}s`,
-              animationDuration: `${s.duration}s`,
-            }}
-          />
-        ))}
-        <div ref={shooterRef} className={styles.shooterContainer} />
-      </div>
+      {/* F7.5 — étoiles : géométrie en CSS (`stars.css`), plus de styles inline. */}
+      <StarField count={80} offset={290} />
       <div className={styles.bg} aria-hidden="true" />
       <div className={styles.container}>
         <motion.div
@@ -275,9 +214,9 @@ export default function Projects({ items }: ProjectsProps = {}) {
             <span className={styles.labelDot} />
             Nos réalisations
           </motion.span>
-          <motion.h2 className={styles.title} variants={titleVar}>
+          <Title className={styles.title} variants={titleVar}>
             Projets <span className={styles.accent}>sélectionnés</span>
-          </motion.h2>
+          </Title>
           <motion.p className={styles.subtitle} variants={subtitleVar}>
             Une sélection de nos réalisations pour des clients de secteurs
             variés.

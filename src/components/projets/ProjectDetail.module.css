@@ -350,6 +350,8 @@
 .mediaWrap {
   width: 100%;
   max-width: 520px;
+  /* F7.4 — la hauteur reste donnée par l'image (ratio naturel conservé),
+     quelle que soit la capture : aucun recadrage n'est imposé. */
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 12px 40px rgba(2, 6, 23, 0.6);

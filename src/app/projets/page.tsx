@@ -12,5 +12,6 @@ export const revalidate = 60;
 
 export default async function ProjetsPage() {
   const projects = await getPublishedProjects();
-  return <Projects items={projects ?? undefined} />;
+  // F7.3 — la page dédiée porte le titre principal de niveau h1.
+  return <Projects items={projects ?? undefined} titleAs="h1" />;
 }

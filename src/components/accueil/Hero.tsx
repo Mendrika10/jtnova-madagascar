@@ -5,6 +5,7 @@ import StarField from "./StarField";
 import FloatingLogos from "./FloatingLogos";
 import styles from "./Hero.module.css";
 import type { HeroSetting, SocialLink } from "@/lib/site-settings";
+import { isUsableHref } from "@/lib/links";
 
 // Easing expo-out ultra-fluide
 const expo = cubicBezier(0.16, 1, 0.3, 1);
@@ -216,37 +217,53 @@ export default function Hero({
               initial="hidden"
               animate="show"
             >
-              {visibleSocials.map((s) => (
-                <motion.a
-                  key={`${s.label}-${s.href}`}
-                  href={s.href}
-                  className={styles.socialLink}
-                  variants={socialItemVariant}
-                  target={s.href.startsWith("http") ? "_blank" : undefined}
-                  rel={
-                    s.href.startsWith("http")
-                      ? "noopener noreferrer"
-                      : undefined
-                  }
-                >
-                  {s.label}
-                  <svg
-                    width="9"
-                    height="9"
-                    viewBox="0 0 12 12"
-                    fill="none"
-                    aria-hidden="true"
+              {visibleSocials.map((s) => {
+                // F7.3 — `href="#"` = lien mort : libellé non cliquable.
+                const label = (
+                  <>
+                    {s.label}
+                    <svg
+                      width="9"
+                      height="9"
+                      viewBox="0 0 12 12"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M2 10L10 2M10 2H4M10 2V8"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </>
+                );
+                if (!isUsableHref(s.href)) {
+                  return (
+                    <motion.span
+                      key={`${s.label}-${s.href}`}
+                      className={styles.socialLink}
+                      variants={socialItemVariant}
+                    >
+                      {label}
+                    </motion.span>
+                  );
+                }
+                const external = s.href.startsWith("http");
+                return (
+                  <motion.a
+                    key={`${s.label}-${s.href}`}
+                    href={s.href}
+                    className={styles.socialLink}
+                    variants={socialItemVariant}
+                    target={external ? "_blank" : undefined}
+                    rel={external ? "noopener noreferrer" : undefined}
                   >
-                    <path
-                      d="M2 10L10 2M10 2H4M10 2V8"
-                      stroke="currentColor"
-                      strokeWidth="1.6"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </motion.a>
-              ))}
+                    {label}
+                  </motion.a>
+                );
+              })}
             </motion.div>
           </div>
           {/* /leftCol */}
@@ -259,22 +276,31 @@ export default function Hero({
           >
             <p className={styles.desc}>{hero.subtitle}</p>
             <div className={styles.ctaActions}>
-              {hero.cta_primary.label && (
-                <Link
-                  href={hero.cta_primary.href || "#"}
-                  className={styles.ctaBtn}
-                >
-                  {hero.cta_primary.label}
-                </Link>
-              )}
-              {hero.cta_secondary.label && (
-                <Link
-                  href={hero.cta_secondary.href || "#"}
-                  className={`${styles.ctaBtn} ${styles.ctaBtnGhost}`}
-                >
-                  {hero.cta_secondary.label}
-                </Link>
-              )}
+              {/* F7.3 — pas d'`href` de repli `#` : sans destination, on rend
+                  un libellé non cliquable plutôt qu'un lien mort. */}
+              {hero.cta_primary.label &&
+                (isUsableHref(hero.cta_primary.href) ? (
+                  <Link href={hero.cta_primary.href} className={styles.ctaBtn}>
+                    {hero.cta_primary.label}
+                  </Link>
+                ) : (
+                  <span className={styles.ctaBtn}>
+                    {hero.cta_primary.label}
+                  </span>
+                ))}
+              {hero.cta_secondary.label &&
+                (isUsableHref(hero.cta_secondary.href) ? (
+                  <Link
+                    href={hero.cta_secondary.href}
+                    className={`${styles.ctaBtn} ${styles.ctaBtnGhost}`}
+                  >
+                    {hero.cta_secondary.label}
+                  </Link>
+                ) : (
+                  <span className={`${styles.ctaBtn} ${styles.ctaBtnGhost}`}>
+                    {hero.cta_secondary.label}
+                  </span>
+                ))}
             </div>
           </motion.div>
         </div>

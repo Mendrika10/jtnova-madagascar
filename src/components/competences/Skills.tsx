@@ -40,9 +40,10 @@ export default function Skills() {
           Spécialité
         </div>
 
-        <h2 className={styles.title}>
+        {/* F7.3 — titre principal de la page (la page /competences n'avait aucun h1). */}
+        <h1 className={styles.title}>
           Domaines<br />d&apos;expertise
-        </h2>
+        </h1>
 
         <div className={styles.layout}>
           {/* Accordéon gauche */}

@@ -10,20 +10,10 @@ import {
 } from "framer-motion";
 import styles from "./CTA.module.css";
 import type { ContactInfoSetting, CtaSetting } from "@/lib/site-settings";
+import StarField from "@/components/accueil/StarField";
+import { isUsableHref } from "@/lib/links";
 
 const expo = cubicBezier(0.16, 1, 0.3, 1);
-
-function seed(n: number) {
-  return (Math.sin(n) * 43758.5453) % 1;
-}
-const PARTICLES = Array.from({ length: 55 }, (_, i) => ({
-  left: (Math.abs(seed(i * 3.1)) * 100).toFixed(2),
-  top: (Math.abs(seed(i * 7.3)) * 100).toFixed(2),
-  size: (Math.abs(seed(i * 2.7)) * 2 + 1).toFixed(2),
-  opacity: (Math.abs(seed(i * 5.9)) * 0.45 + 0.08).toFixed(2),
-  dur: (Math.abs(seed(i * 4.1)) * 4 + 3).toFixed(2),
-  delay: (Math.abs(seed(i * 6.3)) * 5).toFixed(2),
-}));
 
 const colVar = {
   hidden: { opacity: 0, y: 28, filter: "blur(6px)" },
@@ -87,23 +77,8 @@ export default function CTA({
         >
           {/* bg effects */}
 
-          <div className={styles.particles} aria-hidden="true">
-            {PARTICLES.map((p, i) => (
-              <span
-                key={i}
-                className={styles.particle}
-                style={{
-                  left: `${p.left}%`,
-                  top: `${p.top}%`,
-                  width: `${p.size}px`,
-                  height: `${p.size}px`,
-                  opacity: Number(p.opacity),
-                  animationDuration: `${p.dur}s`,
-                  animationDelay: `${p.delay}s`,
-                }}
-              />
-            ))}
-          </div>
+          {/* F7.5 — particules : géométrie en CSS (`stars.css`), plus de styles inline. */}
+          <StarField count={55} offset={440} shooters={0} />
           <div className={styles.scanLine} aria-hidden="true" />
           <div className={styles.glowTop} aria-hidden="true" />
 
@@ -141,11 +116,15 @@ export default function CTA({
                 }
               </p>
 
-              {setting.button_label && (
-                <a href={setting.button_href || "#"} className={styles.social}>
-                  {setting.button_label}
-                </a>
-              )}
+              {/* F7.3 — pas d'`href` de repli `#` (lien mort). */}
+              {setting.button_label &&
+                (isUsableHref(setting.button_href) ? (
+                  <a href={setting.button_href} className={styles.social}>
+                    {setting.button_label}
+                  </a>
+                ) : (
+                  <span className={styles.social}>{setting.button_label}</span>
+                ))}
 
               <div className={styles.infos}>
                 <div className={styles.infoItem}>
@@ -207,21 +186,27 @@ export default function CTA({
               <div className={styles.socials}>
                 {setting.socials
                   .filter((s) => s.label && s.href)
-                  .map((s) => (
-                    <a
-                      key={`${s.label}-${s.href}`}
-                      href={s.href}
-                      className={styles.social}
-                      target={s.href.startsWith("http") ? "_blank" : undefined}
-                      rel={
-                        s.href.startsWith("http")
-                          ? "noopener noreferrer"
-                          : undefined
-                      }
-                    >
-                      {s.label}
-                    </a>
-                  ))}
+                  .map((s) =>
+                    isUsableHref(s.href) ? (
+                      <a
+                        key={`${s.label}-${s.href}`}
+                        href={s.href}
+                        className={styles.social}
+                        target={s.href.startsWith("http") ? "_blank" : undefined}
+                        rel={
+                          s.href.startsWith("http")
+                            ? "noopener noreferrer"
+                            : undefined
+                        }
+                      >
+                        {s.label}
+                      </a>
+                    ) : (
+                      <span key={`${s.label}-${s.href}`} className={styles.social}>
+                        {s.label}
+                      </span>
+                    ),
+                  )}
               </div>
             </motion.div>
 

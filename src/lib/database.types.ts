@@ -62,6 +62,45 @@ export type Database = {
         };
         Relationships: [];
       };
+      error_logs: {
+        Row: {
+          context: Json | null;
+          created_at: string;
+          id: string;
+          level: string;
+          message: string;
+          path: string | null;
+          resolved: boolean;
+          source: string;
+          stack: string | null;
+          user_agent: string | null;
+        };
+        Insert: {
+          context?: Json | null;
+          created_at?: string;
+          id?: string;
+          level?: string;
+          message: string;
+          path?: string | null;
+          resolved?: boolean;
+          source?: string;
+          stack?: string | null;
+          user_agent?: string | null;
+        };
+        Update: {
+          context?: Json | null;
+          created_at?: string;
+          id?: string;
+          level?: string;
+          message?: string;
+          path?: string | null;
+          resolved?: boolean;
+          source?: string;
+          stack?: string | null;
+          user_agent?: string | null;
+        };
+        Relationships: [];
+      };
       faq_items: {
         Row: {
           answer: string;

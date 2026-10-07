@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import styles from "./TechBannerImages.module.css";
 import ImageLightbox from "./ImageLightbox";
+import { shouldSkipOptimizer } from "@/lib/images";
 
 export default function TechBannerImages({
   images = [],
@@ -49,12 +51,17 @@ export default function TechBannerImages({
                   title ? `${title} — capture ${i + 1}` : `capture ${i + 1}`
                 }
               >
-                <img
+                {/* F7.4 — vignette optimisée (WebP + bonne largeur) : les
+                    captures font ~500 Ko en PNG, 20-40 Ko en WebP. */}
+                <Image
                   src={src}
                   alt={
                     title ? `${title} — capture ${i + 1}` : `capture ${i + 1}`
                   }
                   className={styles.thumb}
+                  fill
+                  sizes="(max-width: 560px) 78vw, 426px"
+                  unoptimized={shouldSkipOptimizer(src)}
                   onError={(e) =>
                     ((e.target as HTMLImageElement).style.display = "none")
                   }

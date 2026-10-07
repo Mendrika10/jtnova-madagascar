@@ -1,27 +1,31 @@
 "use client";
 import { useEffect, useRef } from "react";
 import styles from "./StarField.module.css";
+import "./stars.css";
 
-// Pseudo-aléatoire déterministe → pas de mismatch d'hydratation
-const seed = (n: number): number => {
-  const x = Math.sin(n + 1) * 10000;
-  return x - Math.floor(x);
+/**
+ * F7.5 — champ d'étoiles. Les positions/tailles/délais ne sont **plus** des
+ * styles inline (ils pesaient ~90 Ko de HTML sur l'accueil) : chaque étoile
+ * est un `<i>` portant une classe courte, la géométrie vit dans
+ * `stars.css` (généré par `scripts/generate-stars.mjs`, mis en cache).
+ *
+ * Les plages d'indices sont réparties par section (hero, services/réalisations,
+ * témoignages, CTA) pour que deux blocs d'une même page n'affichent pas les
+ * mêmes étoiles. Les étoiles filantes restent créées côté client.
+ */
+
+type StarFieldProps = {
+  /** Nombre d'étoiles rendues. */
+  count?: number;
+  /** Décalage dans le jeu généré (évite les doublons entre sections). */
+  offset?: number;
+  /** Nombre d'étoiles filantes (0 = aucune). */
+  shooters?: number;
 };
 
-const r = (n: number, d = 4): number => parseFloat(n.toFixed(d));
-
-const STARS = Array.from({ length: 200 }, (_, i) => ({
-  id: i,
-  x: r(seed(i) * 100),
-  y: r(seed(i * 3.7) * 100),
-  size: r(seed(i * 7.3) * 1.6 + 0.4),
-  delay: r(seed(i * 11.1) * 7),
-  duration: r(seed(i * 13.7) * 3 + 2),
-  bright: i % 18 === 0,
-  medium: i % 7 === 0,
-}));
-
 const SHOOTING_COUNT = 3;
+/** Intervalle entre deux créations de filante (ms). */
+const SHOOTER_STAGGER = 2500;
 
 function createShooter(container: HTMLDivElement) {
   const el = document.createElement("span");
@@ -47,42 +51,52 @@ function createShooter(container: HTMLDivElement) {
   setTimeout(
     () => {
       el.remove();
-      createShooter(container);
+      if (container.isConnected) createShooter(container);
     },
     total + 6000 + Math.random() * 8000,
   );
 }
 
-export default function StarField() {
+export default function StarField({
+  count = 200,
+  offset = 0,
+  shooters = SHOOTING_COUNT,
+}: StarFieldProps) {
   const shooterRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const el = shooterRef.current;
-    if (!el) return;
-    for (let i = 0; i < SHOOTING_COUNT; i++) {
-      setTimeout(() => createShooter(el), i * 2500);
+    if (!el || shooters <= 0) return;
+    const timers: number[] = [];
+    for (let i = 0; i < shooters; i++) {
+      timers.push(
+        window.setTimeout(() => createShooter(el), i * SHOOTER_STAGGER),
+      );
     }
-  }, []);
+    return () => {
+      timers.forEach(clearTimeout);
+      el.innerHTML = "";
+    };
+  }, [shooters]);
 
   return (
-    <div className={styles.field} aria-hidden="true">
-      {/* Étoiles fixes */}
-      {STARS.map((s) => (
-        <span
-          key={s.id}
-          className={`${styles.star} ${s.bright ? styles.starBright : ""} ${s.medium ? styles.starMedium : ""}`}
-          style={{
-            left: `${s.x}%`,
-            top: `${s.y}%`,
-            width: `${s.size}px`,
-            height: `${s.size}px`,
-            animationDelay: `${s.delay}s`,
-            animationDuration: `${s.duration}s`,
-          }}
-        />
-      ))}
-      {/* Conteneur étoiles filantes (client only) */}
-      <div ref={shooterRef} className={styles.shooterContainer} />
+    <div className="jt-stars" aria-hidden="true">
+      {Array.from({ length: count }, (_, i) => {
+        const idx = offset + i;
+        const bright = idx % 18 === 0;
+        const medium = !bright && idx % 7 === 0;
+        return (
+          <i
+            key={idx}
+            className={`jt-star${medium ? " jt-star-medium" : ""}${
+              bright ? " jt-star-bright" : ""
+            } jt-s${idx}`}
+          />
+        );
+      })}
+      {shooters > 0 && (
+        <div ref={shooterRef} className={styles.shooterContainer} />
+      )}
     </div>
   );
 }

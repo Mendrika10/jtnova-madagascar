@@ -1,27 +1,11 @@
 "use client";
 
-import { useEffect, useRef } from "react";
 import { motion, cubicBezier, type Variants } from "framer-motion";
 import styles from "./Services.module.css";
 import type { ServiceItem } from "@/lib/content";
+import StarField from "@/components/accueil/StarField";
 
 const expo = cubicBezier(0.16, 1, 0.3, 1);
-
-// Étoiles déterministes (pas de mismatch d'hydratation)
-const seed = (n: number) => {
-  const x = Math.sin(n + 1) * 10000;
-  return x - Math.floor(x);
-};
-const r = (n: number, d = 4) => parseFloat(n.toFixed(d));
-const STARS = Array.from({ length: 90 }, (_, i) => ({
-  id: i,
-  x: r(seed(i * 2.3) * 100),
-  y: r(seed(i * 5.1) * 100),
-  size: r(seed(i * 7.9) * 1.5 + 0.4),
-  delay: r(seed(i * 11.3) * 7),
-  duration: r(seed(i * 13.9) * 3 + 2),
-  bright: i % 14 === 0,
-}));
 
 const headerContainerVar: Variants = {
   hidden: {},
@@ -187,32 +171,6 @@ const servicesFallback = [
   },
 ];
 
-function createShooter(container: HTMLDivElement) {
-  const el = document.createElement("span");
-  el.className = styles.shooter;
-  const startX = Math.random() * 80;
-  const startY = Math.random() * 40;
-  const angle = 28 + Math.random() * 22;
-  const length = 100 + Math.random() * 130;
-  const delay = Math.random() * 1.5;
-  const dur = 0.8 + Math.random() * 0.5;
-  el.style.setProperty("--sx", `${startX}%`);
-  el.style.setProperty("--sy", `${startY}%`);
-  el.style.setProperty("--angle", `${angle}deg`);
-  el.style.setProperty("--len", `${length}px`);
-  el.style.animationDelay = `${delay}s`;
-  el.style.animationDuration = `${dur}s`;
-  container.appendChild(el);
-  const total = (delay + dur + 0.1) * 1000;
-  setTimeout(
-    () => {
-      el.remove();
-      createShooter(container);
-    },
-    total + 5000 + Math.random() * 9000,
-  );
-}
-
 // Icônes décoratives des cartes, attribuées par ordre.
 const SERVICES_ICONS = [
   <svg key="web" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M9 21V9" /></svg>,
@@ -226,9 +184,12 @@ const SERVICES_ICONS = [
 type ServicesProps = {
   /** Services publiés depuis Supabase ; absent → repli sur les données locales. */
   items?: ServiceItem[];
+  /** F7.3 — niveau du titre de section : `h1` sur la page dédiée, `h2` sur l'accueil. */
+  titleAs?: "h1" | "h2";
 };
 
-export default function Services({ items }: ServicesProps = {}) {
+export default function Services({ items, titleAs = "h2" }: ServicesProps = {}) {
+  const Title = titleAs === "h1" ? motion.h1 : motion.h2;
   const services =
     items && items.length > 0
       ? items.map((it, i) => ({
@@ -239,37 +200,10 @@ export default function Services({ items }: ServicesProps = {}) {
         }))
       : servicesFallback;
 
-  const shooterRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const el = shooterRef.current;
-    if (!el) return;
-    for (let i = 0; i < 3; i++) {
-      setTimeout(() => createShooter(el), i * 2200);
-    }
-  }, []);
-
   return (
     <section id="services" className={styles.section}>
-      {/* Étoiles de fond */}
-      <div className={styles.starsLayer} aria-hidden="true">
-        {STARS.map((s) => (
-          <span
-            key={s.id}
-            className={`${styles.star} ${s.bright ? styles.starBright : ""}`}
-            style={{
-              left: `${s.x}%`,
-              top: `${s.y}%`,
-              width: `${s.size}px`,
-              height: `${s.size}px`,
-              animationDelay: `${s.delay}s`,
-              animationDuration: `${s.duration}s`,
-            }}
-          />
-        ))}
-        {/* Étoiles filantes (client only) */}
-        <div ref={shooterRef} className={styles.shooterContainer} />
-      </div>
+      {/* F7.5 — étoiles : géométrie en CSS (`stars.css`), plus de styles inline. */}
+      <StarField count={90} offset={200} />
       <div className={styles.bg} aria-hidden="true" />
       <div className={styles.container}>
         <motion.div
@@ -283,11 +217,11 @@ export default function Services({ items }: ServicesProps = {}) {
             <span className={styles.dot} />
             Nos services
           </motion.div>
-          <motion.h2 className={styles.title} variants={titleVar}>
+          <Title className={styles.title} variants={titleVar}>
             Ce que nous
             <br />
             <span className={styles.accent}>construisons</span> pour vous
-          </motion.h2>
+          </Title>
           <motion.p className={styles.subtitle} variants={subtitleVar}>
             De la conception à la mise en production, Jtnova couvre
             l&apos;ensemble du spectre digital pour transformer vos idées en

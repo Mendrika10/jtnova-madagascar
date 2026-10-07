@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, cubicBezier, type Variants } from "framer-motion";
 import { PiSun, PiMoon } from "react-icons/pi";
+import { shouldSkipOptimizer } from "@/lib/images";
 import styles from "./Navbar.module.css";
 
 const expo = cubicBezier(0.16, 1, 0.3, 1);
@@ -88,10 +90,15 @@ export default function Navbar({ logoUrl }: { logoUrl?: string }) {
         >
           <Link href="/" className={styles.logo}>
             <span className={styles.logoBadge}>
-              <img
+              {/* F7.4 — logo optimisé (WebP + largeur adaptée). */}
+              <Image
                 src={logoUrl || "/images/logo.png"}
                 alt="Jtnova"
                 className={styles.logoImg}
+                width={732}
+                height={231}
+                sizes="120px"
+                unoptimized={shouldSkipOptimizer(logoUrl || "/images/logo.png")}
               />
             </span>
           </Link>
