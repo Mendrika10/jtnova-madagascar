@@ -70,6 +70,20 @@ Chaque formulaire soumis sur `/contact` arrive dans **Messages** :
 - Onglets *Nouveau / Lu / Répondu / Archivé* avec compteurs ; la recherche filtre
   nom, e-mail et contenu.
 - L'ouverture d'un message nouveau le passe automatiquement en **Lu**.
+- **Le statut suit votre boîte mail** : la notification reçue dans la boîte
+  Gmail de Jtnova porte un identifiant du message. En ouvrant `/admin` ou la
+  liste **Messages**, le site interroge la boîte en IMAP et passe en **Lu** les
+  messages dont l'e-mail a été lu — y compris si vous l'avez ouvert depuis
+  l'application Gmail de votre téléphone. Le badge des non-lus suit.
+  - Condition : **IMAP activé** dans Gmail (Paramètres → *Transfert et POP/IMAP*
+    → *Activer IMAP*). Les identifiants sont ceux de l'envoi
+    (`SMTP_USER`/`SMTP_PASS`) : rien à créer. `IMAP_USER`/`IMAP_PASS`
+    permettent de surveiller une autre boîte.
+  - Seule la boîte du compte d'envoi est surveillée : si `CONTACT_TO_EMAIL`
+    contient une deuxième adresse, lire la copie reçue sur **cette** boîte ne
+    suffit pas.
+  - Si aucun e-mail n'a pu être envoyé (SMTP non configuré), le message reste
+    « Nouveau » : c'est le comportement attendu, rien de perdu.
 - Actions disponibles : *Répondu* (après avoir répondu par e-mail — cliquer
   l'adresse du message ouvre votre client mail), *Archiver*.
 - **Note interne** : champ libre visible des seuls admins (pas envoyé au

@@ -10,6 +10,7 @@ import {
   type StatusFilter,
 } from "@/lib/admin-messages";
 import { MESSAGE_STATUSES } from "@/lib/validation";
+import { syncContactReadStatuses } from "@/lib/mail-sync";
 import styles from "../../admin.module.css";
 
 export const metadata: Metadata = {
@@ -68,6 +69,10 @@ export default async function AdminMessagesPage({
       </>
     );
   }
+
+  // S8 — la boîte mail fait foi : on aligne les statuts **avant** de lire la
+  // liste et les compteurs, pour que l'affichage soit juste du premier coup.
+  await syncContactReadStatuses(supabase);
 
   const [rows, counts] = await Promise.all([
     getInbox(supabase, { status, q }),

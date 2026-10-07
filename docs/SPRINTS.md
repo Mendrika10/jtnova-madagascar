@@ -165,6 +165,28 @@ Convention d'identifiant : `F<sprint>.<n>` (fonctionnalité). Chaque fonctionnal
 
 ---
 
+---
+
+## S8 — Statut « lu » synchronisé avec la boîte mail
+
+> Incrément **hors roadmap**, ajouté à la demande de l'humain le 2026-10-07 :
+> « une fois que le mail est lu dans la boîte mail, le message dans l'admin
+> passe automatiquement en lu ». L'envoi étant en SMTP (canal qui n'écoute
+> rien), c'est l'application qui interroge la boîte en IMAP.
+
+| ID | Fonctionnalité | Rôle | Critère d'acceptation |
+|---|---|---|---|
+| F8.1 | Notification à plusieurs destinataires (`CONTACT_TO_EMAIL` = liste séparée par virgules) | Messagerie | Un envoi → l'e-mail est reçu sur **chacune** des adresses |
+| F8.2 | Corrélation e-mail ↔ message (`X-Jtnova-Contact-Id`) | Messagerie | L'e-mail reçu porte l'identifiant du message en base |
+| F8.3 | Passage automatique en « Lu » à la lecture de l'e-mail (IMAP) | Messagerie | E-mail marqué lu dans la boîte → message « Lu » dans `/admin/messages` |
+| F8.4 | Mode dégradé | Messagerie | Sans IMAP/SMTP configuré : pages `200`, statuts intacts, aucune erreur |
+
+**Hors périmètre** (assumé) : surveillance de **plusieurs** boîtes (une seule
+boîte = le compte d'envoi), cron planifié (l'écriture en base exigerait la clé
+`service_role`, absente de Vercel).
+
+---
+
 ## Backlog « plus tard » (hors périmètre actuel)
 
 - Blog / actualités, multi-langue (FR/EN), espace client, devis en ligne,

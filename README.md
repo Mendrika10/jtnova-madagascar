@@ -14,7 +14,7 @@ espace `/admin` protégé.
 | Authentification | Supabase Auth |
 | Fichiers | Supabase Storage |
 | Hébergement | Vercel |
-| E-mails | Gmail SMTP (nodemailer) |
+| E-mails | Gmail SMTP (envoi, nodemailer) + IMAP (statut « lu », imapflow) |
 | Images | Supabase Storage + ImageKit (upload admin), `next/image` + WebP/AVIF côté site |
 | Validation | Zod |
 
@@ -90,7 +90,7 @@ Vercel deviennent limitants) y est documenté et testable : **`docs/DEPLOIEMENT-
 | `docs/PLAN.md` | Vision, périmètre, stack, contraintes des offres gratuites, roadmap, Definition of Done |
 | `docs/ARCHITECTURE.md` | Flux de données, modèle de données, politiques RLS, sécurité, performances |
 | `docs/EQUIPE.md` | Rôles, matrice RACI, workflow Git, conventions |
-| `docs/SPRINTS.md` | Sprints S0 → S7, chaque fonctionnalité et son critère d'acceptation |
+| `docs/SPRINTS.md` | Sprints S0 → S8, chaque fonctionnalité et son critère d'acceptation |
 | `docs/DEPLOIEMENT.md` | Runbook Vercel, variables d'environnement, rollback, limites gratuites |
 | `docs/DEPLOIEMENT-CLOUDFLARE.md` | Plan de sortie vers Cloudflare Pages (procédure écrite et testable) |
 | `docs/GUIDE-ADMIN.md` | Guide d'exploitation pour un rédacteur/admin : publier, modérer, sauvegarder |
