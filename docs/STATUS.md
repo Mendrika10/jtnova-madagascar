@@ -2,7 +2,9 @@
 
 Sprint en cours : S7 — **Finitions pro & durcissement** — **terminé et publié** (release #57 merge commit **`b99685a`**, `main` à jour)
 
-Increment terminé : **S8 — Statut « lu » synchronisé avec la boîte mail** (demande de l'humain du 2026-10-07) — **terminé et publié** (release **#61**, merge commit **`1bbe3d4`**, `main` à jour) — dernière mise à jour : 2026-10-07
+Increment terminé : **S8 — Statut « lu » synchronisé avec la boîte mail** (demande de l'humain du 2026-10-07) — **terminé et publié** (release **#61**, merge commit **`1bbe3d4`**, `main` à jour)
+
+Incrément terminé : **UI-ADMIN — refonte visuelle de la page de connexion** (6 demandes de l'humain du 2026-10-07, fiche §3.16) — **terminé et publié** (release **#67**, merge commit **`d8b93c2`**, `main` à jour) — dernière mise à jour : 2026-10-08
 
 Sprint précédent : S6 — **terminé et publié** (release #53, `c3622e7`)
 
@@ -60,6 +62,8 @@ Sprint précédent : S4bis — **terminé et publié** (release #38, `78ff057`)
 | F8.4 | MESSAGERIE | ✅ | #59 | **Mode dégradé** : sans `SMTP_*`/`IMAP_*`, le formulaire reste un succès (ligne créée) et `/admin/messages` répond **200** avec statuts intacts, **0 erreur** serveur. |
 
 ## Journal des décisions prises seul
+
+- 2026-10-08 — **Incrément UI-ADMIN publié en production (release `dev` → `main` #67, merge commit `d8b93c2`).** Le travail avait été fusionné dans `dev` la veille (PR **#66**, squash **`e9be602`**) ; la release regroupe aussi la migration d'icônes (PR #64) et les enregistrements de doc (#62, #63, #65) : 11 fichiers, +1151/−104. **Porte de merge §4ter : 10/10** (détail dans la PR #67) — aucune exception invoquée, `AUTO_MERGE_MAIN = true`, CI verte sur `dev` (`37744698505`), sur la PR de release (`37747067802`) et après fusion sur `main` (`37747385168`). **Aucune migration**, rien à appliquer en base. **Smoke test production** : 10/10 routes clés en `200`, admin anonyme en `307`, `/api/export` et `/api/cron/keep-alive` anonymes en `401` ; discriminateurs du nouveau build servis (`loginMarqueeTrack`, titre « …depuis un seul endroit. »). **Aucun rollback.** Les pré-requis humains ouverts (IMAP Gmail, `SMTP_*`, rotation ImageKit, `db repair`, archivage « Test S8 production ») restent hors périmètre de cet incrément.
 
 - 2026-10-07 — **Icônes : `@deemlol/next-icons` adopté, `react-icons` retiré (directive de l'humain « pour toutes les icônes »).** La lib (0.2.7) expose **351 icônes d'interface** uniquement — **aucune icône de marque** — or les logos flottants du site public en consomment 16 (React, TS, Docker…). Décisions : (1) `Navbar` (soleil/lune, dans le bloc commenté du bouton de thème) passe sur `Moon`/`Sun` de `@deemlol/next-icons` ; (2) les 16 tracés de marques sont **embarqués localement** (`src/components/icons/brand.tsx`, Solar Icons v13 CC0 — la même source que `react-icons/si`), rendus au même calage (24×24, `currentColor`, `1em`) ; (3) `react-icons` désinstallé, 0 référence en code. **Preuve « aucune régression visuelle »** : DOM servi comparé à la production — **tous les tracés `<path d>` identiques** sur `/` et `/a-propos` (0 manquant), captures Chrome headless avant/après (1366×900@1.5) divergentes seulement dans les zones d'animation volatile (~2,4 % de pixels, décalage temporel des logos flottants), **0 erreur console** au runtime, 9 routes locales `200`, `tsc`/`eslint`/build **0**. PR #64 fusionnée dans `dev` (squash `ee626bb`).
 
@@ -391,6 +395,56 @@ Banc d'essai : **GreenMail 2.1.3** (Docker, IMAP 3143 / SMTP 3025, utilisateurs 
 **Décisions S8** : (1) **pas de cron** — écrire en base depuis un cron exigerait `SUPABASE_SERVICE_ROLE_KEY`, absente de Vercel et non posable par l'agent : l'endpoint aurait été invérifiable en production. Déclenchement **au rendu de `/admin`**, instantané et gratuit, mutualisé par une promesse partagée (une connexion IMAP par rendu) et espacé par `IMAP_SYNC_MIN_INTERVAL_SEC` (défaut 60 s). (2) **Corrélation par en-tête `X-*`** plutôt que par `Message-ID` : un relais peut réécrire le `Message-ID`, pas un en-tête `X-`. (3) **UUID généré par la Server Action** : l'insertion anonyme ne peut pas relire la ligne (`return=representation` refusé par la RLS), l'identifiant doit donc être choisi avant l'insertion — **aucune migration** nécessaire. (4) **`CONTACT_TO_EMAIL` en liste** plutôt qu'une nouvelle variable.
 
 **Pré-requis humain S8 (un seul, non bloquant)** : activer **IMAP** dans Gmail (Paramètres → Transfert et POP/IMAP → *Activer IMAP*) sur le compte d'envoi ; les identifiants sont ceux de l'envoi (`SMTP_USER`/`SMTP_PASS`), rien à créer. Sans cela la fonctionnalité s'arrête proprement (statuts inchangés, aucune erreur). `IMAP_USER`/`IMAP_PASS`/`IMAP_HOST`/`IMAP_PORT` permettent de viser une autre boîte.
+
+## UI-ADMIN — Refonte de la page de connexion (vérification 2026-10-08) — **fusionné dans `dev`** (PR #66, squash `e9be602`) puis **publié en production** (release #67, `d8b93c2`)
+
+Demande de l'humain : reproduire fidèlement une capture de référence pour l'écran de connexion de l'administration (fiche §3.16), en **6 reprises successives** le 2026-10-07. **Aucune logique touchée** : `src/app/admin/login/actions.ts` (`loginAction`) inchangé, classes globales `.label`/`.input`/`.submit`/`.error` intactes — l'agent habille, il ne rebranche pas.
+
+**Fichiers (4, +888/−53)** : `src/app/admin/login/page.tsx` (split 2 colonnes, décor landing réutilisé `StarField` + `FloatingLogos`, bandeau défilant des 5 sections, titre complet, `data-theme` rendu serveur depuis le cookie, **aucun script inline**) · `src/app/admin/login/SubmitButton.tsx` (nouveau, `useFormStatus`) · `src/app/admin/login/ThemeToggle.tsx` (nouveau, `useSyncExternalStore`) · `src/app/admin/admin.module.css` (bloc « Connexion (UI-ADMIN) », 51 `light-dark()`, marquee, spinner, toggle, responsive 900/560 px).
+
+### Preuves (rejeu sur le build de production local, Chrome headless + CDP)
+
+| Critère | Résultat |
+|---|---|
+| Thème sombre (système) | `rootBg rgb(7,13,26)` · titre `rgb(255,255,255)` · accent `rgb(0,212,255)` (`background-clip:text`) · submit `rgb(255,255,255)` / texte `rgb(10,21,38)` |
+| Thème clair (système) | `rootBg rgb(238,243,250)` · `color-scheme: light` · titre `rgb(13,26,43)` · accent `rgb(0,137,184)` · submit `rgb(13,26,43)` / texte blanc · décor `invert(1)` |
+| Bascule + persistance | clic → `data-theme="dark"` **et** cookie `jtnova-admin-theme=dark` ; rechargement → attribut **rendu par le serveur** |
+| Cookie vs système | cookie `dark` + système clair → sombre rendu serveur ; aucun cookie → suit `prefers-color-scheme` |
+| Titre complet | « Publiez vos réalisations, ajustez chaque texte et répondez à vos messages **depuis un seul endroit.** » — 208 px (desktop) / 139 px (mobile) |
+| Bandeau + décor | `loginMarqueeTrack` présent · 20 pills (2 groupes) · 200 étoiles |
+| Responsive | 1366×900, 390×844 et 360×740 : `scrollWidth == innerWidth` partout ; **390×844 sans scroll vertical** (`scrollHeight == innerHeight == 844`) |
+| Console | **0 erreur et 0 warning** sur tous les scénarios (thèmes, bascule, rechargement, mobile) |
+| Qualité | `tsc` **0** · `eslint` **0 erreur / 9 warnings** (baseline) · `next build` **0** |
+
+### Décisions de l'incrément
+
+1. **Thème porté par CSS + cookie serveur**, sans `<script>` inline ni `localStorage` : React 19 refuse un script rendu par un composant (erreur console signalée par l'humain) — le script a été supprimé, `color-scheme` + `light-dark()` suffisent pour le rendu initial et le cookie rendu serveur pour la persistance.
+2. **Bascule en `useSyncExternalStore`** (MutationObserver sur `data-theme` + listener `matchMedia`) plutôt qu'en `setState` dans un effet : un `setState` synchrone dans un effet déclenche une erreur lint.
+3. **Police du formulaire : `Outfit`** (`next/font`, `--font-outfit`) — la capture de référence est un mockup introuvable en ligne ; choix **mesuré** (masque binaire du titre comparé à 14 polices) : **Outfit 0,1233** devant Hanken Grotesk 0,1708, Inter Tight 0,1754, Manrope 0,1788 et Satoshi/Switzer 0,1854. Le reste du site garde Satoshi.
+4. **Retouches manuelles de l'humain conservées** : `.loginEyebrow` / `.loginHeadline` sans `margin: 0`, `font-weight: 600`, accent `#00d4ff` (décliné `light-dark(#0089b8, #00d4ff)`).
+
+### Porte de merge §4ter — release UI-ADMIN (2026-10-08)
+
+| # | Condition | État | Preuve |
+|---|---|---|---|
+| 1 | Toutes les `F` ✅, aucune BLOQUÉE | ✅ | Aucune `F` au statut BLOQUÉE dans ce fichier ; incrément hors roadmap `F`, 6/6 demandes livrées |
+| 2 | CI verte sur `dev` et la PR de release | ✅ | `dev` run `37744698505` success · PR #66 3/3 pass · PR de release **#67** checks pass (`37747067802`) · `main` après fusion `37747385168` success |
+| 3 | `tsc` / `eslint` / build : 0 erreur | ✅ | 0 · 0 erreur / 9 warnings · 0, rejoués sur l'arbre `e9be602` |
+| 4 | Critères rejoués, preuves jointes | ✅ | tableau « Preuves » ci-dessus (6/6 demandes, 2 thèmes, bascule, responsive) |
+| 5 | Pas de régression, routes clés en 200 | ✅ | 10/10 `200` · `/admin` + 2 → `307` · `/api/export` et `/api/cron/keep-alive` anon → `401` · RLS anon `[]` |
+| 6 | Verdict REVIEWER, zone respectée | ✅ | diff `main…dev` = 11 fichiers : `src/**` (dont `src/app/admin/**`), `package*.json`, `AGENTS.md`, `docs/**` |
+| 7 | Aucun secret dans le diff | ✅ | scan (1485 lignes) : 0 occurrence de clé ou valeur ; aucun fichier `.env` ; les 3 hits sont des **noms** de variables dans la doc |
+| 8 | Aucune migration destructive | ✅ | **0 fichier `supabase/migrations`** dans le diff |
+| 9 | RLS anon → 0 ligne non publiée | ✅ | aucune donnée touchée ; contrôle : `contact_messages` et `error_logs` anon → `[]`, INSERT anon → `401` |
+| 10 | Aucun pré-requis humain touchant cet incrément | ✅ | ouverts : IMAP Gmail, `SMTP_*`, rotation ImageKit, `db repair`, archivage « Test S8 production » — **S1/S4bis/S6/S8, hors incrément** |
+
+**Conclusion : 10/10** → fusion **#67** par merge commit (`--merge`) le 2026-10-08, sans exception ni rollback.
+
+### Smoke test production (2026-10-08, `jtnova-madagascar.vercel.app`)
+
+- **10/10 `200`** : `/`, `/projets`, `/services`, `/competences`, `/a-propos`, `/contact`, `/projects/julia`, `/sitemap.xml`, `/robots.txt`, `/admin/login` · `/admin`, `/admin/messages`, `/admin/sante` → **307** (redirections `?redirect=%2Fadmin…`) · `/api/export` et `/api/cron/keep-alive` anonymes → **401**.
+- **Discriminateurs du nouveau build** : `loginMarqueeTrack` **présent**, titre « …depuis un seul endroit. » **présent** sur `/admin/login` servi (77 Ko), 0 trace d'erreur React ; `jt-star` et `_next/image` présents sur `/` ; `robots.txt` → `Disallow: /admin` ; sitemap **8 `<loc>`**.
+- **Hygiène** : aucun secret dans le diff, aucune migration, serveur local arrêté (port 3110 libre), harnais de capture supprimé, arbre propre.
 
 ## S4 — Admin : réalisations (vérification 2026-10-06)
 
