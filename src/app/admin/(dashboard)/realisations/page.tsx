@@ -1,5 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import {
+  ChevronDown,
+  ChevronUp,
+  Edit,
+  Eye,
+  Folder,
+  Plus,
+  Trash,
+} from "@deemlol/next-icons";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { listAllProjects } from "@/lib/admin-projects";
 import { deleteProjectAction, moveProjectAction } from "@/app/admin/actions";
@@ -15,11 +24,27 @@ export default async function AdminRealisationsPage() {
   const supabase = await createSupabaseServerClient();
   const projects = supabase ? await listAllProjects(supabase) : [];
 
+  const published = projects.filter((project) => project.published).length;
+  const drafts = projects.length - published;
+
   return (
     <div className={styles.panel}>
       <div className={styles.pageHeader}>
-        <h1 className={styles.pageTitle}>Réalisations</h1>
+        <div className={styles.titleRow}>
+          <span className={styles.titleIcon} aria-hidden>
+            <Folder size={18} strokeWidth={2} />
+          </span>
+          <span className={styles.titleBlock}>
+            <h1 className={styles.pageTitle}>Réalisations</h1>
+            <p className={styles.subtitle}>
+              {projects.length} réalisation{projects.length > 1 ? "s" : ""} ·{" "}
+              {published} publiée{published > 1 ? "s" : ""} · {drafts} brouillon
+              {drafts > 1 ? "s" : ""}
+            </p>
+          </span>
+        </div>
         <Link href="/admin/realisations/new" className={styles.primaryBtn}>
+          <Plus size={14} strokeWidth={2.4} aria-hidden />
           Nouvelle réalisation
         </Link>
       </div>
@@ -49,11 +74,12 @@ export default async function AdminRealisationsPage() {
                       <input type="hidden" name="direction" value="up" />
                       <button
                         type="submit"
-                        className={styles.iconBtn}
+                        className={styles.iconAction}
                         disabled={index === 0}
-                        aria-label="Monter"
+                        aria-label={`Monter « ${project.title} »`}
+                        title="Monter"
                       >
-                        ↑
+                        <ChevronUp size={14} strokeWidth={2.2} aria-hidden />
                       </button>
                     </form>
                     <form action={moveProjectAction}>
@@ -61,11 +87,12 @@ export default async function AdminRealisationsPage() {
                       <input type="hidden" name="direction" value="down" />
                       <button
                         type="submit"
-                        className={styles.iconBtn}
+                        className={styles.iconAction}
                         disabled={index === projects.length - 1}
-                        aria-label="Descendre"
+                        aria-label={`Descendre « ${project.title} »`}
+                        title="Descendre"
                       >
-                        ↓
+                        <ChevronDown size={14} strokeWidth={2.2} aria-hidden />
                       </button>
                     </form>
                   </td>
@@ -83,23 +110,30 @@ export default async function AdminRealisationsPage() {
                   <td className={styles.actionsCell}>
                     <Link
                       href={`/admin/realisations/${project.id}`}
-                      className={styles.linkBtn}
+                      className={styles.iconAction}
+                      aria-label={`Éditer « ${project.title} »`}
+                      title="Éditer"
                     >
-                      Éditer
+                      <Edit size={15} strokeWidth={2} aria-hidden />
                     </Link>
                     <Link
                       href={`/admin/realisations/${project.id}/apercu`}
-                      className={styles.linkBtn}
+                      className={styles.iconAction}
+                      aria-label={`Aperçu de « ${project.title} »`}
+                      title="Aperçu"
                     >
-                      Aperçu
+                      <Eye size={15} strokeWidth={2} aria-hidden />
                     </Link>
                     <form action={deleteProjectAction}>
                       <input type="hidden" name="id" value={project.id} />
                       <ConfirmButton
                         message={`Supprimer « ${project.title} » et tout son contenu ?`}
-                        className={styles.dangerBtn}
+                        className={`${styles.iconAction} ${styles.iconActionDanger}`}
                       >
-                        Supprimer
+                        <Trash size={15} strokeWidth={2} aria-hidden />
+                        <span className={styles.srOnly}>
+                          Supprimer « {project.title} »
+                        </span>
                       </ConfirmButton>
                     </form>
                   </td>

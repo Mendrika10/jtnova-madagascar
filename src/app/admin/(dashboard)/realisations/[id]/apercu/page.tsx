@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ArrowLeft, Eye } from "@deemlol/next-icons";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getProjectForEdit } from "@/lib/admin-projects";
 import { toProjectDetail } from "@/lib/content";
@@ -34,8 +35,12 @@ export default async function PreviewProjectPage({
   return (
     <div className={styles.previewPage}>
       <div className={styles.previewBar}>
-        <span>Aperçu — {data.project.published ? "publiée" : "brouillon"}</span>
+        <span className={styles.previewLabel}>
+          <Eye size={14} strokeWidth={2} aria-hidden />
+          Aperçu — {data.project.published ? "publiée" : "brouillon"}
+        </span>
         <Link href={`/admin/realisations/${id}`} className={styles.linkBtn}>
+          <ArrowLeft size={14} strokeWidth={2} aria-hidden />
           Retour à l&apos;édition
         </Link>
       </div>

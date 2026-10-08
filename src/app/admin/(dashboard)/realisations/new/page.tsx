@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { FilePlus } from "@deemlol/next-icons";
 import ProjectForm from "@/components/admin/ProjectForm";
 import styles from "../../../admin.module.css";
 
@@ -14,7 +15,18 @@ export default function NewProjectPage() {
       <p className={styles.breadcrumb}>
         <Link href="/admin/realisations">← Réalisations</Link>
       </p>
-      <h1 className={styles.pageTitle}>Nouvelle réalisation</h1>
+      <div className={styles.titleRow}>
+        <span className={styles.titleIcon} aria-hidden>
+          <FilePlus size={18} strokeWidth={2} />
+        </span>
+        <span className={styles.titleBlock}>
+          <h1 className={styles.pageTitle}>Nouvelle réalisation</h1>
+          <p className={styles.subtitle}>
+            Renseignez les informations puis enregistrez : elle apparaîtra sur le
+            site dès qu&apos;elle sera publiée.
+          </p>
+        </span>
+      </div>
       <ProjectForm
         initial={{
           title: "",
