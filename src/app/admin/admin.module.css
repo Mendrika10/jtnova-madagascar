@@ -1103,6 +1103,7 @@
 
 .orderCell {
   display: flex;
+  align-items: center;
   gap: 0.25rem;
 }
 
@@ -2694,4 +2695,92 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
+}
+
+/* Réordonnancement par glisser-déposer (UI-ADMIN, écrans Réalisations). */
+
+/* Ligne d'aide au-dessus du tableau. `position: relative` est nécessaire : la
+   région d'annonce `.srOnly` est en `position: absolute` et un parent non
+   positionné étend la zone de défilement du document (déjà rencontré à 390 px). */
+.orderHint {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 0.7rem;
+  font-size: 0.76rem;
+  color: #6b7280;
+}
+
+.orderSaving {
+  color: #5d6ac0;
+  font-weight: 600;
+}
+
+/* Poignée de glisser-déposer : cible large, mais discrète. */
+.dragHandle {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: #94a3b8;
+  cursor: grab;
+}
+
+.dragHandle:hover {
+  color: #334155;
+  background: #f1f5f9;
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+}
+
+.dragHandle:focus-visible {
+  border-color: #5d6ac0;
+  outline: 2px solid #5d6ac0;
+  outline-offset: 1px;
+  color: #334155;
+}
+
+/* Position affichée en clair ; la région d'annonce porte déjà l'information. */
+.orderIndex {
+  flex: none;
+  min-width: 1.1rem;
+  text-align: right;
+  font-size: 0.76rem;
+  color: #94a3b8;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Repli sans souris : les flèches ↑/↓ ne réapparaissent que sur écran tactile
+   (`hover: none`), seul cas où le glisser-déposer HTML5 est inexploitable. */
+.orderFallback {
+  display: none;
+  gap: 0.25rem;
+  margin-left: 0.15rem;
+}
+
+@media (hover: none) {
+  .orderFallback {
+    display: flex;
+  }
+}
+
+.panel .rowDragging td {
+  opacity: 0.45;
+}
+
+/* Trait d'insertion : matérialise la position de dépôt. */
+.panel .rowDropBefore td {
+  border-top: 2px solid #5d6ac0;
+}
+
+.panel .rowDropAfter td {
+  border-bottom: 2px solid #5d6ac0;
 }
