@@ -1101,16 +1101,29 @@
   vertical-align: middle;
 }
 
-.orderCell {
+/* Cellules à contenu en ligne (« Ordre », « Actions »). Elles restent de vraies
+   cellules de tableau (`display: table-cell`, la valeur par défaut) et le
+   conteneur flex vit dans un enfant : `display: flex` posé sur le `<td>`
+   lui-même le retire de la grille du tableau, si bien que son fond et sa
+   bordure se placent 1 à 3 px plus bas et 6 px plus courts que ceux de ses
+   voisines — d'où le bandeau et le trait d'insertion « en escalier » observés
+   sur la liste des réalisations. */
+.orderCell,
+.actionsCell {
+  vertical-align: middle;
+}
+
+.orderFlex {
   display: flex;
+  align-items: center;
   gap: 0.25rem;
 }
 
-.actionsCell {
+.actionsFlex {
   display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .code {
@@ -2767,4 +2780,170 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
+}
+
+/* Réordonnancement par glisser-déposer (UI-ADMIN, écrans Réalisations). */
+
+/* Ligne d'aide au-dessus du tableau. `position: relative` est nécessaire : la
+   région d'annonce `.srOnly` est en `position: absolute` et un parent non
+   positionné étend la zone de défilement du document (déjà rencontré à 390 px). */
+.orderHint {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 0.7rem;
+  font-size: 0.76rem;
+  color: #6b7280;
+}
+
+.orderSaving {
+  color: #5d6ac0;
+  font-weight: 600;
+}
+
+/* Poignée de glisser-déposer : cible large, mais discrète. */
+.dragHandle {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: #94a3b8;
+  cursor: grab;
+}
+
+.dragHandle:hover {
+  color: #334155;
+  background: #f1f5f9;
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+}
+
+.dragHandle:focus-visible {
+  border-color: #5d6ac0;
+  outline: 2px solid #5d6ac0;
+  outline-offset: 1px;
+  color: #334155;
+}
+
+/* Position affichée en clair ; la région d'annonce porte déjà l'information. */
+.orderIndex {
+  flex: none;
+  min-width: 1.1rem;
+  text-align: right;
+  font-size: 0.76rem;
+  color: #94a3b8;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Repli sans souris : les flèches ↑/↓ ne réapparaissent que sur écran tactile
+   (`hover: none`), seul cas où le glisser-déposer HTML5 est inexploitable. */
+.orderFallback {
+  display: none;
+  gap: 0.25rem;
+  margin-left: 0.15rem;
+}
+
+@media (hover: none) {
+  .orderFallback {
+    display: flex;
+  }
+}
+
+.panel .rowDragging td {
+  opacity: 0.45;
+}
+
+/* Trait d'insertion : matérialise la position de dépôt. */
+.panel .rowDropBefore td {
+  border-top: 2px solid #5d6ac0;
+}
+
+.panel .rowDropAfter td {
+  border-bottom: 2px solid #5d6ac0;
+}
+
+/* La ligne visée par le dépôt se teinte en plus du trait, pour épaissir le
+   repère pendant le survol. `tr.rowDrop…` dépasse la règle de survol du
+   tableau (`.panel .table tr:hover td`), sinon la teinte serait écrasée. */
+.panel .table tr.rowDropBefore td,
+.panel .table tr.rowDropAfter td {
+  background-color: rgba(93, 106, 192, 0.07);
+}
+
+/* La poignée de la ligne en cours de glissement se détache nettement. */
+.panel .rowDragging .dragHandle {
+  color: #334155;
+  background: #eef2ff;
+  box-shadow: 0 0 0 2px rgba(93, 106, 192, 0.35);
+}
+
+/* ── Retour visuel du déplacement ──
+   La ligne qui vient de changer de place clignote une fois puis se stabilise :
+   surbrillance qui s'estompe + léger glissement venant du sens du mouvement.
+   La teinte et la barre d'accent de `.rowMoved` restent affichées seules si
+   l'animation est coupée (mouvement réduit), pour ne jamais perdre le repère. */
+.panel .table tr.rowMoved td {
+  background-color: rgba(93, 106, 192, 0.09);
+}
+
+.panel .table tr.rowMoved td:first-child {
+  box-shadow: inset 3px 0 0 #5d6ac0;
+}
+
+.panel .table tr.rowMoved .orderIndex {
+  color: #4150a8;
+  font-weight: 600;
+}
+
+@keyframes rowMovedFlash {
+  from {
+    background-color: rgba(93, 106, 192, 0.28);
+  }
+  to {
+    background-color: rgba(93, 106, 192, 0.09);
+  }
+}
+
+/* Sens du glissement : une ligne descendue arrive d'en haut, et inversement. */
+@keyframes rowMovedFromAbove {
+  from {
+    transform: translateY(-8px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes rowMovedFromBelow {
+  from {
+    transform: translateY(8px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.panel .rowMovedDown td {
+  animation: rowMovedFlash 900ms ease-out both, rowMovedFromAbove 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.panel .rowMovedUp td {
+  animation: rowMovedFlash 900ms ease-out both, rowMovedFromBelow 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Mouvement réduit : plus de clignotement ni de glissement — la teinte et la
+   barre d'accent de `.rowMoved` suffisent à montrer le changement de place. */
+@media (prefers-reduced-motion: reduce) {
+  .panel .rowMovedDown td,
+  .panel .rowMovedUp td {
+    animation: none;
+  }
 }
