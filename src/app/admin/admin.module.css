@@ -1,40 +1,598 @@
 /* Espace d'administration — coquille sombre autonome (hors habillage public). */
 
+/* ── Connexion (UI-ADMIN) ────────────────────────────────────────────────────
+   Mise en page en deux colonnes reprise de la capture de référence : colonne
+   marque à gauche, carte « verre » à droite.
+   Décor = fond de la landing publique : nébuleuses cyan (::before), grille
+   64 px (::after) et le champ d'étoiles public `<StarField />` (étoiles +
+   étoiles filantes). Le site public reste gelé : son composant est seulement
+   réutilisé, jamais modifié. */
+
 .loginPage {
+  position: relative;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  padding: 2rem 1rem;
-  background: radial-gradient(circle at 30% 10%, #12233d 0%, #070b12 60%);
+  /* Thème : `light-dark()` se résout sur la propriété `color-scheme` posée
+     ci-dessous. Sombre par défaut ; bascule en clair soit par l'attribut
+     `data-theme` (choix explicite, rendu par le serveur), soit par la
+     préférence système (media query) quand aucun choix n'a été fait. */
+  background: light-dark(#eef3fa, var(--color-bg));
+  color-scheme: dark;
+  overflow: hidden;
+  /* Police de la capture de référence, appliquée à toute la page de connexion
+     (les titres qui utilisaient `--font-heading` héritent désormais d'ici).
+     Chargée par `next/font` dans `login/page.tsx` sous `--font-outfit`. */
+  font-family: var(--font-outfit, system-ui, sans-serif);
+  transition: background-color 0.35s ease;
 }
 
-.loginCard {
+/* Choix explicite de l'utilisateur — attribut rendu par le serveur depuis le
+   cookie, donc appliqué dès le premier octet de HTML (aucun flash). */
+.loginPage[data-theme="light"] {
+  color-scheme: light;
+}
+
+.loginPage[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+/* Aucun choix mémorisé : on suit la préférence système, en CSS pur — donc sans
+   script et sans flash, y compris lors d'une navigation côté client. */
+@media (prefers-color-scheme: light) {
+  .loginPage:not([data-theme]) {
+    color-scheme: light;
+  }
+}
+
+/* Décor (étoiles + logos flottants) regroupé : la bascule de thème peut ainsi
+   l'ajuster en une seule règle. La boîte reproduit exactement celle de
+   `.loginPage`, donc le rendu des enfants ne change pas. */
+.loginDecor {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+  transition:
+    opacity 0.35s ease,
+    filter 0.35s ease;
+}
+
+/* Seule propriété du thème qui ne soit pas une couleur (donc invisible à
+   `light-dark()`) : le décor clair est déclaré ici pour les deux chemins. */
+.loginPage[data-theme="light"] .loginDecor {
+  filter: invert(1);
+  opacity: 0.45;
+}
+
+@media (prefers-color-scheme: light) {
+  .loginPage:not([data-theme]) .loginDecor {
+    filter: invert(1);
+    opacity: 0.45;
+  }
+}
+
+/* Nébuleuse du hero (mêmes valeurs que Hero.module.css) */
+.loginPage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    /* voile discret à gauche : le texte reste lisible par-dessus les étoiles */
+    radial-gradient(
+      ellipse 58% 78% at 4% 50%,
+      light-dark(rgba(255, 255, 255, 0.8), rgba(4, 9, 18, 0.66)) 0%,
+      transparent 68%
+    ),
+    radial-gradient(
+      ellipse 70% 55% at 20% 10%,
+      light-dark(rgba(0, 150, 200, 0.1), rgba(0, 180, 216, 0.07)) 0%,
+      transparent 65%
+    ),
+    radial-gradient(
+      ellipse 50% 40% at 85% 80%,
+      light-dark(rgba(90, 140, 255, 0.08), rgba(100, 180, 255, 0.05)) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 40% 30% at 60% 50%,
+      light-dark(rgba(0, 180, 216, 0.05), rgba(0, 180, 216, 0.03)) 0%,
+      transparent 50%
+    );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Grille futuriste du hero */
+.loginPage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(
+      light-dark(rgba(13, 26, 43, 0.045), rgba(255, 255, 255, 0.015)) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      light-dark(rgba(13, 26, 43, 0.045), rgba(255, 255, 255, 0.015)) 1px,
+      transparent 1px
+    );
+  background-size: 64px 64px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.loginInner {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
   width: 100%;
-  max-width: 380px;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 3rem clamp(1.25rem, 5vw, 5rem);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 430px);
+  align-items: center;
+  gap: clamp(2rem, 6vw, 6rem);
+}
+
+/* ── Pied de page minimal (bas de page) ── */
+.loginFooter {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  padding: 1.1rem 1.5rem;
+  border-top: 1px solid light-dark(rgba(13, 26, 43, 0.08), rgba(255, 255, 255, 0.06));
+  text-align: center;
+  font-size: 0.78rem;
+  color: light-dark(#7a8ea6, rgba(150, 175, 205, 0.7));
+}
+
+/* ── Colonne marque (gauche) ── */
+.loginBrandCol {
   display: flex;
   flex-direction: column;
-  gap: 0.9rem;
-  padding: 2rem;
-  border-radius: 16px;
-  border: 1px solid rgba(120, 170, 255, 0.18);
-  background: rgba(13, 20, 32, 0.92);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  gap: 1.5rem;
+  max-width: 770px;
+  /* La bande défilante a une largeur intrinsèque très grande : sans
+     `min-width: 0`, elle imposerait sa taille à la colonne de grille et
+     déborderait du viewport sur mobile. */
+  min-width: 0;
+}
+
+/* Le wordmark Jtnova est sombre : il est posé sur une pastille claire, comme
+   dans la navbar, pour rester net sur le fond de la landing. */
+.loginLogoBadge {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 11px;
+  border-radius: 12px;
+  /* La pastille reste claire dans les deux thèmes : le wordmark est sombre. */
+  background: #fff;
+  border: 1px solid light-dark(rgba(13, 26, 43, 0.1), rgba(0, 180, 216, 0.2));
+  box-shadow:
+    0 4px 16px light-dark(rgba(13, 26, 43, 0.12), rgba(0, 0, 0, 0.4)),
+    inset 0 1px 0 light-dark(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.06));
+}
+
+.loginLogoImg {
+  height: 30px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
+.loginEyebrow {
+  /* margin: 0; */
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: light-dark(#5b7699, rgba(180, 220, 240, 0.62));
+}
+
+.loginHeadline {
+  /* margin: 0; */
+  font-family: inherit;
+  font-size: clamp(2.3rem, 4.4vw, 3.1rem);
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+  color: light-dark(#0d1a2b, #fff);
+  /* text-wrap: balance; */
+}
+
+/* Accent bleu sur les deux expressions clés du grand titre : « vos
+   réalisations » et « vos messages », en écho aux deux pilules juste en
+   dessous. Même technique que `.accent` du hero public (dégradé clippé sur le
+   texte) pour rester aligné sur la charte, en suivant la couleur d'accent
+   configurable `--color-accent`. */
+.loginHeadlineAccent {
+  background: light-dark(#0089b8, #00d4ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Bande défilante des 5 sections de l'admin (marquee CSS pur, sans JS). Le
+   contenu est dupliqué dans le DOM : la piste avance de -50 % puis boucle
+   sans saut. Fondu sur les deux bords pour ne pas trancher net. */
+.loginMarquee {
+  overflow: hidden;
+  width: 100%;
+  min-width: 0;
+  /* Propriété standard uniquement : Lightning CSS regénère la variante
+     préfixée `-webkit-mask-image` de lui-même. */
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    #000 8%,
+    #000 92%,
+    transparent 100%
+  );
+}
+
+.loginMarqueeTrack {
+  display: flex;
+  width: max-content;
+  animation: loginMarquee 30s linear infinite;
+}
+
+.loginMarquee:hover .loginMarqueeTrack {
+  animation-play-state: paused;
+}
+
+.loginMarqueeGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0 0.6rem 0 0;
+  list-style: none;
+}
+
+@keyframes loginMarquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.loginPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 6px 15px 6px 7px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  color: light-dark(#22334a, rgba(255, 255, 255, 0.88));
+  background: light-dark(rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.05));
+  border: 1px solid light-dark(rgba(13, 26, 43, 0.1), rgba(255, 255, 255, 0.1));
+  box-shadow: 0 2px 10px light-dark(rgba(13, 26, 43, 0.07), transparent);
+  backdrop-filter: blur(10px);
+}
+
+/* Icône colorée très visible : pastille teintée + halo de la même teinte,
+   couleur fournie par `--tone` (propriété inline de chaque section). */
+.loginPillIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  color: var(--tone, #00b4d8);
+  background: color-mix(in srgb, var(--tone, #00b4d8) 20%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tone, #00b4d8) 45%, transparent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--tone, #00b4d8) 40%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loginMarqueeTrack {
+    animation: none;
+  }
+  .loginMarquee {
+    overflow-x: auto;
+  }
+}
+
+/* ── Carte de connexion (droite) ── */
+.loginCard {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 3rem 2rem 5rem;
+  border-radius: 24px;
+  border: 1px solid light-dark(rgba(13, 26, 43, 0.08), rgba(255, 255, 255, 0.16));
+  background: linear-gradient(
+    160deg,
+    light-dark(rgba(255, 255, 255, 0.94), rgba(22, 34, 56, 0.82)) 0%,
+    light-dark(rgba(244, 248, 253, 0.94), rgba(10, 18, 32, 0.88)) 100%
+  );
+  backdrop-filter: blur(22px);
+  box-shadow:
+    0 24px 60px light-dark(rgba(13, 26, 43, 0.14), rgba(0, 0, 0, 0.5)),
+    inset 0 1px 0 light-dark(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.08));
 }
 
 .loginTitle {
   margin: 0;
-  font-size: 1.4rem;
+  font-family: inherit;
+  font-size: 1.75rem;
   font-weight: 700;
-  color: #eaf2ff;
+  color: light-dark(#0d1a2b, #fff);
 }
 
 .loginSub {
-  margin: 0 0 0.5rem;
-  font-size: 0.9rem;
-  color: #8fa3c0;
+  margin: 0 0 0.4rem;
+  font-size: 0.92rem;
+  color: light-dark(#5b7699, #a9bbd6);
+}
+
+.loginLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: light-dark(#41566f, #bcd0e8);
+}
+
+.loginInput {
+  padding: 0.7rem 0.9rem;
+  border-radius: 12px;
+  border: 1px solid light-dark(rgba(13, 26, 43, 0.14), rgba(255, 255, 255, 0.16));
+  background: light-dark(#f7fafd, rgba(255, 255, 255, 0.06));
+  color: light-dark(#0d1a2b, #eaf2ff);
+  font-size: 0.95rem;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.35s ease,
+    color 0.35s ease;
+}
+
+.loginInput::placeholder {
+  color: light-dark(#93a6bd, rgba(180, 205, 230, 0.5));
+}
+
+.loginInput:focus {
+  outline: none;
+  border-color: rgba(0, 212, 255, 0.6);
+  box-shadow: 0 0 0 3px rgba(0, 180, 216, 0.18);
+}
+
+.loginSubmit {
+  margin-top: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1rem;
+  border: none;
+  border-radius: 999px;
+  background: light-dark(#0d1a2b, #fff);
+  color: light-dark(#fff, #0a1526);
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.2s ease,
+    background-color 0.35s ease,
+    color 0.35s ease;
+}
+
+.loginSubmit:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px light-dark(rgba(13, 26, 43, 24%), rgba(255, 255, 255, 18%));
+}
+
+.loginSubmit:disabled {
+  opacity: 0.65;
+  cursor: progress;
+}
+
+.loginArrow {
+  transition: transform 0.2s ease;
+}
+
+.loginSubmit:not(:disabled):hover .loginArrow {
+  transform: translateX(3px);
+}
+
+/* ── État « connexion en cours » ──
+   Pendant l'exécution de la Server Action : balayage lumineux sur le bouton +
+   anneau qui tourne à la place de la flèche. L'opacité réduite du `:disabled`
+   est annulée ici : le balayage porte déjà l'information. */
+.loginSubmitPending {
+  background: linear-gradient(
+    100deg,
+    light-dark(#0d1a2b, #ffffff) 0%,
+    light-dark(#26425f, #dbe8ff) 45%,
+    light-dark(#0d1a2b, #ffffff) 100%
+  );
+  background-size: 220% 100%;
+  animation: loginShimmer 1.5s linear infinite;
+}
+
+.loginSubmit.loginSubmitPending:disabled {
+  opacity: 1;
+}
+
+.loginSpinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid light-dark(rgba(255, 255, 255, 0.3), rgba(10, 21, 38, 0.18));
+  border-top-color: light-dark(#ffffff, #0a1526);
+  animation: loginSpin 0.7s linear infinite;
+}
+
+@keyframes loginSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes loginShimmer {
+  from {
+    background-position: 200% center;
+  }
+  to {
+    background-position: -40% center;
+  }
+}
+
+/* Mouvement réduit : plus de rotation ni de balayage — l'anneau figé, le
+   libellé « Connexion… » et l'état désactivé suffisent à informer. */
+@media (prefers-reduced-motion: reduce) {
+  .loginSpinner,
+  .loginSubmitPending {
+    animation: none;
+  }
+  .loginSpinner {
+    border-top-color: light-dark(rgba(255, 255, 255, 0.6), rgba(10, 21, 38, 0.45));
+  }
+}
+
+.loginFootnote {
+  margin: 0.6rem 0 0;
+  text-align: center;
+  font-size: 0.78rem;
+  color: light-dark(#7a8ea6, rgba(150, 175, 205, 0.75));
+}
+
+/* Bannière d'erreur du login : déclinée ici en clair/sombre pour rester lisible
+   sur la carte claire, sans toucher au `.error` partagé des autres écrans.
+   `.error.loginError` (et non `.loginError` seul) : la règle `.error` est
+   déclarée plus loin dans le fichier et l'emporterait à spécificité égale. */
+.error.loginError {
+  color: light-dark(#9b1c1c, #ffd7d7);
+  background: light-dark(rgba(200, 40, 40, 0.09), rgba(180, 40, 40, 0.18));
+  border-color: light-dark(rgba(200, 40, 40, 0.26), rgba(220, 80, 80, 0.35));
+}
+
+/* ── Bascule de thème ──
+   Le thème est porté par la propriété `color-scheme` du conteneur de la page
+   (attribut `data-theme` rendu par le serveur pour un choix explicite, sinon
+   préférence système) ; `ThemeToggle` le change côté client. Les deux icônes
+   sont rendues, une seule est visible selon le thème résolu. */
+.loginThemeToggle {
+  position: absolute;
+  top: clamp(1rem, 2.5vw, 1.6rem);
+  right: clamp(1rem, 2.5vw, 1.6rem);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  color: light-dark(#22334a, rgba(255, 255, 255, 0.82));
+  background: light-dark(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.06));
+  border: 1px solid light-dark(rgba(13, 26, 43, 0.12), rgba(255, 255, 255, 0.14));
+  box-shadow: 0 4px 16px light-dark(rgba(13, 26, 43, 0.1), transparent);
+  backdrop-filter: blur(10px);
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease,
+    border-color 0.25s ease,
+    transform 0.15s ease;
+}
+
+.loginThemeToggle:hover {
+  background: light-dark(#ffffff, rgba(255, 255, 255, 0.12));
+  transform: translateY(-1px);
+}
+
+.loginThemeToggle:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 180, 216, 0.35);
+}
+
+.loginThemeIconDark,
+.loginThemeIconLight {
+  display: inline-flex;
+}
+
+.loginThemeIconLight {
+  display: none;
+}
+
+/* Une seule icône visible, en suivant la même règle que le thème. */
+.loginPage[data-theme="light"] .loginThemeIconDark {
+  display: none;
+}
+
+.loginPage[data-theme="light"] .loginThemeIconLight {
+  display: inline-flex;
+}
+
+@media (prefers-color-scheme: light) {
+  .loginPage:not([data-theme]) .loginThemeIconDark {
+    display: none;
+  }
+  .loginPage:not([data-theme]) .loginThemeIconLight {
+    display: inline-flex;
+  }
+}
+
+/* Fondu des surfaces pendant la bascule. */
+.loginHeadline,
+.loginEyebrow,
+.loginTitle,
+.loginSub,
+.loginLabel,
+.loginPill,
+.loginFootnote,
+.loginFooter,
+.loginCard {
+  transition:
+    background-color 0.35s ease,
+    color 0.35s ease,
+    border-color 0.35s ease;
+}
+
+@media (max-width: 900px) {
+  .loginInner {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 460px;
+    gap: 2.2rem;
+  }
+  .loginBrandCol {
+    gap: 1rem;
+  }
+  .loginHeadline {
+    font-size: clamp(1.9rem, 8.5vw, 2.9rem);
+  }
+}
+
+@media (max-width: 560px) {
+  /* Resserrement mobile : le titre complet (4 lignes) doit tenir dans un écran
+     de 390×844 sans faire défiler la page. */
+  .loginInner {
+    padding: 1.25rem 1.1rem 1rem;
+  }
+  .loginBrandCol {
+    gap: 0.8rem;
+  }
+  .loginCard {
+    padding: 1.25rem 1.15rem 1.05rem;
+    border-radius: 20px;
+    gap: 0.7rem;
+  }
 }
 
 .label {
