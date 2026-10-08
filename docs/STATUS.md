@@ -2,7 +2,7 @@
 
 Sprint en cours : S7 — **Finitions pro & durcissement** — **terminé et publié** (release #57 merge commit **`b99685a`**, `main` à jour)
 
-Incrément en cours : **S8 — Statut « lu » synchronisé avec la boîte mail** (demande de l'humain du 2026-10-07) — **phase 1 vérifiée localement** — dernière mise à jour : 2026-10-07
+Increment terminé : **S8 — Statut « lu » synchronisé avec la boîte mail** (demande de l'humain du 2026-10-07) — **terminé et publié** (release **#61**, merge commit **`1bbe3d4`**, `main` à jour) — dernière mise à jour : 2026-10-07
 
 Sprint précédent : S6 — **terminé et publié** (release #53, `c3622e7`)
 
@@ -61,7 +61,11 @@ Sprint précédent : S4bis — **terminé et publié** (release #38, `78ff057`)
 
 ## Journal des décisions prises seul
 
-- 2026-10-07 — **S8 Phase 1 vérifiée et fusionnée dans `dev` (PR #59, squash `aeeafcb`).** CI « Types, lint et build » **verte** (54 s) + preview Vercel générée. Preuves complètes et décision « pas de cron » : voir la section S8. **Reste** : (1) pré-requis humain — activer IMAP dans Gmail (non bloquant, la fonctionnalité s'arrête proprement sinon) ; (2) la **release `dev` → `main`**, laissée à la décision de l'humain (la Porte §4ter ne peut pas être verte tant que le pré-requis IMAP est en attente, condition 10).
+- 2026-10-07 — **Icônes : `@deemlol/next-icons` adopté, `react-icons` retiré (directive de l'humain « pour toutes les icônes »).** La lib (0.2.7) expose **351 icônes d'interface** uniquement — **aucune icône de marque** — or les logos flottants du site public en consomment 16 (React, TS, Docker…). Décisions : (1) `Navbar` (soleil/lune, dans le bloc commenté du bouton de thème) passe sur `Moon`/`Sun` de `@deemlol/next-icons` ; (2) les 16 tracés de marques sont **embarqués localement** (`src/components/icons/brand.tsx`, Solar Icons v13 CC0 — la même source que `react-icons/si`), rendus au même calage (24×24, `currentColor`, `1em`) ; (3) `react-icons` désinstallé, 0 référence en code. **Preuve « aucune régression visuelle »** : DOM servi comparé à la production — **tous les tracés `<path d>` identiques** sur `/` et `/a-propos` (0 manquant), captures Chrome headless avant/après (1366×900@1.5) divergentes seulement dans les zones d'animation volatile (~2,4 % de pixels, décalage temporel des logos flottants), **0 erreur console** au runtime, 9 routes locales `200`, `tsc`/`eslint`/build **0**. PR #64 fusionnée dans `dev` (squash `ee626bb`).
+
+- 2026-10-07 — **Release S8 fusionnée en production (PR #61, merge commit `1bbe3d4`).** Sur demande explicite de l'humain (« publication en production ») : PR `release/S8` → `main` ouverte (branche `release/`, comme S7), CI verte, `MERGEABLE/CLEAN`, puis fusion par **merge commit**. **Porte §4ter 9/10** — condition 10 levée par décision humaine : la fusion n'est donc **pas automatique** (voie §9). **Aucune migration** dans cette release, rien à appliquer en base avant la fusion. Smoke test production : **10/10 routes publiques en `200`**, admin anonyme en **`307`**, `/api/export` et `/api/cron/keep-alive` en **`401`**, déploiement Vercel de production `success` pour `1bbe3d4`. Le **chemin d'insertion du contact ayant changé** (UUID désormais explicite), un envoi réel a été refait en production → **`200`** + écran « Message envoyé ! » (message étiqueté « Test S8 production », **à archiver** par l'humain). **Aucun rollback.**
+
+- 2026-10-07 — **S8 Phase 1 vérifiée et fusionnée dans `dev` (PR #59, squash `aeeafcb`).** CI « Types, lint et build » **verte** (54 s) + preview Vercel générée. Preuves complètes et décision « pas de cron » : voir la section S8. **Reste** : (1) pré-requis humain — activer IMAP dans Gmail (non bloquant, la fonctionnalité s'arrête proprement sinon) ; (2) la **release `dev` → `main`**, laissée à la décision de l'humain (la Porte §4ter ne peut pas être verte tant que le pré-requis IMAP est en attente, condition 10) — **✅ faite le même jour : PR #61, `main` = `1bbe3d4`**.
 
 - 2026-10-07 — **S8 : le statut « lu » suit la boîte Gmail (IMAP), sans nouveau secret.** L'humain demande que « une fois que le mail est lu dans la boîte, le message dans l'admin passe automatiquement en lu ». L'envoi étant en **SMTP** (canal qui n'écoute rien), l'application devait interroger la boîte : `imapflow` (dépendance ajoutée, déclarée en `serverExternalPackages`) + `src/lib/mail-sync.ts`. Chaque notification part désormais avec l'en-tête `X-Jtnova-Contact-Id: <uuid de la ligne>` — l'UUID est **généré par la Server Action** et inséré explicitement, l'insertion anonyme ne pouvant pas relire la ligne ; à l'ouverture de l'admin on recherche cet en-tête et on lit le drapeau `\Seen`. **Décision notable — pas de cron** : un cron devrait écrire en base avec `SUPABASE_SERVICE_ROLE_KEY`, **absente de Vercel** (et non posable par l'agent) ; l'endpoint aurait été invérifiable en production. Le déclenchement se fait donc **au rendu de `/admin`** : instantané, gratuit, aucun secret, mutualisé par une promesse partagée (une seule connexion IMAP par rendu) et espacé par `IMAP_SYNC_MIN_INTERVAL_SEC` (défaut 60 s) ; **aucune connexion n'est ouverte quand plus aucun message n'est « Nouveau »** (mesuré : 0 connexion sur 3 rechargements ; page ≈170 ms contre ≈470-520 ms quand la sonde tourne). Le statut manuel n'est jamais écrasé (`.eq("status","new")`). **Limite documentée** : seule la boîte du compte d'envoi est surveillée. Vérifié de bout en bout avec une vraie boîte IMAP locale (GreenMail) — voir la section S8.
 
@@ -313,6 +317,15 @@ Contexte Phase 2 : arbre de `dev` = `ed0fcc0` (PR #51), même pile locale, rejou
 
 **Conclusion : 10/10** → release fusionnée.
 
+### Release S8 fusionnée + smoke test production (2026-10-07)
+
+- **PR #61** (`release/S8` → `main`) mergée par **merge commit** → `main` = **`1bbe3d4`**. CI `Types, lint et build` **verte** sur la PR (53 s puis 44 s, deux runs car `dev` a bougé), `MERGEABLE/CLEAN`. **Aucune exception, aucun rollback.**
+- **Porte §4ter : 9/10** — la condition 10 (aucun pré-requis humain ou décision en attente) est **levée explicitement par l'humain** (« publication en production »), voie §9 : la fusion n'est donc **pas automatique**. Les 9 autres conditions sont vertes (détail dans la PR #61). **Aucune migration** dans cette release.
+- **Smoke test prod** (`https://jtnova-madagascar.vercel.app`) : `/`, `/projets`, `/services`, `/competences`, `/a-propos`, `/contact`, `/projects/julia`, `/sitemap.xml`, `/robots.txt`, `/admin/login` → **10/10 `200`** ; `/admin`, `/admin/messages`, `/admin/sante` → **307** ; `/api/export` → **401** ; `/api/cron/keep-alive` anonyme → **401** (donc `CRON_SECRET` bien présent en production). Déploiement Vercel de production pour `1bbe3d4` → **`success`**.
+- **Discriminateurs** : `jt-star` présent, `_next/image` présent, `robots.txt` contient `Disallow: /admin`, sitemap **8 `<loc>`**, HTML `/` = **148 Ko**. **S8 ne modifie aucun rendu public** (en-tête d'e-mail, réconciliation serveur, admin protégé) : comme pour S6, le discriminateur du build servi est le **SHA déployé `1bbe3d4` + la CI**.
+- **Chemin d'insertion revérifié en production** (il a changé — UUID désormais explicite) : `POST /contact` réel → **`200`**, écran « Message envoyé ! », aucune erreur. Un message étiqueté **« Test S8 production »** (`test-s8@jtnova.local`) a été créé — **à archiver par l'humain** ; son e-mail de notification sert de démonstration : le lire, puis ouvrir `/admin/messages` → le message passe en « Lu ».
+- **Hygiène** : aucun secret dans le diff, aucune migration, base locale rendue au seed, conteneur et temporaires de test supprimés, port 3110 libre, arbre propre.
+
 ### Release S7 fusionnée + smoke test production (2026-10-07)
 
 - **PR #57** (`release/S7` → `main`) mergée par **merge commit** → `main` = **`b99685a`**. CI `main` = success. Aucune exception invoquée, aucun rollback.
@@ -351,7 +364,7 @@ Contexte : pile locale (base seedée, `next start -p 3110`, `CRON_SECRET` local)
 
 **Pré-requis humain S7 (restants, non bloquants)** : (1) appliquer la migration `error_logs` sur l'instance cloud (bloc SQL fourni dans `supabase/migrations/20261007090000_error_logs.sql`, voie éditeur SQL) ; poser `NEXT_PUBLIC_SITE_URL=https://jtnova-madagascar.vercel.app` (Production + Preview) pour que les workflows pointent la bonne URL ; (2) lernen lien Login GitHub↔Vercel pour déployements auto si souhaité (= pré-clos S6).
 
-## S8 — Statut « lu » synchronisé avec la boîte mail (vérification 2026-10-07) — **fusionné dans `dev`** (PR #59, squash `aeeafcb`)
+## S8 — Statut « lu » synchronisé avec la boîte mail (vérification 2026-10-07) — **fusionné dans `dev`** (PR #59, squash `aeeafcb`) puis **publié en production** (release #61, `1bbe3d4`)
 
 Demande de l'humain (2026-10-07) : « une fois que le mail est lu dans la boîte mail, le message dans l'admin passe automatiquement en lu ». Voie retenue (son choix) : **IMAP + mot de passe d'application Gmail existant**, sans nouveau secret.
 

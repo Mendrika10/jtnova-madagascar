@@ -47,7 +47,7 @@ Transformer le site statique de Jtnova en **plateforme éditoriale** : design cl
 
 ---
 
-## 2. L'équipe (15 agents)
+## 2. L'équipe (16 agents)
 
 | # | Agent | Responsabilité unique |
 |---|---|---|
@@ -58,7 +58,7 @@ Transformer le site statique de Jtnova en **plateforme éditoriale** : design cl
 | 5 | **FRONT-PUBLIC** | Pages publiques branchées sur les données (design inchangé). |
 | 6 | **AUTH** | Authentification : compte admin, page de connexion, middleware. |
 | 7 | **MUTATIONS** | Écritures : server actions + validation Zod. |
-| 8 | **ADMIN-UI** | Écrans de l'espace `/admin` (formulaires, listes, tableau de bord). |
+| 8 | **ADMIN-UI** | Logique des écrans de l'espace `/admin` (formulaires fonctionnels, listes, tableau de bord) — **hors design visuel** (→ UI-ADMIN). |
 | 9 | **MESSAGERIE** | Contact : envoi e-mail (Resend) et anti-spam. |
 | 10 | **SEO** | Sitemap, robots, métadonnées, Open Graph. |
 | 11 | **PERF-A11Y** | Performance et accessibilité : images, poids de page, `h1`, liens. |
@@ -66,6 +66,7 @@ Transformer le site statique de Jtnova en **plateforme éditoriale** : design cl
 | 13 | **EXPLOITATION** | Fiabilité en production : keep-alive, sauvegardes, monitoring. |
 | 14 | **REVIEWER** | Vérifier et rendre un verdict. Lecture seule. |
 | 15 | **DOC** | Documentation d'exploitation et guide admin. |
+| 16 | **UI-ADMIN** | Design **visuel** de `/admin/login` et de l'espace `/admin`, reproduit fidèlement depuis les captures d'écran de référence de l'humain (méthode §3.16). |
 
 **Activation progressive** : n'active que les agents du sprint en cours (S1 : ORCHESTRATEUR, SCHEMA, RLS, DEVOPS, REVIEWER).
 
@@ -182,6 +183,14 @@ Test de validation : une requête anonyme sur un contenu non publié renvoie **0
 - **Fait** : README, guide admin (publier une réalisation en < 5 min), documentation d'exploitation, mise à jour de la doc associée aux fonctionnalités.
 - **Ne fait jamais** : modifier du code.
 - **Zone** : `README.md`, `docs/**` (hors `docs/STATUS.md`).
+
+### 16. UI-ADMIN
+- **Fait** : le design **visuel** de la page de connexion et de tout l'espace `/admin` : mise en page, `admin.module.css` (et uniquement lui côté styles), thème, espacements, typographie, états (survol, actif, erreur, succès), responsive. **Méthode imposée : copie fidèle depuis capture d'écran.** L'humain envoie une capture de référence dans la conversation (référence locale, non committée, non stockée dans le dépôt) : l'agent la décrit d'abord en mots (structure, couleurs, espacements, composants), propose sa lecture **avant** de coder, puis reproduit l'écran concerné le plus fidèlement possible. Toute ambiguïté de la capture est signalée avec la proposition retenue ; aucune invention hors capture.
+- **Ne fait jamais** : toucher aux Server Actions, aux requêtes ou à la logique (→ ADMIN-UI), aux données (→ DATA), à la base (→ SCHEMA/RLS), au **site public** (design gelé, §1), ni stocker la capture dans le dépôt.
+- **Zone** : `src/app/admin/**` (mises en page et JSX visuel), `src/app/admin.module.css`. Les écrans livrés restent **fonctionnels à l'identique** : même formulaire de connexion, mêmes statuts et boutons — l'agent habille, il ne rebranche pas.
+- **Skills** : à chaque capture, commencer par la lecture écrite (structure → palette → espacements → composants) puis la proposition de reproduction ; un écran = un PR ; la preuve est une **capture « après »** confrontée à la référence (screenshots comparés de bout en bout) ; vérifier les états d'erreur (mauvais mot de passe, champ vide) et le responsive étroit (mobile) ; 0 erreur de console ; la lisibilité des textes d'administration prime toujours sur l'esthétique.
+
+
 
 ---
 

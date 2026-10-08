@@ -1,22 +1,22 @@
 "use client";
 import {
-  SiJavascript,
-  SiTypescript,
-  SiReact,
-  SiNextdotjs,
-  SiNodedotjs,
-  SiPython,
-  SiTailwindcss,
-  SiGit,
-  SiDocker,
-  SiFigma,
-  SiGraphql,
-  SiPostgresql,
-  SiMongodb,
-  SiRedis,
-  SiLinux,
-  SiRust,
-} from "react-icons/si";
+  React,
+  TypeScript,
+  Javascript,
+  Nextdotjs,
+  Nodedotjs,
+  Python,
+  Tailwindcss,
+  Git,
+  Docker,
+  Figma,
+  Graphql,
+  Postgresql,
+  Mongodb,
+  Redis,
+  Linux,
+  Rust,
+} from "@/components/icons/brand";
 import styles from "./FloatingLogos.module.css";
 
 const seed = (n: number): number => {
@@ -26,22 +26,22 @@ const seed = (n: number): number => {
 const r = (n: number, d = 2) => parseFloat(n.toFixed(d));
 
 const ICONS = [
-  SiReact,
-  SiTypescript,
-  SiJavascript,
-  SiNextdotjs,
-  SiNodedotjs,
-  SiPython,
-  SiTailwindcss,
-  SiGit,
-  SiDocker,
-  SiFigma,
-  SiGraphql,
-  SiPostgresql,
-  SiMongodb,
-  SiRedis,
-  SiLinux,
-  SiRust,
+  React,
+  TypeScript,
+  Javascript,
+  Nextdotjs,
+  Nodedotjs,
+  Python,
+  Tailwindcss,
+  Git,
+  Docker,
+  Figma,
+  Graphql,
+  Postgresql,
+  Mongodb,
+  Redis,
+  Linux,
+  Rust,
 ];
 
 const LOGOS = ICONS.map((Icon, i) => ({
