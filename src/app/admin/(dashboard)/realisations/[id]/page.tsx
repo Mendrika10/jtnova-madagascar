@@ -37,7 +37,7 @@ export default async function EditProjectPage({
   const p = data.project;
 
   return (
-    <>
+    <div className={styles.panel}>
       <p className={styles.breadcrumb}>
         <Link href="/admin/realisations">← Réalisations</Link>
       </p>
@@ -115,6 +115,6 @@ export default async function EditProjectPage({
 
         <ImageUploader projectId={p.id} />
       </section>
-    </>
+    </div>
   );
 }

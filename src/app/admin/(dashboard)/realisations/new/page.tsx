@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function NewProjectPage() {
   return (
-    <>
+    <div className={styles.panel}>
       <p className={styles.breadcrumb}>
         <Link href="/admin/realisations">← Réalisations</Link>
       </p>
@@ -37,6 +37,6 @@ export default function NewProjectPage() {
           highlights: "",
         }}
       />
-    </>
+    </div>
   );
 }

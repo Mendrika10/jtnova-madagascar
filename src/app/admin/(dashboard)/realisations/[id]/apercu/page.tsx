@@ -32,11 +32,9 @@ export default async function PreviewProjectPage({
   );
 
   return (
-    <>
+    <div className={styles.previewPage}>
       <div className={styles.previewBar}>
-        <span>
-          Aperçu — {data.project.published ? "publiée" : "brouillon"}
-        </span>
+        <span>Aperçu — {data.project.published ? "publiée" : "brouillon"}</span>
         <Link href={`/admin/realisations/${id}`} className={styles.linkBtn}>
           Retour à l&apos;édition
         </Link>
@@ -44,6 +42,6 @@ export default async function PreviewProjectPage({
       <div className={styles.previewSurface}>
         <ProjectDetail data={detail} />
       </div>
-    </>
+    </div>
   );
 }
