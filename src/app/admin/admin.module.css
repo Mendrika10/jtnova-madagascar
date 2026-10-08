@@ -2437,6 +2437,79 @@
   background: #1f2937;
 }
 
+/* Onglets du formulaire de réalisation (ADMIN-UI) : mêmes pastilles que
+   Personnalisation, en variante claire puisqu'elles vivent dans le panneau. */
+.panel .tabs {
+  gap: 0.4rem;
+  margin: 0 0 1.1rem;
+  padding-bottom: 0.7rem;
+  border-bottom: 1px solid #e9eef4;
+}
+
+.panel .tab {
+  border: 1px solid #e6ebf2;
+  background: #ffffff;
+  color: #475569;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.panel .tab:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+.panel .tabActive,
+.panel .tabActive:hover {
+  border-color: transparent;
+  background: #111827;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* Compteur d'erreurs porté par un onglet : un champ fautif peut se trouver dans
+   un onglet masqué, l'onglet concerné le signale. */
+.tabCount {
+  display: inline-block;
+  min-width: 1.05rem;
+  margin-left: 0.35rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  background: #fee2e2;
+  color: #b42318;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.55;
+  text-align: center;
+}
+
+.panel .tabActive .tabCount {
+  background: rgba(255, 255, 255, 0.24);
+  color: #ffffff;
+}
+
+/* Phrase d'introduction de l'onglet ouvert. */
+.tabIntro {
+  margin: 0 0 0.9rem;
+  font-size: 0.82rem;
+  color: #6b7280;
+  max-width: 900px;
+}
+
+/* Le bouton d'enregistrement reste atteignable sous l'onglet ouvert. */
+.panel .formActions {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  margin-top: 0.2rem;
+  padding: 0.85rem 0;
+  background-image: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0) 0%,
+    #ffffff 45%
+  );
+}
+
 .panel .imageItem {
   border: 1px solid #e9eef4;
   border-radius: 14px;
