@@ -2784,3 +2784,81 @@
 .panel .rowDropAfter td {
   border-bottom: 2px solid #5d6ac0;
 }
+
+/* La ligne visée par le dépôt se teinte en plus du trait, pour épaissir le
+   repère pendant le survol. `tr.rowDrop…` dépasse la règle de survol du
+   tableau (`.panel .table tr:hover td`), sinon la teinte serait écrasée. */
+.panel .table tr.rowDropBefore td,
+.panel .table tr.rowDropAfter td {
+  background-color: rgba(93, 106, 192, 0.07);
+}
+
+/* La poignée de la ligne en cours de glissement se détache nettement. */
+.panel .rowDragging .dragHandle {
+  color: #334155;
+  background: #eef2ff;
+  box-shadow: 0 0 0 2px rgba(93, 106, 192, 0.35);
+}
+
+/* ── Retour visuel du déplacement ──
+   La ligne qui vient de changer de place clignote une fois puis se stabilise :
+   surbrillance qui s'estompe + léger glissement venant du sens du mouvement.
+   La teinte et la barre d'accent de `.rowMoved` restent affichées seules si
+   l'animation est coupée (mouvement réduit), pour ne jamais perdre le repère. */
+.panel .table tr.rowMoved td {
+  background-color: rgba(93, 106, 192, 0.09);
+}
+
+.panel .table tr.rowMoved td:first-child {
+  box-shadow: inset 3px 0 0 #5d6ac0;
+}
+
+.panel .table tr.rowMoved .orderIndex {
+  color: #4150a8;
+  font-weight: 600;
+}
+
+@keyframes rowMovedFlash {
+  from {
+    background-color: rgba(93, 106, 192, 0.28);
+  }
+  to {
+    background-color: rgba(93, 106, 192, 0.09);
+  }
+}
+
+/* Sens du glissement : une ligne descendue arrive d'en haut, et inversement. */
+@keyframes rowMovedFromAbove {
+  from {
+    transform: translateY(-8px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes rowMovedFromBelow {
+  from {
+    transform: translateY(8px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.panel .rowMovedDown td {
+  animation: rowMovedFlash 900ms ease-out both, rowMovedFromAbove 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.panel .rowMovedUp td {
+  animation: rowMovedFlash 900ms ease-out both, rowMovedFromBelow 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Mouvement réduit : plus de clignotement ni de glissement — la teinte et la
+   barre d'accent de `.rowMoved` suffisent à montrer le changement de place. */
+@media (prefers-reduced-motion: reduce) {
+  .panel .rowMovedDown td,
+  .panel .rowMovedUp td {
+    animation: none;
+  }
+}

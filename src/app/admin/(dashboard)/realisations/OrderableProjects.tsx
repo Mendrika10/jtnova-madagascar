@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import {
   ChevronDown,
@@ -33,6 +33,10 @@ export type OrderableProject = {
  * Trois voies d'accès au même réordonnancement : la souris (glisser-déposer),
  * le clavier (flèches haut/bas sur la poignée) et le tactile (repli ↑/↓, seul
  * moyen sans souris ni clavier).
+ *
+ * Après un déplacement, la ligne concernée est mise en avant une fois
+ * (surbrillance + glissement, cf. `admin.module.css`) : le changement de place
+ * reste visible même quand les lignes se ressemblent.
  */
 export default function OrderableProjects({
   projects,
@@ -50,7 +54,34 @@ export default function OrderableProjects({
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dropAt, setDropAt] = useState<number | null>(null);
   const [status, setStatus] = useState("");
+  const [moved, setMoved] = useState<{
+    id: string;
+    direction: "up" | "down";
+    nonce: number;
+  } | null>(null);
   const [pending, startTransition] = useTransition();
+  const rowRefs = useRef(new Map<string, HTMLTableRowElement>());
+
+  // Relance l'animation de la ligne déplacée après chaque déplacement. React
+  // ne remet pas la classe si elle est déjà posée (même ligne déplacée deux
+  // fois de suite) : on force donc un redémarrage en coupant puis rétablissant
+  // l'animation sur les cellules, avant de lever la mise en avant.
+  useEffect(() => {
+    if (!moved) return;
+    const row = rowRefs.current.get(moved.id);
+    if (row) {
+      const cells = row.querySelectorAll("td");
+      cells.forEach((cell) => {
+        cell.style.animation = "none";
+      });
+      void row.offsetWidth;
+      cells.forEach((cell) => {
+        cell.style.animation = "";
+      });
+    }
+    const timer = window.setTimeout(() => setMoved(null), 950);
+    return () => window.clearTimeout(timer);
+  }, [moved]);
 
   // Réajustement pendant le rendu (motif documenté par React) : quand la
   // composition de la liste change côté serveur (création, suppression),
@@ -91,12 +122,22 @@ export default function OrderableProjects({
 
   function commit(next: string[], id: string, position: number) {
     const previous = order;
+    const from = previous.indexOf(id);
+    const to = next.indexOf(id);
     setOrder(next);
     announceMove(id, position);
+    // Mise en avant immédiate (l'ordre affiché change tout de suite) ; annulée
+    // avec le retour à l'état précédent si l'enregistrement échoue.
+    setMoved((current) => ({
+      id,
+      direction: to > from ? "down" : "up",
+      nonce: (current?.nonce ?? 0) + 1,
+    }));
     startTransition(async () => {
       const result = await reorderProjectsAction(next);
       if (!result.ok) {
         setOrder(previous);
+        setMoved(null);
         setStatus(result.message ?? "L'ordre n'a pas pu être enregistré.");
       }
     });
@@ -188,12 +229,19 @@ export default function OrderableProjects({
           </thead>
           <tbody>
             {rows.map((project, index) => {
+              const isMoved = moved?.id === project.id;
               const rowClass = [
                 project.id === draggedId ? styles.rowDragging : "",
                 dropTarget?.row === index
                   ? dropTarget.after
                     ? styles.rowDropAfter
                     : styles.rowDropBefore
+                  : "",
+                isMoved ? styles.rowMoved : "",
+                isMoved
+                  ? moved.direction === "down"
+                    ? styles.rowMovedDown
+                    : styles.rowMovedUp
                   : "",
               ]
                 .filter(Boolean)
@@ -202,6 +250,10 @@ export default function OrderableProjects({
               return (
                 <tr
                   key={project.id}
+                  ref={(node) => {
+                    if (node) rowRefs.current.set(project.id, node);
+                    else rowRefs.current.delete(project.id);
+                  }}
                   className={rowClass || undefined}
                   onDragOver={(event) => handleDragOver(event, index)}
                   onDrop={handleDrop}
