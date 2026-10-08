@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import {
+  Check,
   ChevronRight,
+  FileText,
   Folder,
   MessageSquare,
   Shield,
@@ -82,10 +84,22 @@ export default async function AdminDashboardPage({
   const cards = supabase ? await getProjectCards(supabase) : [];
 
   const stats = [
-    { label: "Réalisations publiées", value: counts.publishedProjects },
-    { label: "Brouillons", value: counts.draftProjects },
-    { label: "Messages non lus", value: counts.unreadMessages },
-    { label: "Erreurs à traiter", value: counts.unresolvedErrors },
+    {
+      label: "Réalisations publiées",
+      value: counts.publishedProjects,
+      Icon: Check,
+    },
+    { label: "Brouillons", value: counts.draftProjects, Icon: FileText },
+    {
+      label: "Messages non lus",
+      value: counts.unreadMessages,
+      Icon: MessageSquare,
+    },
+    {
+      label: "Erreurs à traiter",
+      value: counts.unresolvedErrors,
+      Icon: Shield,
+    },
   ];
 
   const searched = query.length >= MIN_QUERY_LENGTH;
@@ -198,10 +212,15 @@ export default async function AdminDashboardPage({
       ) : (
         <>
           <ul className={styles.pills}>
-            {stats.map((stat) => (
-              <li key={stat.label} className={styles.pill}>
-                <span className={styles.pillValue}>{stat.value}</span>
-                <span className={styles.pillLabel}>{stat.label}</span>
+            {stats.map(({ label, value, Icon }) => (
+              <li key={label} className={styles.statPill}>
+                <span className={styles.statIcon} aria-hidden>
+                  <Icon size={14} strokeWidth={2} />
+                </span>
+                <span className={styles.statBody}>
+                  <span className={styles.pillValue}>{value}</span>
+                  <span className={styles.pillLabel}>{label}</span>
+                </span>
               </li>
             ))}
           </ul>
@@ -225,7 +244,12 @@ export default async function AdminDashboardPage({
       )}
 
       <section className={styles.projects}>
-        <h2 className={styles.projectsTitle}>Réalisations publiées</h2>
+        <div className={styles.sectionTitleRow}>
+          <span className={styles.sectionIcon} aria-hidden>
+            <Folder size={15} strokeWidth={2} />
+          </span>
+          <h2 className={styles.projectsTitle}>Réalisations publiées</h2>
+        </div>
         {cards.length === 0 ? (
           <p className={styles.projectsEmpty}>
             Aucune réalisation publiée pour l&apos;instant.

@@ -2323,6 +2323,7 @@
 
 .panel .tableScroll {
   width: 100%;
+  min-width: 0;
   overflow-x: auto;
 }
 
@@ -2494,4 +2495,203 @@
   .previewPage .previewBar {
     border-radius: 14px;
   }
+}
+
+/* ── Compacité & décoration (UI-ADMIN) ────────────────────────────────────── */
+/* Demande de l'humain : textes un peu plus petits mais toujours très lisibles
+   (aucune couleur de texte éclaircie), boutons resserrés, sous-titres sous les
+   titres, icônes de décoration, et actions de ligne en icônes — chaque icône
+   gardant son nom accessible (texte masqué `.srOnly` ou `aria-label`). */
+
+.sideBrand { font-size: 0.85rem; }
+.sideRole { font-size: 0.64rem; }
+.sidePrimary { padding: 0.5rem 0.7rem; font-size: 0.78rem; }
+.sideGroupTitle { font-size: 0.6rem; }
+.sideLink,
+.sideLinkOn { padding: 0.42rem 0.5rem; font-size: 0.8rem; }
+.sideSearchInput { font-size: 0.75rem; }
+.sideEmail { font-size: 0.67rem; }
+.sideLogout { padding: 0.45rem 0.6rem; font-size: 0.72rem; }
+
+.panel { gap: 1.1rem; }
+.heroTitle { font-size: clamp(1.45rem, 2.6vw, 2rem); }
+.heroLogo { height: clamp(1.3rem, 2.3vw, 1.75rem); }
+.heroSub { font-size: 0.82rem; }
+.composerNote { font-size: 0.74rem; }
+.composerInput { min-height: 62px; font-size: 0.87rem; }
+.composerChip { padding: 0.38rem 0.7rem; font-size: 0.74rem; }
+.composerAsk { padding: 0.42rem 0.85rem; font-size: 0.76rem; }
+.resultsCount { font-size: 0.78rem; }
+.result { padding: 0.5rem 0.7rem; }
+.resultIcon { width: 26px; height: 26px; }
+.resultTitle { font-size: 0.8rem; }
+.resultDetail { font-size: 0.71rem; }
+.resultStamp { font-size: 0.63rem; }
+.pill { gap: 0.4rem; padding: 0.5rem 0.75rem; }
+.pillValue { font-size: 0.92rem; }
+.pillLabel { font-size: 0.73rem; }
+.pillLink { padding: 0.45rem 0.6rem 0.45rem 0.5rem; font-size: 0.76rem; }
+.pillIcon { width: 22px; height: 22px; }
+.projectsTitle { font-size: 0.88rem; }
+.cardName { font-size: 0.88rem; }
+.cardRole { font-size: 0.69rem; }
+
+.panel .pageTitle { font-size: 1.12rem; }
+.panel .table { font-size: 0.8rem; }
+.panel .table th,
+.panel .table td { padding: 0.5rem 0.6rem; }
+.panel .code { font-size: 0.75rem; }
+.panel .badgeOk,
+.panel .badgeDraft { padding: 0.12rem 0.5rem; font-size: 0.71rem; }
+.panel .primaryBtn,
+.panel .secondaryBtn,
+.panel .linkBtn,
+.panel .dangerBtn,
+.panel .iconBtn { padding: 0.32rem 0.7rem; font-size: 0.75rem; }
+.panel .iconBtn { padding: 0.28rem 0.4rem; }
+.panel .input,
+.panel .textarea { padding: 0.5rem 0.6rem; font-size: 0.85rem; }
+.panel .fieldLabel { font-size: 0.78rem; }
+.panel .fieldHint { font-size: 0.72rem; }
+.panel .submit { padding: 0.45rem 0.95rem; font-size: 0.8rem; }
+.panel .sectionTitle { font-size: 0.92rem; }
+.panel .notice,
+.panel .error { padding: 0.5rem 0.7rem; font-size: 0.8rem; }
+.panel .placeholder { padding: 1.1rem; font-size: 0.82rem; }
+.previewPage .previewBar { padding: 0.45rem 0.7rem; font-size: 0.78rem; }
+.previewPage .linkBtn { padding: 0.32rem 0.7rem; font-size: 0.75rem; }
+
+/* Entête de page : pastille d'icône + titre + sous-titre. */
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.titleIcon {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.titleBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.08rem;
+  min-width: 0;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 0.76rem;
+  color: #6b7280;
+}
+
+.sectionTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.9rem;
+}
+
+.sectionIcon {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: #f1f5f9;
+  color: #334155;
+}
+
+/* Actions de ligne : icône seule, nom accessible conservé. */
+.iconAction {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 9px;
+  border: 1px solid #e6ebf2;
+  background: #ffffff;
+  color: #334155;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.iconAction:hover {
+  border-color: #d6dee8;
+  background: #f6f8fb;
+}
+
+.iconActionDanger {
+  border-color: #fecdd3;
+  background: #fff1f2;
+  color: #b42318;
+}
+
+.iconActionDanger:hover {
+  background: #ffe4e6;
+}
+
+.iconAction:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Pastilles de statistiques : icône + valeur + libellé. */
+.statPill {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.5rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid #e9eef4;
+  background: #ffffff;
+}
+
+.statIcon {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.statBody {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+/* Boutons à icône : alignement (UI-ADMIN). */
+.panel .primaryBtn,
+.panel .secondaryBtn,
+.panel .linkBtn,
+.panel .dangerBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.previewPage .linkBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.previewLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Eye, FileText, Folder, Trash } from "@deemlol/next-icons";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getProjectForEdit } from "@/lib/admin-projects";
 import { deleteImageAction } from "@/app/admin/actions";
@@ -42,11 +43,22 @@ export default async function EditProjectPage({
         <Link href="/admin/realisations">← Réalisations</Link>
       </p>
       <div className={styles.pageHeader}>
-        <h1 className={styles.pageTitle}>{p.title}</h1>
+        <div className={styles.titleRow}>
+          <span className={styles.titleIcon} aria-hidden>
+            <Folder size={18} strokeWidth={2} />
+          </span>
+          <span className={styles.titleBlock}>
+            <h1 className={styles.pageTitle}>{p.title}</h1>
+            <p className={styles.subtitle}>
+              {p.slug} · {p.published ? "publiée" : "brouillon"}
+            </p>
+          </span>
+        </div>
         <Link
           href={`/admin/realisations/${p.id}/apercu`}
           className={styles.secondaryBtn}
         >
+          <Eye size={14} strokeWidth={2} aria-hidden />
           Aperçu
         </Link>
       </div>
@@ -85,7 +97,12 @@ export default async function EditProjectPage({
       />
 
       <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Images ({data.images.length})</h2>
+        <div className={styles.sectionTitleRow}>
+          <span className={styles.sectionIcon} aria-hidden>
+            <FileText size={15} strokeWidth={2} />
+          </span>
+          <h2 className={styles.sectionTitle}>Images ({data.images.length})</h2>
+        </div>
 
         {data.images.length === 0 ? (
           <p className={styles.placeholder}>Aucune image pour l&apos;instant.</p>
@@ -102,9 +119,12 @@ export default async function EditProjectPage({
                     <input type="hidden" name="project_id" value={p.id} />
                     <ConfirmButton
                       message="Supprimer cette image ?"
-                      className={styles.dangerBtn}
+                      className={`${styles.iconAction} ${styles.iconActionDanger}`}
                     >
-                      Supprimer
+                      <Trash size={15} strokeWidth={2} aria-hidden />
+                      <span className={styles.srOnly}>
+                        Supprimer l&apos;image « {img.alt} »
+                      </span>
                     </ConfirmButton>
                   </form>
                 </div>
