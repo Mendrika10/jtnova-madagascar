@@ -1101,17 +1101,29 @@
   vertical-align: middle;
 }
 
-.orderCell {
+/* Cellules à contenu en ligne (« Ordre », « Actions »). Elles restent de vraies
+   cellules de tableau (`display: table-cell`, la valeur par défaut) et le
+   conteneur flex vit dans un enfant : `display: flex` posé sur le `<td>`
+   lui-même le retire de la grille du tableau, si bien que son fond et sa
+   bordure se placent 1 à 3 px plus bas et 6 px plus courts que ceux de ses
+   voisines — d'où le bandeau et le trait d'insertion « en escalier » observés
+   sur la liste des réalisations. */
+.orderCell,
+.actionsCell {
+  vertical-align: middle;
+}
+
+.orderFlex {
   display: flex;
   align-items: center;
   gap: 0.25rem;
 }
 
-.actionsCell {
+.actionsFlex {
   display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .code {

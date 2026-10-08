@@ -259,48 +259,50 @@ export default function OrderableProjects({
                   onDrop={handleDrop}
                 >
                   <td className={styles.orderCell}>
-                    <button
-                      type="button"
-                      className={styles.dragHandle}
-                      draggable
-                      aria-label={`Réordonner « ${project.title} » (glisser-déposer, ou flèches haut et bas au clavier)`}
-                      title="Glisser pour changer l'ordre"
-                      onDragStart={(event) => handleDragStart(event, project.id)}
-                      onDragEnd={handleDragEnd}
-                      onKeyDown={(event) => handleOrderKeyDown(event, project.id, index)}
-                    >
-                      <Menu size={15} strokeWidth={2} aria-hidden />
-                    </button>
-                    <span className={styles.orderIndex} aria-hidden>
-                      {index + 1}
-                    </span>
-                    <span className={styles.orderFallback}>
-                      <form action={moveProjectAction}>
-                        <input type="hidden" name="id" value={project.id} />
-                        <input type="hidden" name="direction" value="up" />
-                        <button
-                          type="submit"
-                          className={styles.iconAction}
-                          disabled={index === 0}
-                          aria-label={`Monter « ${project.title} »`}
-                          title="Monter"
-                        >
-                          <ChevronUp size={14} strokeWidth={2.2} aria-hidden />
-                        </button>
-                      </form>
-                      <form action={moveProjectAction}>
-                        <input type="hidden" name="id" value={project.id} />
-                        <input type="hidden" name="direction" value="down" />
-                        <button
-                          type="submit"
-                          className={styles.iconAction}
-                          disabled={index === lastIndex}
-                          aria-label={`Descendre « ${project.title} »`}
-                          title="Descendre"
-                        >
-                          <ChevronDown size={14} strokeWidth={2.2} aria-hidden />
-                        </button>
-                      </form>
+                    <span className={styles.orderFlex}>
+                      <button
+                        type="button"
+                        className={styles.dragHandle}
+                        draggable
+                        aria-label={`Réordonner « ${project.title} » (glisser-déposer, ou flèches haut et bas au clavier)`}
+                        title="Glisser pour changer l'ordre"
+                        onDragStart={(event) => handleDragStart(event, project.id)}
+                        onDragEnd={handleDragEnd}
+                        onKeyDown={(event) => handleOrderKeyDown(event, project.id, index)}
+                      >
+                        <Menu size={15} strokeWidth={2} aria-hidden />
+                      </button>
+                      <span className={styles.orderIndex} aria-hidden>
+                        {index + 1}
+                      </span>
+                      <span className={styles.orderFallback}>
+                        <form action={moveProjectAction}>
+                          <input type="hidden" name="id" value={project.id} />
+                          <input type="hidden" name="direction" value="up" />
+                          <button
+                            type="submit"
+                            className={styles.iconAction}
+                            disabled={index === 0}
+                            aria-label={`Monter « ${project.title} »`}
+                            title="Monter"
+                          >
+                            <ChevronUp size={14} strokeWidth={2.2} aria-hidden />
+                          </button>
+                        </form>
+                        <form action={moveProjectAction}>
+                          <input type="hidden" name="id" value={project.id} />
+                          <input type="hidden" name="direction" value="down" />
+                          <button
+                            type="submit"
+                            className={styles.iconAction}
+                            disabled={index === lastIndex}
+                            aria-label={`Descendre « ${project.title} »`}
+                            title="Descendre"
+                          >
+                            <ChevronDown size={14} strokeWidth={2.2} aria-hidden />
+                          </button>
+                        </form>
+                      </span>
                     </span>
                   </td>
                   <td>{project.title}</td>
@@ -315,34 +317,36 @@ export default function OrderableProjects({
                     )}
                   </td>
                   <td className={styles.actionsCell}>
-                    <Link
-                      href={`/admin/realisations/${project.id}`}
-                      className={styles.iconAction}
-                      aria-label={`Éditer « ${project.title} »`}
-                      title="Éditer"
-                    >
-                      <Edit size={15} strokeWidth={2} aria-hidden />
-                    </Link>
-                    <Link
-                      href={`/admin/realisations/${project.id}/apercu`}
-                      className={styles.iconAction}
-                      aria-label={`Aperçu de « ${project.title} »`}
-                      title="Aperçu"
-                    >
-                      <Eye size={15} strokeWidth={2} aria-hidden />
-                    </Link>
-                    <form action={deleteProjectAction}>
-                      <input type="hidden" name="id" value={project.id} />
-                      <ConfirmButton
-                        message={`Supprimer « ${project.title} » et tout son contenu ?`}
-                        className={`${styles.iconAction} ${styles.iconActionDanger}`}
+                    <span className={styles.actionsFlex}>
+                      <Link
+                        href={`/admin/realisations/${project.id}`}
+                        className={styles.iconAction}
+                        aria-label={`Éditer « ${project.title} »`}
+                        title="Éditer"
                       >
-                        <Trash size={15} strokeWidth={2} aria-hidden />
-                        <span className={styles.srOnly}>
-                          Supprimer « {project.title} »
-                        </span>
-                      </ConfirmButton>
-                    </form>
+                        <Edit size={15} strokeWidth={2} aria-hidden />
+                      </Link>
+                      <Link
+                        href={`/admin/realisations/${project.id}/apercu`}
+                        className={styles.iconAction}
+                        aria-label={`Aperçu de « ${project.title} »`}
+                        title="Aperçu"
+                      >
+                        <Eye size={15} strokeWidth={2} aria-hidden />
+                      </Link>
+                      <form action={deleteProjectAction}>
+                        <input type="hidden" name="id" value={project.id} />
+                        <ConfirmButton
+                          message={`Supprimer « ${project.title} » et tout son contenu ?`}
+                          className={`${styles.iconAction} ${styles.iconActionDanger}`}
+                        >
+                          <Trash size={15} strokeWidth={2} aria-hidden />
+                          <span className={styles.srOnly}>
+                            Supprimer « {project.title} »
+                          </span>
+                        </ConfirmButton>
+                      </form>
+                    </span>
                   </td>
                 </tr>
               );
