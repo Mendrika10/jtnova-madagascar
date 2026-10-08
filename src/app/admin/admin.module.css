@@ -2459,6 +2459,15 @@
   border-bottom: 1px solid #e9eef4;
 }
 
+/* Le formulaire est masqué quand l'onglet « Images » est ouvert : la barre
+   d'onglets et le panneau « Images » sont **frères** du `<form>`, jamais ses
+   enfants — les formulaires de suppression d'image ne peuvent pas être
+   imbriqués dans un autre formulaire (interdit en HTML). Sans cette règle, le
+   `display: flex` de `.form` l'emporterait sur l'attribut `hidden`. */
+.panel .form[hidden] {
+  display: none;
+}
+
 .panel .tab {
   border: 1px solid #e6ebf2;
   background: #ffffff;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, type ReactNode } from "react";
 import {
   saveProjectAction,
   type ProjectFormState,
@@ -54,11 +54,13 @@ const TEXT_FIELDS = [
 
 type TextFieldName = (typeof TEXT_FIELDS)[number];
 
-type TabId = "essentiel" | "details" | "liens";
+type TabId = "essentiel" | "details" | "liens" | "images";
 
 /**
  * Découpage du formulaire en onglets. L'ordre des `fields` sert aussi à
- * retrouver l'onglet à ouvrir quand l'enregistrement est refusé.
+ * retrouver l'onglet à ouvrir quand l'enregistrement est refusé. Le dernier
+ * onglet (Images) ne porte aucun champ du formulaire : son contenu est fourni
+ * par la page via `imagesPanel`.
  */
 const TABS: {
   id: TabId;
@@ -97,6 +99,13 @@ const TABS: {
     intro:
       "Les liens à ouvrir depuis le projet, puis la visibilité sur le site public.",
     fields: ["live_url", "repo_url", "video_url", "video_poster"],
+  },
+  {
+    id: "images",
+    label: "Images",
+    intro:
+      "La galerie du projet. Chaque image doit porter un texte alternatif (alt) ; les images ajoutées apparaissent sur le site dès l'envoi, sans réenregistrer le projet.",
+    fields: [],
   },
 ];
 
@@ -153,7 +162,17 @@ function Field({
   );
 }
 
-export default function ProjectForm({ initial }: { initial: ProjectFormInitial }) {
+export default function ProjectForm({
+  initial,
+  imagesPanel,
+  initialTab,
+}: {
+  initial: ProjectFormInitial;
+  /** Contenu de l'onglet « Images », rendu par la page (liste, suppression, envoi). */
+  imagesPanel?: ReactNode;
+  /** Onglet ouvert au chargement (sert à revenir sur « Images » après un envoi). */
+  initialTab?: TabId;
+}) {
   const [state, formAction, pending] = useActionState<ProjectFormState, FormData>(
     saveProjectAction,
     INITIAL_STATE,
@@ -166,7 +185,7 @@ export default function ProjectForm({ initial }: { initial: ProjectFormInitial }
     initialValues(initial),
   );
   const [published, setPublished] = useState(initial.published);
-  const [tab, setTab] = useState<TabId>("essentiel");
+  const [tab, setTab] = useState<TabId>(initialTab ?? "essentiel");
   const [seenState, setSeenState] = useState(state);
   // Incrémenté à chaque réponse de l'action : sert de clé de remontage à la
   // case « Publiée ». React réinitialise aussi les cases à cocher en fin
@@ -201,10 +220,12 @@ export default function ProjectForm({ initial }: { initial: ProjectFormInitial }
     return tabFields.filter((f) => state.errors[f]).length;
   }
 
+  // La barre d'onglets et le panneau « Images » sont volontairement **frères**
+  // du `<form>`, pas ses enfants : la liste des images porte ses propres
+  // formulaires (suppression d'une image), et un `<form>` imbriqué dans un
+  // autre est interdit en HTML.
   return (
-    <form action={formAction} className={styles.form}>
-      {initial.id && <input type="hidden" name="id" value={initial.id} />}
-
+    <>
       {state.errors._ && (
         <p className={styles.error} role="alert">
           {state.errors._}
@@ -240,201 +261,219 @@ export default function ProjectForm({ initial }: { initial: ProjectFormInitial }
         })}
       </div>
 
-      <div
-        role="tabpanel"
-        id="panel-essentiel"
-        aria-labelledby="tab-essentiel"
-        hidden={tab !== "essentiel"}
+      <form
+        action={formAction}
+        className={styles.form}
+        hidden={tab === "images"}
       >
-        <p className={styles.tabIntro}>{TABS[0].intro}</p>
-        <div className={styles.formGrid}>
-          <Field
-            name="title"
-            label="Titre"
-            value={values.title}
-            onChange={handleChange}
-            error={state.errors.title}
-            placeholder="Refonte du site vitrine"
-          />
-          <Field
-            name="slug"
-            label="Slug (URL)"
-            value={values.slug}
-            onChange={handleChange}
-            error={state.errors.slug}
-            placeholder="refonte-site-vitrine"
-            hint="Minuscules, chiffres et tirets. Sert d'URL : /projects/<slug>"
-          />
-        </div>
-        <Field
-          name="description"
-          label="Description (résumé, 10–600 car.)"
-          value={values.description}
-          onChange={handleChange}
-          error={state.errors.description}
-          placeholder="Ce que le projet apporte, en une ou deux phrases."
-          textarea
-        />
-      </div>
+        {initial.id && <input type="hidden" name="id" value={initial.id} />}
 
-      <div
-        role="tabpanel"
-        id="panel-details"
-        aria-labelledby="tab-details"
-        hidden={tab !== "details"}
-      >
-        <p className={styles.tabIntro}>{TABS[1].intro}</p>
-        <div className={styles.formGrid}>
+        <div
+          role="tabpanel"
+          id="panel-essentiel"
+          aria-labelledby="tab-essentiel"
+          hidden={tab !== "essentiel"}
+        >
+          <p className={styles.tabIntro}>{TABS[0].intro}</p>
+          <div className={styles.formGrid}>
+            <Field
+              name="title"
+              label="Titre"
+              value={values.title}
+              onChange={handleChange}
+              error={state.errors.title}
+              placeholder="Refonte du site vitrine"
+            />
+            <Field
+              name="slug"
+              label="Slug (URL)"
+              value={values.slug}
+              onChange={handleChange}
+              error={state.errors.slug}
+              placeholder="refonte-site-vitrine"
+              hint="Minuscules, chiffres et tirets. Sert d'URL : /projects/<slug>"
+            />
+          </div>
           <Field
-            name="tag"
-            label="Étiquette (tag)"
-            value={values.tag}
+            name="description"
+            label="Description (résumé, 10–600 car.)"
+            value={values.description}
             onChange={handleChange}
-            error={state.errors.tag}
-            placeholder="Design · Développement"
-          />
-          <Field
-            name="category"
-            label="Catégorie"
-            value={values.category}
-            onChange={handleChange}
-            error={state.errors.category}
-            placeholder="Site web"
-          />
-          <Field
-            name="year"
-            label="Année"
-            value={values.year}
-            onChange={handleChange}
-            error={state.errors.year}
-            placeholder="2026"
-          />
-          <Field
-            name="client_name"
-            label="Client (optionnel)"
-            value={values.client_name}
-            onChange={handleChange}
-            error={state.errors.client_name}
-            placeholder="Nom du client"
-          />
-        </div>
-        <Field
-          name="presentation"
-          label="Présentation"
-          value={values.presentation}
-          onChange={handleChange}
-          error={state.errors.presentation}
-          placeholder="Le contexte et le besoin du client."
-          textarea
-        />
-        <Field
-          name="explication"
-          label="Explication"
-          value={values.explication}
-          onChange={handleChange}
-          error={state.errors.explication}
-          placeholder="La solution proposée et les choix techniques."
-          textarea
-        />
-        <div className={styles.formGrid}>
-          <Field
-            name="security"
-            label="Sécurité"
-            value={values.security}
-            onChange={handleChange}
-            error={state.errors.security}
-            placeholder="Mesures de sécurité mises en place."
-            textarea
-          />
-          <Field
-            name="performance"
-            label="Performance"
-            value={values.performance}
-            onChange={handleChange}
-            error={state.errors.performance}
-            placeholder="Résultats mesurés et optimisations."
+            error={state.errors.description}
+            placeholder="Ce que le projet apporte, en une ou deux phrases."
             textarea
           />
         </div>
-        <Field
-          name="tech"
-          label="Technologies (une par ligne)"
-          value={values.tech}
-          onChange={handleChange}
-          error={state.errors.tech}
-          placeholder={"Next.js\nTypeScript\nSupabase"}
-          textarea
-        />
-        <Field
-          name="highlights"
-          label="Points forts (un par ligne)"
-          value={values.highlights}
-          onChange={handleChange}
-          error={state.errors.highlights}
-          placeholder={"Chargement divisé par deux\nParcours mobile repensé"}
-          textarea
-        />
-      </div>
 
-      <div
-        role="tabpanel"
-        id="panel-liens"
-        aria-labelledby="tab-liens"
-        hidden={tab !== "liens"}
-      >
-        <p className={styles.tabIntro}>{TABS[2].intro}</p>
-        <div className={styles.formGrid}>
+        <div
+          role="tabpanel"
+          id="panel-details"
+          aria-labelledby="tab-details"
+          hidden={tab !== "details"}
+        >
+          <p className={styles.tabIntro}>{TABS[1].intro}</p>
+          <div className={styles.formGrid}>
+            <Field
+              name="tag"
+              label="Étiquette (tag)"
+              value={values.tag}
+              onChange={handleChange}
+              error={state.errors.tag}
+              placeholder="Design · Développement"
+            />
+            <Field
+              name="category"
+              label="Catégorie"
+              value={values.category}
+              onChange={handleChange}
+              error={state.errors.category}
+              placeholder="Site web"
+            />
+            <Field
+              name="year"
+              label="Année"
+              value={values.year}
+              onChange={handleChange}
+              error={state.errors.year}
+              placeholder="2026"
+            />
+            <Field
+              name="client_name"
+              label="Client (optionnel)"
+              value={values.client_name}
+              onChange={handleChange}
+              error={state.errors.client_name}
+              placeholder="Nom du client"
+            />
+          </div>
           <Field
-            name="live_url"
-            label="Lien du site"
-            value={values.live_url}
+            name="presentation"
+            label="Présentation"
+            value={values.presentation}
             onChange={handleChange}
-            error={state.errors.live_url}
-            placeholder="https://exemple.mg"
+            error={state.errors.presentation}
+            placeholder="Le contexte et le besoin du client."
+            textarea
           />
           <Field
-            name="repo_url"
-            label="Lien du code"
-            value={values.repo_url}
+            name="explication"
+            label="Explication"
+            value={values.explication}
             onChange={handleChange}
-            error={state.errors.repo_url}
-            placeholder="https://github.com/…"
+            error={state.errors.explication}
+            placeholder="La solution proposée et les choix techniques."
+            textarea
+          />
+          <div className={styles.formGrid}>
+            <Field
+              name="security"
+              label="Sécurité"
+              value={values.security}
+              onChange={handleChange}
+              error={state.errors.security}
+              placeholder="Mesures de sécurité mises en place."
+              textarea
+            />
+            <Field
+              name="performance"
+              label="Performance"
+              value={values.performance}
+              onChange={handleChange}
+              error={state.errors.performance}
+              placeholder="Résultats mesurés et optimisations."
+              textarea
+            />
+          </div>
+          <Field
+            name="tech"
+            label="Technologies (une par ligne)"
+            value={values.tech}
+            onChange={handleChange}
+            error={state.errors.tech}
+            placeholder={"Next.js\nTypeScript\nSupabase"}
+            textarea
           />
           <Field
-            name="video_url"
-            label="Vidéo (URL)"
-            value={values.video_url}
+            name="highlights"
+            label="Points forts (un par ligne)"
+            value={values.highlights}
             onChange={handleChange}
-            error={state.errors.video_url}
-            placeholder="https://…/presentation.mp4"
-          />
-          <Field
-            name="video_poster"
-            label="Vignette vidéo (URL)"
-            value={values.video_poster}
-            onChange={handleChange}
-            error={state.errors.video_poster}
-            placeholder="https://…/vignette.jpg"
+            error={state.errors.highlights}
+            placeholder={"Chargement divisé par deux\nParcours mobile repensé"}
+            textarea
           />
         </div>
 
-        <label className={styles.checkboxRow}>
-          <input
-            key={generation}
-            type="checkbox"
-            name="published"
-            defaultChecked={published}
-            onChange={(event) => setPublished(event.target.checked)}
-          />
-          <span>Publiée (visible sur le site public)</span>
-        </label>
-      </div>
+        <div
+          role="tabpanel"
+          id="panel-liens"
+          aria-labelledby="tab-liens"
+          hidden={tab !== "liens"}
+        >
+          <p className={styles.tabIntro}>{TABS[2].intro}</p>
+          <div className={styles.formGrid}>
+            <Field
+              name="live_url"
+              label="Lien du site"
+              value={values.live_url}
+              onChange={handleChange}
+              error={state.errors.live_url}
+              placeholder="https://exemple.mg"
+            />
+            <Field
+              name="repo_url"
+              label="Lien du code"
+              value={values.repo_url}
+              onChange={handleChange}
+              error={state.errors.repo_url}
+              placeholder="https://github.com/…"
+            />
+            <Field
+              name="video_url"
+              label="Vidéo (URL)"
+              value={values.video_url}
+              onChange={handleChange}
+              error={state.errors.video_url}
+              placeholder="https://…/presentation.mp4"
+            />
+            <Field
+              name="video_poster"
+              label="Vignette vidéo (URL)"
+              value={values.video_poster}
+              onChange={handleChange}
+              error={state.errors.video_poster}
+              placeholder="https://…/vignette.jpg"
+            />
+          </div>
 
-      <div className={styles.formActions}>
-        <button type="submit" className={styles.submit} disabled={pending}>
-          {pending ? "Enregistrement…" : initial.id ? "Enregistrer" : "Créer la réalisation"}
-        </button>
+          <label className={styles.checkboxRow}>
+            <input
+              key={generation}
+              type="checkbox"
+              name="published"
+              defaultChecked={published}
+              onChange={(event) => setPublished(event.target.checked)}
+            />
+            <span>Publiée (visible sur le site public)</span>
+          </label>
+        </div>
+
+        <div className={styles.formActions}>
+          <button type="submit" className={styles.submit} disabled={pending}>
+            {pending ? "Enregistrement…" : initial.id ? "Enregistrer" : "Créer la réalisation"}
+          </button>
+        </div>
+      </form>
+
+      <div
+        role="tabpanel"
+        id="panel-images"
+        aria-labelledby="tab-images"
+        hidden={tab !== "images"}
+      >
+        <p className={styles.tabIntro}>{TABS[3].intro}</p>
+        {imagesPanel}
       </div>
-    </form>
+    </>
   );
 }

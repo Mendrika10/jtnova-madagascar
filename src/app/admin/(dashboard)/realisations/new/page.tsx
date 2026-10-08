@@ -48,6 +48,13 @@ export default function NewProjectPage() {
           tech: "",
           highlights: "",
         }}
+        imagesPanel={
+          <p className={styles.placeholder}>
+            Les images s&apos;ajoutent après l&apos;enregistrement : créez la
+            réalisation, puis ouvrez l&apos;onglet « Images » de sa fiche pour
+            envoyer la galerie.
+          </p>
+        }
       />
     </div>
   );
