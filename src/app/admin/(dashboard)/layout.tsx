@@ -1,18 +1,12 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { ChevronUp, LogOut, Plus, Search, User } from "@deemlol/next-icons";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getDashboardCounts } from "@/lib/admin-data";
 import { syncContactReadStatuses } from "@/lib/mail-sync";
 import { logoutAction } from "../login/actions";
+import SidebarNav from "./SidebarNav";
 import styles from "../admin.module.css";
-
-const NAV = [
-  { href: "/admin", label: "Tableau de bord" },
-  { href: "/admin/realisations", label: "Réalisations" },
-  { href: "/admin/personnalisation", label: "Personnalisation" },
-  { href: "/admin/messages", label: "Messages" },
-  { href: "/admin/sante", label: "Santé" },
-];
 
 export default async function AdminLayout({
   children,
@@ -48,47 +42,69 @@ export default async function AdminLayout({
   await syncContactReadStatuses(supabase);
   const counts = await getDashboardCounts(supabase);
 
-  const badgeFor = (href: string) =>
-    href === "/admin/messages"
-      ? { count: counts.unreadMessages, noun: "message" }
-      : href === "/admin/sante"
-        ? { count: counts.unresolvedErrors, noun: "erreur" }
-        : null;
-
   return (
     <div className={styles.shell}>
       <aside className={styles.sidebar}>
-        <div className={styles.brand}>
-          Jtnova <span className={styles.brandAccent}>Admin</span>
+        <div className={styles.sideHead}>
+          <span className={styles.sideMark} aria-hidden>
+            JT
+          </span>
+          <span className={styles.sideIdent}>
+            <span className={styles.sideBrand}>Jtnova</span>
+            <span className={styles.sideRole}>Administration</span>
+          </span>
+          <span className={styles.sideCaret} aria-hidden>
+            <ChevronUp size={14} strokeWidth={2} />
+          </span>
         </div>
-        <nav className={styles.nav} aria-label="Navigation administration">
-          {NAV.map((item) => {
-            const badge = badgeFor(item.href);
-            return (
-              <Link key={item.href} href={item.href} className={styles.navLink}>
-                {item.label}
-                {badge && badge.count > 0 && (
-                  <span
-                    className={styles.navBadge}
-                    aria-label={`${badge.count} ${badge.noun}${badge.count > 1 ? "s" : ""} à traiter`}
-                  >
-                    {badge.count}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
+
+        <Link href="/admin/realisations/new" className={styles.sidePrimary}>
+          <Plus size={16} strokeWidth={2.2} aria-hidden />
+          Nouvelle réalisation
+        </Link>
+
+        <nav className={styles.sideNav} aria-label="Navigation administration">
+          <SidebarNav
+            unreadMessages={counts.unreadMessages}
+            unresolvedErrors={counts.unresolvedErrors}
+          />
+
+          <div className={styles.sideGroup}>
+            <p className={styles.sideGroupTitle}>Recherche</p>
+            <form className={styles.sideSearch} action="/admin" method="get" role="search">
+              <span className={styles.sideSearchIcon} aria-hidden>
+                <Search size={14} strokeWidth={2} />
+              </span>
+              <input
+                type="search"
+                name="q"
+                placeholder="Réalisation, message…"
+                aria-label="Rechercher une réalisation ou un message"
+                className={styles.sideSearchInput}
+              />
+            </form>
+          </div>
         </nav>
-      </aside>
-      <div className={styles.main}>
-        <header className={styles.topbar}>
-          <span className={styles.userEmail}>{user.email}</span>
+
+        <div className={styles.sideFoot}>
+          <div className={styles.sideUser}>
+            <span className={styles.sideAvatar} aria-hidden>
+              <User size={14} strokeWidth={2} />
+            </span>
+            <span className={styles.sideEmail} title={user.email ?? ""}>
+              {profile.email ?? user.email}
+            </span>
+          </div>
           <form action={logoutAction}>
-            <button type="submit" className={styles.logoutBtn}>
+            <button type="submit" className={styles.sideLogout}>
+              <LogOut size={14} strokeWidth={2} aria-hidden />
               Déconnexion
             </button>
           </form>
-        </header>
+        </div>
+      </aside>
+
+      <div className={styles.main}>
         <div className={styles.content}>{children}</div>
       </div>
     </div>
