@@ -2481,8 +2481,10 @@
 }
 
 /* Compteur d'erreurs porté par un onglet : un champ fautif peut se trouver dans
-   un onglet masqué, l'onglet concerné le signale. */
-.tabCount {
+   un onglet masqué, l'onglet concerné le signale. Volontairement limité au
+   panneau clair : `.tabCount` sert aussi au compteur de la boîte de réception
+   (écran sombre, hors périmètre), qu'il ne doit pas repeindre. */
+.panel .tabCount {
   display: inline-block;
   min-width: 1.05rem;
   margin-left: 0.35rem;
