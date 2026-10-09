@@ -1,5 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import {
+  HelpCircle,
+  Image,
+  Info,
+  Layers,
+  MessageSquare,
+  Search,
+  Share2,
+  Sparkles,
+} from "@deemlol/next-icons";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSiteSetting } from "@/lib/site-settings";
 import {
@@ -27,15 +37,20 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+/**
+ * Onglets de la page, dans l'ordre d'affichage. Chaque section porte l'icône
+ * qui la représente (même traitement que les onglets du formulaire de
+ * réalisation) : la barre reste lisible d'un coup d'œil.
+ */
 const SECTIONS = [
-  { id: "hero", label: "Hero" },
-  { id: "about", label: "À propos" },
-  { id: "services", label: "Services" },
-  { id: "testimonials", label: "Témoignages" },
-  { id: "faq", label: "FAQ" },
-  { id: "cta", label: "CTA & réseaux" },
-  { id: "seo", label: "SEO" },
-  { id: "identity", label: "Identité" },
+  { id: "hero", label: "Hero", icon: Sparkles },
+  { id: "about", label: "À propos", icon: Info },
+  { id: "services", label: "Services", icon: Layers },
+  { id: "testimonials", label: "Témoignages", icon: MessageSquare },
+  { id: "faq", label: "FAQ", icon: HelpCircle },
+  { id: "cta", label: "CTA & réseaux", icon: Share2 },
+  { id: "seo", label: "SEO", icon: Search },
+  { id: "identity", label: "Identité", icon: Image },
 ] as const;
 
 type SectionId = (typeof SECTIONS)[number]["id"];
@@ -154,8 +169,21 @@ export default async function AdminPersonnalisationPage({
   };
 
   return (
-    <>
-      <h1 className={styles.pageTitle}>Personnalisation</h1>
+    <div className={styles.panel}>
+      <div className={styles.pageHeader}>
+        <div className={styles.titleRow}>
+          <span className={styles.titleIcon} aria-hidden>
+            <Sparkles size={18} strokeWidth={2} />
+          </span>
+          <span className={styles.titleBlock}>
+            <h1 className={styles.pageTitle}>Personnalisation</h1>
+            <p className={styles.subtitle}>
+              {SECTIONS.length} sections · le site public est mis à jour à
+              l&apos;enregistrement.
+            </p>
+          </span>
+        </div>
+      </div>
 
       {params.saved === "1" && (
         <p className={styles.notice} role="status">
@@ -163,29 +191,36 @@ export default async function AdminPersonnalisationPage({
         </p>
       )}
 
-      <nav className={styles.tabs} aria-label="Sections personnalisables">
-        {SECTIONS.map((section) => (
+      <nav
+        className={`${styles.tabs} ${styles.segmentedTabs}`}
+        aria-label="Sections personnalisables"
+      >
+        {SECTIONS.map(({ id, label, icon: Icon }) => (
           <Link
-            key={section.id}
-            href={`/admin/personnalisation?section=${section.id}`}
-            className={`${styles.tab} ${active === section.id ? styles.tabActive : ""}`}
-            aria-current={active === section.id ? "page" : undefined}
+            key={id}
+            href={`/admin/personnalisation?section=${id}`}
+            className={`${styles.tab} ${active === id ? styles.tabActive : ""}`}
+            aria-current={active === id ? "page" : undefined}
           >
-            {section.label}
+            <Icon size={14} strokeWidth={2} aria-hidden />
+            {label}
           </Link>
         ))}
       </nav>
 
-      {active === "hero" && <HeroEditor values={heroValues} />}
-      {active === "about" && <AboutEditor values={aboutValues} />}
-      {active === "services" && <ServicesEditor initial={servicesRows} />}
-      {active === "testimonials" && (
-        <TestimonialsEditor initial={testimonialRows} />
-      )}
-      {active === "faq" && <FaqEditor initial={faqRows} />}
-      {active === "cta" && <CtaEditor values={ctaValues} />}
-      {active === "seo" && <SeoEditor values={seoValues} />}
-      {active === "identity" && <IdentityEditor values={identityValues} />}
-    </>
+      {/* Carte unique : l'éditeur de la section ouverte, avec son aperçu. */}
+      <div className={styles.settingsCard}>
+        {active === "hero" && <HeroEditor values={heroValues} />}
+        {active === "about" && <AboutEditor values={aboutValues} />}
+        {active === "services" && <ServicesEditor initial={servicesRows} />}
+        {active === "testimonials" && (
+          <TestimonialsEditor initial={testimonialRows} />
+        )}
+        {active === "faq" && <FaqEditor initial={faqRows} />}
+        {active === "cta" && <CtaEditor values={ctaValues} />}
+        {active === "seo" && <SeoEditor values={seoValues} />}
+        {active === "identity" && <IdentityEditor values={identityValues} />}
+      </div>
+    </div>
   );
 }

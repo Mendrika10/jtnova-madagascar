@@ -528,6 +528,9 @@ export default function ProjectForm({
   // du `<form>`, pas ses enfants : la liste des images porte ses propres
   // formulaires (suppression d'une image), et un `<form>` imbriqué dans un
   // autre est interdit en HTML.
+  //
+  // La barre segmentée (`segmentedTabs`) est partagée avec la page
+  // Personnalisation : les deux écrans doivent présenter les mêmes onglets.
   return (
     <>
       {state.errors._ && (
@@ -539,7 +542,7 @@ export default function ProjectForm({
       <div
         role="tablist"
         aria-label="Sections de la réalisation"
-        className={`${styles.tabs} ${styles.formTabs}`}
+        className={`${styles.tabs} ${styles.segmentedTabs}`}
       >
         {TABS.map((t) => {
           const Icon = t.icon;

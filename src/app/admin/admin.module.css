@@ -3490,12 +3490,15 @@
 
 /* ——— Formulaire de réalisation (ADMIN-UI) : carte encadrée, groupes de champs
    et icônes de champ. Tout est scopé à `.panel` (thème clair) et aux classes
-   `formCard` / `formTabs` / `fieldGroup`, pour ne pas repeindre les autres
+   `formCard` / `settingsCard` / `segmentedTabs` / `fieldGroup`, pour ne pas repeindre les autres
    formulaires de l'administration. ——— */
 /* Aucun plafond de largeur : la carte occupe toute la place du panneau (les
    `max-width: 900px` hérités de `.form`, `.tabs` et `.section` sont neutralisés
    plus bas, dans le périmètre de la carte uniquement). */
-.panel .formCard {
+/* La même carte sert au formulaire de réalisation et à la page
+   Personnalisation : une seule surface à maintenir. */
+.panel .formCard,
+.panel .settingsCard {
   gap: 1.15rem;
   max-width: none;
   padding: clamp(1.1rem, 2.4vw, 1.6rem);
@@ -3505,7 +3508,8 @@
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
-.panel .formCard .field {
+.panel .formCard .field,
+.panel .settingsCard .field {
   gap: 0.5rem;
 }
 
@@ -3519,7 +3523,8 @@
    de colonnes est fixé (et non laissé à `auto-fit`) pour qu'un groupe de 4
    champs tienne toujours en 2 × 2 sans laisser de champ orphelin, quelle que
    soit la largeur de la carte — désormais non plafonnée. */
-.panel .formCard .formGrid {
+.panel .formCard .formGrid,
+.panel .settingsCard .formGrid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1.1rem 1.3rem;
 }
@@ -3532,7 +3537,8 @@
 }
 
 @media (max-width: 640px) {
-  .panel .formCard .formGrid {
+  .panel .formCard .formGrid,
+  .panel .settingsCard .formGrid {
     grid-template-columns: minmax(0, 1fr);
   }
 }
@@ -3612,8 +3618,10 @@
   background: #f8fafc;
 }
 
-/* Barre d'onglets du formulaire : barre segmentée posée au-dessus de la carte. */
-.panel .formTabs {
+/* Barre d'onglets segmentée, posée au-dessus d'une carte : elle sert au
+   formulaire de réalisation **et** à la page Personnalisation, dont les
+   onglets doivent se ressembler. */
+.panel .segmentedTabs {
   gap: 0.3rem;
   max-width: none;
   margin: 0 0 1rem;
@@ -3626,7 +3634,7 @@
 /* Texte d'onglet volontairement plus petit que la base des onglets (0,85 rem) :
    la barre reste une navigation secondaire, les libellés ne doivent pas
    concurrencer le titre de la page. */
-.panel .formTabs .tab {
+.panel .segmentedTabs .tab {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
@@ -3636,12 +3644,12 @@
   font-size: 0.76rem;
 }
 
-.panel .formTabs .tab:hover {
+.panel .segmentedTabs .tab:hover {
   background: #eef2f6;
 }
 
-.panel .formTabs .tabActive,
-.panel .formTabs .tabActive:hover {
+.panel .segmentedTabs .tabActive,
+.panel .segmentedTabs .tabActive:hover {
   border-color: transparent;
   background: #111827;
   color: #ffffff;
@@ -3792,6 +3800,38 @@
   margin: 0;
   padding: 0;
   border-top: 0;
+}
+
+/* ——— Page Personnalisation (ADMIN-UI) ——— */
+/* Les éditeurs de sections reprennent le langage des formulaires : carte
+   blanche, champs clairs, onglets segmentés. Deux différences assumées :
+   chaque entrée des listes (services, témoignages, questions) vit dans son
+   propre encadré — comme une ligne de galerie — et l'**aperçu live reste
+   sombre**, parce qu'il montre le site public, qui est sombre : même
+   traitement que la page « Aperçu » d'une réalisation, encadrée dans le
+   panneau clair comme une fenêtre. */
+.panel .settingsCard .form {
+  max-width: none;
+}
+
+/* Une entrée de liste : encadré à coins arrondis, séparé des autres par le
+   `gap` du formulaire (le filet et la marge haute de `.section` disparaissent). */
+.panel .settingsCard .section {
+  max-width: none;
+  margin: 0;
+  padding: 0.9rem 1rem 0.6rem;
+  border: 1px solid #e6ebf2;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+/* Dans une entrée de liste, les actions de ligne (↑ ↓ Retirer) restent en
+   place : la barre collante est réservée au bouton d'enregistrement, sinon
+   chacune des lignes porterait son propre bandeau collant. */
+.panel .settingsCard .section .formActions {
+  position: static;
+  padding: 0;
+  background-image: none;
 }
 
 /* ——— Liste des réalisations (ADMIN-UI) ——— */
