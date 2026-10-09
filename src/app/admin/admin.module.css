@@ -1269,34 +1269,211 @@
   font-weight: 700;
 }
 
+/* ——— Galerie : liste réordonnable, poignée à gauche de chaque ligne ———
+   Une ligne = une image : poignée de glisser-déposer, position, vignette,
+   texte alternatif, puis une suppression discrète à droite (rouge seulement
+   au survol : une action destructrice ne doit pas dominer la liste). */
 .imageList {
   list-style: none;
   margin: 0 0 1.25rem;
   padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-.imageItem {
-  border: 1px solid rgba(120, 170, 255, 0.16);
-  border-radius: 10px;
+.imageRow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid #e6ebf2;
+  border-radius: 12px;
+  background: #ffffff;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.imageRow:hover {
+  border-color: #d6dee8;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+
+.imageGrip {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.imageNumber {
+  flex: none;
+  min-width: 1rem;
+  text-align: right;
+  font-size: 0.76rem;
+  color: #94a3b8;
+  font-variant-numeric: tabular-nums;
+}
+
+.imageThumbBox {
+  flex: none;
+  width: 96px;
+  height: 68px;
+  display: grid;
+  place-items: center;
   overflow: hidden;
-  background: rgba(13, 20, 32, 0.9);
+  border: 1px solid #eef2f7;
+  border-radius: 9px;
+  background: #f1f5f9;
 }
 
 .imageThumb {
   width: 100%;
-  height: 120px;
+  height: 100%;
   object-fit: cover;
   display: block;
 }
 
-.imageMeta {
+.imageText {
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding: 0.6rem;
+  gap: 0.15rem;
+}
+
+.imageAlt {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #111827;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.imagePosition {
+  font-size: 0.72rem;
+  color: #8b98a9;
+}
+
+.imageActions {
+  flex: none;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+/* Suppression : discrète au repos (30 px, icône grise), rouge au survol. */
+.imageDelete {
+  width: 30px;
+  height: 30px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+}
+
+.imageDelete:hover {
+  border-color: #fecdd3;
+  background: #fff1f2;
+  color: #b42318;
+}
+
+.imageDelete:focus-visible {
+  border-color: #5d6ac0;
+  outline: 2px solid #5d6ac0;
+  outline-offset: 1px;
+}
+
+/* Repli sans souris : les flèches ↑/↓ ne réapparaissent que sur écran tactile
+   (`hover: none`), seul cas où le glisser-déposer HTML5 est inexploitable. */
+.imageFallback {
+  display: none;
+  gap: 0.25rem;
+}
+
+@media (hover: none) {
+  .imageFallback {
+    display: flex;
+  }
+}
+
+/* ——— Glisser-déposer de la galerie (mêmes repères que la liste des
+   réalisations : trait d'insertion, ligne atténuée, poignée détachée). ——— */
+.panel .imageRowDragging {
+  opacity: 0.45;
+}
+
+.imageRowDropBefore::before,
+.imageRowDropAfter::after {
+  content: "";
+  position: absolute;
+  left: 0.5rem;
+  right: 0.5rem;
+  height: 2px;
+  border-radius: 2px;
+  background: #5d6ac0;
+}
+
+.imageRowDropBefore::before {
+  top: -0.32rem;
+}
+
+.imageRowDropAfter::after {
+  bottom: -0.32rem;
+}
+
+.imageRowDropBefore,
+.imageRowDropAfter {
+  border-color: #c7cff0;
+  background: #f7f8fd;
+}
+
+.imageRowDragging .dragHandle {
+  color: #334155;
+  background: #eef2ff;
+  box-shadow: 0 0 0 2px rgba(93, 106, 192, 0.35);
+}
+
+/* Ligne qui vient de changer de place : surbrillance qui s'estompe + léger
+   glissement venant du sens du mouvement (mêmes keyframes que le tableau). */
+.imageRowMoved {
+  border-color: #c7cff0;
+  background-color: rgba(93, 106, 192, 0.09);
+  box-shadow: inset 3px 0 0 #5d6ac0;
+}
+
+.imageRowMoved .imageNumber {
+  color: #4150a8;
+  font-weight: 600;
+}
+
+.imageRowMovedDown {
+  animation: rowMovedFlash 900ms ease-out both, rowMovedFromAbove 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.imageRowMovedUp {
+  animation: rowMovedFlash 900ms ease-out both, rowMovedFromBelow 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .imageRowMovedDown,
+  .imageRowMovedUp {
+    animation: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .imageThumbBox {
+    width: 64px;
+    height: 46px;
+  }
+  .imagePosition {
+    display: none;
+  }
 }
 
 /* ——— Envoi d'images (ADMIN-UI) : zone de dépôt, aperçus, progression.
