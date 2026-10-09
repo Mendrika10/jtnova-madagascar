@@ -1101,16 +1101,29 @@
   vertical-align: middle;
 }
 
-.orderCell {
+/* Cellules à contenu en ligne (« Ordre », « Actions »). Elles restent de vraies
+   cellules de tableau (`display: table-cell`, la valeur par défaut) et le
+   conteneur flex vit dans un enfant : `display: flex` posé sur le `<td>`
+   lui-même le retire de la grille du tableau, si bien que son fond et sa
+   bordure se placent 1 à 3 px plus bas et 6 px plus courts que ceux de ses
+   voisines — d'où le bandeau et le trait d'insertion « en escalier » observés
+   sur la liste des réalisations. */
+.orderCell,
+.actionsCell {
+  vertical-align: middle;
+}
+
+.orderFlex {
   display: flex;
+  align-items: center;
   gap: 0.25rem;
 }
 
-.actionsCell {
+.actionsFlex {
   display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .code {
@@ -1256,62 +1269,593 @@
   font-weight: 700;
 }
 
+/* ——— Galerie : liste réordonnable, poignée à gauche de chaque ligne ———
+   Une ligne = une image : poignée de glisser-déposer, position, vignette,
+   texte alternatif, puis une suppression discrète à droite (rouge seulement
+   au survol : une action destructrice ne doit pas dominer la liste). */
 .imageList {
   list-style: none;
   margin: 0 0 1.25rem;
   padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-.imageItem {
-  border: 1px solid rgba(120, 170, 255, 0.16);
-  border-radius: 10px;
+.imageRow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid #e6ebf2;
+  border-radius: 12px;
+  background: #ffffff;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.imageRow:hover {
+  border-color: #d6dee8;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+
+.imageGrip {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.imageNumber {
+  flex: none;
+  min-width: 1rem;
+  text-align: right;
+  font-size: 0.76rem;
+  color: #94a3b8;
+  font-variant-numeric: tabular-nums;
+}
+
+.imageThumbBox {
+  flex: none;
+  width: 96px;
+  height: 68px;
+  display: grid;
+  place-items: center;
   overflow: hidden;
-  background: rgba(13, 20, 32, 0.9);
+  border: 1px solid #eef2f7;
+  border-radius: 9px;
+  background: #f1f5f9;
 }
 
 .imageThumb {
   width: 100%;
-  height: 120px;
+  height: 100%;
   object-fit: cover;
   display: block;
 }
 
-.imageMeta {
+.imageText {
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding: 0.6rem;
+  gap: 0.15rem;
 }
 
+.imageAlt {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #111827;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.imagePosition {
+  font-size: 0.72rem;
+  color: #8b98a9;
+}
+
+.imageActions {
+  flex: none;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+/* Suppression : discrète au repos (30 px, icône grise), rouge au survol. */
+.imageDelete {
+  width: 30px;
+  height: 30px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+}
+
+.imageDelete:hover {
+  border-color: #fecdd3;
+  background: #fff1f2;
+  color: #b42318;
+}
+
+.imageDelete:focus-visible {
+  border-color: #5d6ac0;
+  outline: 2px solid #5d6ac0;
+  outline-offset: 1px;
+}
+
+/* Repli sans souris : les flèches ↑/↓ ne réapparaissent que sur écran tactile
+   (`hover: none`), seul cas où le glisser-déposer HTML5 est inexploitable. */
+.imageFallback {
+  display: none;
+  gap: 0.25rem;
+}
+
+@media (hover: none) {
+  .imageFallback {
+    display: flex;
+  }
+}
+
+/* ——— Glisser-déposer de la galerie (mêmes repères que la liste des
+   réalisations : trait d'insertion, ligne atténuée, poignée détachée). ——— */
+.panel .imageRowDragging {
+  opacity: 0.45;
+}
+
+.imageRowDropBefore::before,
+.imageRowDropAfter::after {
+  content: "";
+  position: absolute;
+  left: 0.5rem;
+  right: 0.5rem;
+  height: 2px;
+  border-radius: 2px;
+  background: #5d6ac0;
+}
+
+.imageRowDropBefore::before {
+  top: -0.32rem;
+}
+
+.imageRowDropAfter::after {
+  bottom: -0.32rem;
+}
+
+.imageRowDropBefore,
+.imageRowDropAfter {
+  border-color: #c7cff0;
+  background: #f7f8fd;
+}
+
+.imageRowDragging .dragHandle {
+  color: #334155;
+  background: #eef2ff;
+  box-shadow: 0 0 0 2px rgba(93, 106, 192, 0.35);
+}
+
+/* Ligne qui vient de changer de place : surbrillance qui s'estompe + léger
+   glissement venant du sens du mouvement (mêmes keyframes que le tableau). */
+.imageRowMoved {
+  border-color: #c7cff0;
+  background-color: rgba(93, 106, 192, 0.09);
+  box-shadow: inset 3px 0 0 #5d6ac0;
+}
+
+.imageRowMoved .imageNumber {
+  color: #4150a8;
+  font-weight: 600;
+}
+
+.imageRowMovedDown {
+  animation: rowMovedFlash 900ms ease-out both, rowMovedFromAbove 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.imageRowMovedUp {
+  animation: rowMovedFlash 900ms ease-out both, rowMovedFromBelow 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .imageRowMovedDown,
+  .imageRowMovedUp {
+    animation: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .imageThumbBox {
+    width: 64px;
+    height: 46px;
+  }
+  .imagePosition {
+    display: none;
+  }
+}
+
+/* ——— Envoi d'images (ADMIN-UI) : zone de dépôt, aperçus, progression.
+   Ces règles ne servent que dans le panneau clair (onglet « Images »), d'où
+   des couleurs claires directement, sans variante `.panel`. ——— */
 .uploader {
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
+  padding: 1.1rem;
+  border: 1px solid #e6ebf2;
+  border-radius: 16px;
+  background: #fbfcfe;
 }
 
+.uploaderHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+
+.uploaderHeadIcon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: #111827;
+  color: #ffffff;
+}
+
+.uploaderHeadText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.uploaderTitle {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.uploaderSubtitle {
+  margin: 0;
+  font-size: 0.76rem;
+  color: #6b7280;
+}
+
+/* Zone de dépôt : un `<label>`, donc un clic n'importe où ouvre le sélecteur de
+   fichiers ; le champ est masqué mais reste focusable (`:focus-within`). */
+.dropZone {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 1.5rem 1rem;
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 14px;
+  background: #ffffff;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.dropZone:hover {
+  border-color: #94a3b8;
+}
+
+.dropZone:focus-within {
+  border-color: #111827;
+  outline: 2px solid #111827;
+  outline-offset: 2px;
+}
+
+.dropZoneActive {
+  border-color: #111827;
+  background: #f1f5f9;
+}
+
+.dropInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.dropIcon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  margin-bottom: 0.35rem;
+  border-radius: 50%;
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.dropTitle {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.dropText {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.dropBrowse {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
+.dropMeta {
+  margin-top: 0.15rem;
+  font-size: 0.74rem;
+  color: #8b98a9;
+}
+
+/* File d'attente : aperçu, texte alternatif, progression par fichier. */
 .pendingList {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.6rem;
 }
 
 .pendingItem {
   display: flex;
+  gap: 0.7rem;
+  padding: 0.6rem;
+  border: 1px solid #e9eef4;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.pendingItemError {
+  border-color: #fecaca;
+  background: #fff8f8;
+}
+
+.pendingThumb {
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: 9px;
+  object-fit: cover;
+  background: #eef2f6;
+}
+
+.pendingBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.pendingHead {
+  display: flex;
   align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+  gap: 0.45rem;
 }
 
 .pendingName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 0.82rem;
-  color: #9fb1cb;
-  flex: 1 1 160px;
+  font-weight: 500;
+  color: #111827;
+}
+
+.pendingSize {
+  flex: none;
+  font-size: 0.72rem;
+  color: #8b98a9;
+}
+
+.pendingStatus {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.pendingStatusDone {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.pendingStatusError {
+  background: #fef2f2;
+  color: #b42318;
+}
+
+.pendingSpin {
+  animation: pendingSpin 1s linear infinite;
+}
+
+@keyframes pendingSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.pendingRemove {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid #e6ebf2;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.pendingRemove:hover:not(:disabled) {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #b42318;
+}
+
+.pendingRemove:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.pendingAlt {
+  display: block;
+}
+
+.pendingError {
+  margin: 0;
+  font-size: 0.74rem;
+  color: #b42318;
+}
+
+/* Progression : la piste et le pourcentage, lisibles dès 8 px de haut. */
+.progress {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.progressTrack {
+  flex: 1;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #eef2f6;
+}
+
+.progressBar {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #2a79ff 0%, #00b4d8 100%);
+  transition: width 0.2s ease;
+}
+
+.progressError .progressBar {
+  background: #ef4444;
+}
+
+.progressPct {
+  flex: none;
+  min-width: 2.4rem;
+  text-align: right;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.uploaderFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.uploaderHint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #6b7280;
+}
+
+.uploaderNotice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  margin: 0;
+  font-size: 0.74rem;
+  color: #8b98a9;
+}
+
+.uploaderNotice svg {
+  flex: none;
+  margin-top: 0.1rem;
+}
+
+/* ——— Onglet « Images » : galerie à gauche, envoi à droite ——— */
+.imagesLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(300px, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.imagesGallery {
+  min-width: 0;
+}
+
+.imagesSide {
+  min-width: 0;
+  position: sticky;
+  top: 1rem;
+}
+
+.imageCount {
+  display: block;
+  margin: -0.35rem 0 0.75rem;
+  font-size: 0.76rem;
+  color: #8b98a9;
+}
+
+/* État vide du même bloc (écran de création : aucune galerie possible). */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 2rem 1.25rem;
+  border: 1.5px dashed #dbe3ec;
+  border-radius: 14px;
+  background: #fbfcfe;
+  text-align: center;
+}
+
+.emptyIcon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  margin-bottom: 0.2rem;
+  border-radius: 50%;
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.emptyTitle {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.emptyText {
+  margin: 0;
+  max-width: 46ch;
+  font-size: 0.78rem;
+  color: #6b7280;
 }
 
 .previewBar {
@@ -2437,6 +2981,90 @@
   background: #1f2937;
 }
 
+/* Onglets du formulaire de réalisation (ADMIN-UI) : mêmes pastilles que
+   Personnalisation, en variante claire puisqu'elles vivent dans le panneau. */
+.panel .tabs {
+  gap: 0.4rem;
+  margin: 0 0 1.1rem;
+  padding-bottom: 0.7rem;
+  border-bottom: 1px solid #e9eef4;
+}
+
+/* Le formulaire est masqué quand l'onglet « Images » est ouvert : la barre
+   d'onglets et le panneau « Images » sont **frères** du `<form>`, jamais ses
+   enfants — les formulaires de suppression d'image ne peuvent pas être
+   imbriqués dans un autre formulaire (interdit en HTML). Sans cette règle, le
+   `display: flex` de `.form` l'emporterait sur l'attribut `hidden`. */
+.panel .form[hidden] {
+  display: none;
+}
+
+.panel .tab {
+  border: 1px solid #e6ebf2;
+  background: #ffffff;
+  color: #475569;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.panel .tab:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+.panel .tabActive,
+.panel .tabActive:hover {
+  border-color: transparent;
+  background: #111827;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* Compteur d'erreurs porté par un onglet : un champ fautif peut se trouver dans
+   un onglet masqué, l'onglet concerné le signale. Volontairement limité au
+   panneau clair : `.tabCount` sert aussi au compteur de la boîte de réception
+   (écran sombre, hors périmètre), qu'il ne doit pas repeindre. */
+.panel .tabCount {
+  display: inline-block;
+  min-width: 1.05rem;
+  margin-left: 0.35rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  background: #fee2e2;
+  color: #b42318;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.55;
+  text-align: center;
+}
+
+.panel .tabActive .tabCount {
+  background: rgba(255, 255, 255, 0.24);
+  color: #ffffff;
+}
+
+/* Phrase d'introduction de l'onglet ouvert. */
+.tabIntro {
+  margin: 0 0 0.9rem;
+  font-size: 0.82rem;
+  color: #6b7280;
+  max-width: 900px;
+}
+
+/* Le bouton d'enregistrement reste atteignable sous l'onglet ouvert. */
+.panel .formActions {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  margin-top: 0.2rem;
+  padding: 0.85rem 0;
+  background-image: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0) 0%,
+    #ffffff 45%
+  );
+}
+
 .panel .imageItem {
   border: 1px solid #e9eef4;
   border-radius: 14px;
@@ -2447,9 +3075,7 @@
   background: #eef2f6;
 }
 
-.panel .pendingName {
-  color: #475569;
-}
+
 
 /* Aperçu : le rendu réel du site public reste sombre, encadré dans le panneau
    clair comme une fenêtre de navigateur. */
@@ -2694,4 +3320,472 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
+}
+
+/* Réordonnancement par glisser-déposer (UI-ADMIN, écrans Réalisations). */
+
+/* Ligne d'aide au-dessus du tableau. `position: relative` est nécessaire : la
+   région d'annonce `.srOnly` est en `position: absolute` et un parent non
+   positionné étend la zone de défilement du document (déjà rencontré à 390 px). */
+.orderHint {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 0.7rem;
+  font-size: 0.76rem;
+  color: #6b7280;
+}
+
+.orderSaving {
+  color: #5d6ac0;
+  font-weight: 600;
+}
+
+/* Poignée de glisser-déposer : cible large, mais discrète. */
+.dragHandle {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: #94a3b8;
+  cursor: grab;
+}
+
+.dragHandle:hover {
+  color: #334155;
+  background: #f1f5f9;
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+}
+
+.dragHandle:focus-visible {
+  border-color: #5d6ac0;
+  outline: 2px solid #5d6ac0;
+  outline-offset: 1px;
+  color: #334155;
+}
+
+/* Position affichée en clair ; la région d'annonce porte déjà l'information. */
+.orderIndex {
+  flex: none;
+  min-width: 1.1rem;
+  text-align: right;
+  font-size: 0.76rem;
+  color: #94a3b8;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Repli sans souris : les flèches ↑/↓ ne réapparaissent que sur écran tactile
+   (`hover: none`), seul cas où le glisser-déposer HTML5 est inexploitable. */
+.orderFallback {
+  display: none;
+  gap: 0.25rem;
+  margin-left: 0.15rem;
+}
+
+@media (hover: none) {
+  .orderFallback {
+    display: flex;
+  }
+}
+
+.panel .rowDragging td {
+  opacity: 0.45;
+}
+
+/* Trait d'insertion : matérialise la position de dépôt. */
+.panel .rowDropBefore td {
+  border-top: 2px solid #5d6ac0;
+}
+
+.panel .rowDropAfter td {
+  border-bottom: 2px solid #5d6ac0;
+}
+
+/* La ligne visée par le dépôt se teinte en plus du trait, pour épaissir le
+   repère pendant le survol. `tr.rowDrop…` dépasse la règle de survol du
+   tableau (`.panel .table tr:hover td`), sinon la teinte serait écrasée. */
+.panel .table tr.rowDropBefore td,
+.panel .table tr.rowDropAfter td {
+  background-color: rgba(93, 106, 192, 0.07);
+}
+
+/* La poignée de la ligne en cours de glissement se détache nettement. */
+.panel .rowDragging .dragHandle {
+  color: #334155;
+  background: #eef2ff;
+  box-shadow: 0 0 0 2px rgba(93, 106, 192, 0.35);
+}
+
+/* ── Retour visuel du déplacement ──
+   La ligne qui vient de changer de place clignote une fois puis se stabilise :
+   surbrillance qui s'estompe + léger glissement venant du sens du mouvement.
+   La teinte et la barre d'accent de `.rowMoved` restent affichées seules si
+   l'animation est coupée (mouvement réduit), pour ne jamais perdre le repère. */
+.panel .table tr.rowMoved td {
+  background-color: rgba(93, 106, 192, 0.09);
+}
+
+.panel .table tr.rowMoved td:first-child {
+  box-shadow: inset 3px 0 0 #5d6ac0;
+}
+
+.panel .table tr.rowMoved .orderIndex {
+  color: #4150a8;
+  font-weight: 600;
+}
+
+@keyframes rowMovedFlash {
+  from {
+    background-color: rgba(93, 106, 192, 0.28);
+  }
+  to {
+    background-color: rgba(93, 106, 192, 0.09);
+  }
+}
+
+/* Sens du glissement : une ligne descendue arrive d'en haut, et inversement. */
+@keyframes rowMovedFromAbove {
+  from {
+    transform: translateY(-8px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes rowMovedFromBelow {
+  from {
+    transform: translateY(8px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.panel .rowMovedDown td {
+  animation: rowMovedFlash 900ms ease-out both, rowMovedFromAbove 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.panel .rowMovedUp td {
+  animation: rowMovedFlash 900ms ease-out both, rowMovedFromBelow 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Mouvement réduit : plus de clignotement ni de glissement — la teinte et la
+   barre d'accent de `.rowMoved` suffisent à montrer le changement de place. */
+@media (prefers-reduced-motion: reduce) {
+  .panel .rowMovedDown td,
+  .panel .rowMovedUp td {
+    animation: none;
+  }
+}
+
+/* ——— Formulaire de réalisation (ADMIN-UI) : carte encadrée, groupes de champs
+   et icônes de champ. Tout est scopé à `.panel` (thème clair) et aux classes
+   `formCard` / `formTabs` / `fieldGroup`, pour ne pas repeindre les autres
+   formulaires de l'administration. ——— */
+/* Aucun plafond de largeur : la carte occupe toute la place du panneau (les
+   `max-width: 900px` hérités de `.form`, `.tabs` et `.section` sont neutralisés
+   plus bas, dans le périmètre de la carte uniquement). */
+.panel .formCard {
+  gap: 1.15rem;
+  max-width: none;
+  padding: clamp(1.1rem, 2.4vw, 1.6rem);
+  border: 1px solid #e6ebf2;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.panel .formCard .field {
+  gap: 0.5rem;
+}
+
+.panel .formCard .fieldLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+/* Champs courts sur deux colonnes, une seule dès que la place manque. Le nombre
+   de colonnes est fixé (et non laissé à `auto-fit`) pour qu'un groupe de 4
+   champs tienne toujours en 2 × 2 sans laisser de champ orphelin, quelle que
+   soit la largeur de la carte — désormais non plafonnée. */
+.panel .formCard .formGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.1rem 1.3rem;
+}
+
+/* Écran très large : les groupes de 4 champs passent sur une seule ligne. */
+@media (min-width: 1500px) {
+  .panel .formCard .formGridWide {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .panel .formCard .formGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Sous 1100 px, la galerie et l'envoi s'empilent (et l'encart d'envoi cesse
+   d'être collant : il n'y a plus de colonne à suivre). */
+@media (max-width: 1100px) {
+  .imagesLayout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .imagesSide {
+    position: static;
+  }
+}
+
+.panel .formCard .tabIntro {
+  margin-bottom: 1.2rem;
+  max-width: none;
+}
+
+/* Pastille d'icône devant un libellé de champ, ou devant la case « Publiée ».
+   Volontairement clair : elle n'est utilisée que dans le panneau. */
+.fieldIcon {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+/* Groupe de champs : un titre, puis ses champs — séparés par un filet. */
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.fieldGroup + .fieldGroup {
+  margin-top: 0.4rem;
+  padding-top: 1.2rem;
+  border-top: 1px dashed #eef2f6;
+}
+
+.fieldGroupTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.fieldGroupIcon {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  background: #eef2f6;
+  color: #334155;
+}
+
+/* La case « Publiée » se présente comme un groupe encadré, en fin d'onglet. */
+.panel .formCard .checkboxCard {
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.4rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid #e6ebf2;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+/* Barre d'onglets du formulaire : barre segmentée posée au-dessus de la carte. */
+.panel .formTabs {
+  gap: 0.3rem;
+  max-width: none;
+  margin: 0 0 1rem;
+  padding: 0.35rem;
+  border: 1px solid #e6ebf2;
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+.panel .formTabs .tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.95rem;
+  border-color: transparent;
+  background: transparent;
+}
+
+.panel .formTabs .tab:hover {
+  background: #eef2f6;
+}
+
+.panel .formTabs .tabActive,
+.panel .formTabs .tabActive:hover {
+  border-color: transparent;
+  background: #111827;
+  color: #ffffff;
+}
+
+/* ——— Sélecteur multiple de technologies (ADMIN-UI) ——— */
+.techPicker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+/* Ancre de la liste : elle doit suivre la hauteur de la zone de saisie (les
+   pastilles passent à la ligne), pas celle du champ entier. */
+.techAnchor {
+  position: relative;
+}
+
+/* Zone de saisie : les pastilles sélectionnées, puis l'input qui pousse à la
+   suite. Toute la zone ramène le curseur dans l'input. */
+.techField {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 46px;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid #e6ebf2;
+  border-radius: 10px;
+  background: #ffffff;
+  cursor: text;
+}
+
+.techField:focus-within {
+  border-color: #111827;
+  outline: 2px solid #111827;
+  outline-offset: 1px;
+}
+
+.techChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.22rem 0.3rem 0.22rem 0.6rem;
+  border-radius: 999px;
+  background: #111827;
+  color: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.techChipRemove {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.techChipRemove:hover {
+  background: rgba(255, 255, 255, 0.38);
+}
+
+.techInput {
+  flex: 1 1 140px;
+  min-width: 140px;
+  padding: 0.25rem 0.2rem;
+  border: 0;
+  background: transparent;
+  color: #111827;
+  font: inherit;
+  font-size: 0.95rem;
+}
+
+.techInput:focus {
+  outline: 0;
+}
+
+.techInput::placeholder {
+  color: #9aa5b4;
+}
+
+/* Propositions : liste flottante sous la zone de saisie. */
+.techSuggest {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 236px;
+  margin: 0;
+  padding: 0.3rem;
+  overflow: auto;
+  list-style: none;
+  border: 1px solid #e6ebf2;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.14);
+}
+
+.techSuggestItem {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.55rem;
+  border-radius: 8px;
+  color: #334155;
+  font-size: 0.86rem;
+  cursor: pointer;
+}
+
+.techSuggestItemActive {
+  background: #eef2f6;
+  color: #111827;
+}
+
+.techSuggestNew {
+  color: #1d4ed8;
+  font-weight: 500;
+}
+
+.techHint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #8b98a9;
+}
+
+.techHint kbd {
+  padding: 0.05rem 0.32rem;
+  border: 1px solid #dde3ec;
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: #f8fafc;
+  color: #475569;
+  font-family: inherit;
+  font-size: 0.72rem;
+}
+
+/* Onglet « Images » : la carte porte la galerie ; la `section` interne n'a plus
+   besoin du filet qui la séparait du reste de la page. */
+.panel .imagesCard .section {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  border-top: 0;
 }
