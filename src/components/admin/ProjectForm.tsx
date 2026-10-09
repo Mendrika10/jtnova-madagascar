@@ -38,6 +38,7 @@ import {
   saveProjectAction,
   type ProjectFormState,
 } from "@/app/admin/actions";
+import TechPicker from "@/components/admin/TechPicker";
 import styles from "@/app/admin/admin.module.css";
 
 export type ProjectFormInitial = {
@@ -104,6 +105,8 @@ type FieldSpec = {
   textarea?: boolean;
   /** Occupe toute la largeur, sous la grille (textes longs). */
   wide?: boolean;
+  /** Contrôle dédié : aujourd'hui, le sélecteur multiple de technologies. */
+  control?: "tech";
 };
 
 type FieldGroup = {
@@ -252,11 +255,10 @@ const TABS: TabSpec[] = [
         fields: [
           {
             name: "tech",
-            label: "Technologies (une par ligne)",
+            label: "Technologies",
             icon: Cpu,
-            placeholder: "Next.js\nTypeScript\nSupabase",
-            textarea: true,
             wide: true,
+            control: "tech",
           },
           {
             name: "highlights",
@@ -335,15 +337,38 @@ function Field({
   value,
   onChange,
   error,
+  techOptions,
 }: {
   spec: FieldSpec;
   value: string;
-  onChange: (
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => void;
+  onChange: (name: TextFieldName, value: string) => void;
   error?: string;
+  techOptions?: string[];
 }) {
   const Icon = spec.icon;
+
+  // Le sélecteur de technologies n'est pas un `<label>` : ses pastilles et ses
+  // propositions sont cliquables, et un `<label>` renverrait chaque clic vers
+  // son contrôle associé.
+  if (spec.control === "tech") {
+    return (
+      <div className={styles.field}>
+        <span className={styles.fieldLabel}>
+          <span className={styles.fieldIcon} aria-hidden>
+            <Icon size={13} strokeWidth={2} />
+          </span>
+          {spec.label}
+        </span>
+        <TechPicker
+          value={value}
+          onChange={(next) => onChange(spec.name, next)}
+          extraOptions={techOptions}
+          error={error}
+        />
+      </div>
+    );
+  }
+
   return (
     <label className={styles.field}>
       <span className={styles.fieldLabel}>
@@ -356,7 +381,7 @@ function Field({
         <textarea
           name={spec.name}
           value={value}
-          onChange={onChange}
+          onChange={(event) => onChange(spec.name, event.target.value)}
           rows={4}
           placeholder={spec.placeholder}
           className={styles.textarea}
@@ -366,7 +391,7 @@ function Field({
           name={spec.name}
           type="text"
           value={value}
-          onChange={onChange}
+          onChange={(event) => onChange(spec.name, event.target.value)}
           placeholder={spec.placeholder}
           className={styles.input}
         />
@@ -382,13 +407,13 @@ function Group({
   values,
   errors,
   onChange,
+  techOptions,
 }: {
   group: FieldGroup;
   values: Record<TextFieldName, string>;
   errors: ProjectFormState["errors"];
-  onChange: (
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => void;
+  onChange: (name: TextFieldName, value: string) => void;
+  techOptions?: string[];
 }) {
   const Icon = group.icon;
   // Champs courts côte à côte, textes longs empilés sous la grille.
@@ -416,6 +441,7 @@ function Group({
               value={values[spec.name]}
               onChange={onChange}
               error={errors[spec.name]}
+              techOptions={techOptions}
             />
           ))}
         </div>
@@ -427,6 +453,7 @@ function Group({
           value={values[spec.name]}
           onChange={onChange}
           error={errors[spec.name]}
+          techOptions={techOptions}
         />
       ))}
     </div>
@@ -437,12 +464,15 @@ export default function ProjectForm({
   initial,
   imagesPanel,
   initialTab,
+  techOptions,
 }: {
   initial: ProjectFormInitial;
   /** Contenu de l'onglet « Images », rendu par la page (liste, suppression, envoi). */
   imagesPanel?: ReactNode;
   /** Onglet ouvert au chargement (sert à revenir sur « Images » après un envoi). */
   initialTab?: TabId;
+  /** Technologies déjà utilisées, proposées par le sélecteur multiple. */
+  techOptions?: string[];
 }) {
   const [state, formAction, pending] = useActionState<ProjectFormState, FormData>(
     saveProjectAction,
@@ -482,10 +512,9 @@ export default function ProjectForm({
     if (errorTab) setTab(errorTab.id);
   }
 
-  function handleChange(
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) {
-    const { name, value } = event.target;
+  // Signature volontairement simple (nom, valeur) : le champ Technologies est
+  // un composant contrôlé qui n'a pas d'événement DOM à transmettre.
+  function handleChange(name: TextFieldName, value: string) {
     setValues((current) => ({ ...current, [name]: value }));
   }
 
@@ -562,6 +591,7 @@ export default function ProjectForm({
                 values={values}
                 errors={state.errors}
                 onChange={handleChange}
+                techOptions={techOptions}
               />
             ))}
             {t.id === "liens" && (

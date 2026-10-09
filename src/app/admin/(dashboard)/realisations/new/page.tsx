@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { FilePlus } from "@deemlol/next-icons";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { listTechLabels } from "@/lib/admin-projects";
 import ProjectForm from "@/components/admin/ProjectForm";
 import styles from "../../../admin.module.css";
 
@@ -9,7 +11,12 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function NewProjectPage() {
+export default async function NewProjectPage() {
+  // Propositions du sélecteur de technologies : celles déjà utilisées. Sans
+  // banque configurée, le sélecteur garde sa liste de base.
+  const supabase = await createSupabaseServerClient();
+  const techOptions = supabase ? await listTechLabels(supabase) : [];
+
   return (
     <div className={styles.panel}>
       <p className={styles.breadcrumb}>
@@ -48,6 +55,7 @@ export default function NewProjectPage() {
           tech: "",
           highlights: "",
         }}
+        techOptions={techOptions}
         imagesPanel={
           <p className={styles.placeholder}>
             Les images s&apos;ajoutent après l&apos;enregistrement : créez la

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Eye, FileText, Folder, Trash } from "@deemlol/next-icons";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { getProjectForEdit } from "@/lib/admin-projects";
+import { getProjectForEdit, listTechLabels } from "@/lib/admin-projects";
 import { deleteImageAction } from "@/app/admin/actions";
 import ProjectForm from "@/components/admin/ProjectForm";
 import ImageUploader from "@/components/admin/ImageUploader";
@@ -32,7 +32,10 @@ export default async function EditProjectPage({
 
   const supabase = await createSupabaseServerClient();
   if (!supabase) notFound();
-  const data = await getProjectForEdit(supabase, id);
+  const [data, techOptions] = await Promise.all([
+    getProjectForEdit(supabase, id),
+    listTechLabels(supabase),
+  ]);
   if (!data) notFound();
 
   const p = data.project;
@@ -95,6 +98,7 @@ export default async function EditProjectPage({
           highlights: data.highlights.map((h) => h.text).join("\n"),
         }}
         initialTab={flags.images || flags.images_error ? "images" : undefined}
+        techOptions={techOptions}
         imagesPanel={
           <section className={styles.section}>
             <div className={styles.sectionTitleRow}>

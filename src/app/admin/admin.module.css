@@ -3102,6 +3102,144 @@
   color: #ffffff;
 }
 
+/* ——— Sélecteur multiple de technologies (ADMIN-UI) ——— */
+.techPicker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+/* Ancre de la liste : elle doit suivre la hauteur de la zone de saisie (les
+   pastilles passent à la ligne), pas celle du champ entier. */
+.techAnchor {
+  position: relative;
+}
+
+/* Zone de saisie : les pastilles sélectionnées, puis l'input qui pousse à la
+   suite. Toute la zone ramène le curseur dans l'input. */
+.techField {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 46px;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid #e6ebf2;
+  border-radius: 10px;
+  background: #ffffff;
+  cursor: text;
+}
+
+.techField:focus-within {
+  border-color: #111827;
+  outline: 2px solid #111827;
+  outline-offset: 1px;
+}
+
+.techChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.22rem 0.3rem 0.22rem 0.6rem;
+  border-radius: 999px;
+  background: #111827;
+  color: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.techChipRemove {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.techChipRemove:hover {
+  background: rgba(255, 255, 255, 0.38);
+}
+
+.techInput {
+  flex: 1 1 140px;
+  min-width: 140px;
+  padding: 0.25rem 0.2rem;
+  border: 0;
+  background: transparent;
+  color: #111827;
+  font: inherit;
+  font-size: 0.95rem;
+}
+
+.techInput:focus {
+  outline: 0;
+}
+
+.techInput::placeholder {
+  color: #9aa5b4;
+}
+
+/* Propositions : liste flottante sous la zone de saisie. */
+.techSuggest {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 236px;
+  margin: 0;
+  padding: 0.3rem;
+  overflow: auto;
+  list-style: none;
+  border: 1px solid #e6ebf2;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.14);
+}
+
+.techSuggestItem {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.55rem;
+  border-radius: 8px;
+  color: #334155;
+  font-size: 0.86rem;
+  cursor: pointer;
+}
+
+.techSuggestItemActive {
+  background: #eef2f6;
+  color: #111827;
+}
+
+.techSuggestNew {
+  color: #1d4ed8;
+  font-weight: 500;
+}
+
+.techHint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #8b98a9;
+}
+
+.techHint kbd {
+  padding: 0.05rem 0.32rem;
+  border: 1px solid #dde3ec;
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: #f8fafc;
+  color: #475569;
+  font-family: inherit;
+  font-size: 0.72rem;
+}
+
 /* Onglet « Images » : la carte porte la galerie ; la `section` interne n'a plus
    besoin du filet qui la séparait du reste de la page. */
 .panel .imagesCard .section {
