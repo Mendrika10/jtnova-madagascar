@@ -216,143 +216,148 @@ export default function OrderableProjects({
         {pending ? <span className={styles.orderSaving}>Enregistrement…</span> : null}
       </p>
 
-      <div className={styles.tableScroll}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>Ordre</th>
-              <th>Titre</th>
-              <th>Slug</th>
-              <th>Statut</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((project, index) => {
-              const isMoved = moved?.id === project.id;
-              const rowClass = [
-                project.id === draggedId ? styles.rowDragging : "",
-                dropTarget?.row === index
-                  ? dropTarget.after
-                    ? styles.rowDropAfter
-                    : styles.rowDropBefore
-                  : "",
-                isMoved ? styles.rowMoved : "",
-                isMoved
-                  ? moved.direction === "down"
-                    ? styles.rowMovedDown
-                    : styles.rowMovedUp
-                  : "",
-              ]
-                .filter(Boolean)
-                .join(" ");
+      {/* Carte encadrée, comme les cartes de formulaire (`formCard`) : le
+          tableau vit dans un panneau blanc à coins arrondis, au lieu de flotter
+          à même le fond clair. */}
+      <div className={styles.tableCard}>
+        <div className={styles.tableScroll}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Ordre</th>
+                <th>Titre</th>
+                <th>Slug</th>
+                <th>Statut</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((project, index) => {
+                const isMoved = moved?.id === project.id;
+                const rowClass = [
+                  project.id === draggedId ? styles.rowDragging : "",
+                  dropTarget?.row === index
+                    ? dropTarget.after
+                      ? styles.rowDropAfter
+                      : styles.rowDropBefore
+                    : "",
+                  isMoved ? styles.rowMoved : "",
+                  isMoved
+                    ? moved.direction === "down"
+                      ? styles.rowMovedDown
+                      : styles.rowMovedUp
+                    : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ");
 
-              return (
-                <tr
-                  key={project.id}
-                  ref={(node) => {
-                    if (node) rowRefs.current.set(project.id, node);
-                    else rowRefs.current.delete(project.id);
-                  }}
-                  className={rowClass || undefined}
-                  onDragOver={(event) => handleDragOver(event, index)}
-                  onDrop={handleDrop}
-                >
-                  <td className={styles.orderCell}>
-                    <span className={styles.orderFlex}>
-                      <button
-                        type="button"
-                        className={styles.dragHandle}
-                        draggable
-                        aria-label={`Réordonner « ${project.title} » (glisser-déposer, ou flèches haut et bas au clavier)`}
-                        title="Glisser pour changer l'ordre"
-                        onDragStart={(event) => handleDragStart(event, project.id)}
-                        onDragEnd={handleDragEnd}
-                        onKeyDown={(event) => handleOrderKeyDown(event, project.id, index)}
-                      >
-                        <Menu size={15} strokeWidth={2} aria-hidden />
-                      </button>
-                      <span className={styles.orderIndex} aria-hidden>
-                        {index + 1}
-                      </span>
-                      <span className={styles.orderFallback}>
-                        <form action={moveProjectAction}>
-                          <input type="hidden" name="id" value={project.id} />
-                          <input type="hidden" name="direction" value="up" />
-                          <button
-                            type="submit"
-                            className={styles.iconAction}
-                            disabled={index === 0}
-                            aria-label={`Monter « ${project.title} »`}
-                            title="Monter"
-                          >
-                            <ChevronUp size={14} strokeWidth={2.2} aria-hidden />
-                          </button>
-                        </form>
-                        <form action={moveProjectAction}>
-                          <input type="hidden" name="id" value={project.id} />
-                          <input type="hidden" name="direction" value="down" />
-                          <button
-                            type="submit"
-                            className={styles.iconAction}
-                            disabled={index === lastIndex}
-                            aria-label={`Descendre « ${project.title} »`}
-                            title="Descendre"
-                          >
-                            <ChevronDown size={14} strokeWidth={2.2} aria-hidden />
-                          </button>
-                        </form>
-                      </span>
-                    </span>
-                  </td>
-                  <td>{project.title}</td>
-                  <td>
-                    <code className={styles.code}>{project.slug}</code>
-                  </td>
-                  <td>
-                    {project.published ? (
-                      <span className={styles.badgeOk}>Publiée</span>
-                    ) : (
-                      <span className={styles.badgeDraft}>Brouillon</span>
-                    )}
-                  </td>
-                  <td className={styles.actionsCell}>
-                    <span className={styles.actionsFlex}>
-                      <Link
-                        href={`/admin/realisations/${project.id}`}
-                        className={styles.iconAction}
-                        aria-label={`Éditer « ${project.title} »`}
-                        title="Éditer"
-                      >
-                        <Edit size={15} strokeWidth={2} aria-hidden />
-                      </Link>
-                      <Link
-                        href={`/admin/realisations/${project.id}/apercu`}
-                        className={styles.iconAction}
-                        aria-label={`Aperçu de « ${project.title} »`}
-                        title="Aperçu"
-                      >
-                        <Eye size={15} strokeWidth={2} aria-hidden />
-                      </Link>
-                      <form action={deleteProjectAction}>
-                        <input type="hidden" name="id" value={project.id} />
-                        <ConfirmButton
-                          message={`Supprimer « ${project.title} » et tout son contenu ?`}
-                          className={`${styles.iconAction} ${styles.iconActionDanger}`}
+                return (
+                  <tr
+                    key={project.id}
+                    ref={(node) => {
+                      if (node) rowRefs.current.set(project.id, node);
+                      else rowRefs.current.delete(project.id);
+                    }}
+                    className={rowClass || undefined}
+                    onDragOver={(event) => handleDragOver(event, index)}
+                    onDrop={handleDrop}
+                  >
+                    <td className={styles.orderCell}>
+                      <span className={styles.orderFlex}>
+                        <button
+                          type="button"
+                          className={styles.dragHandle}
+                          draggable
+                          aria-label={`Réordonner « ${project.title} » (glisser-déposer, ou flèches haut et bas au clavier)`}
+                          title="Glisser pour changer l'ordre"
+                          onDragStart={(event) => handleDragStart(event, project.id)}
+                          onDragEnd={handleDragEnd}
+                          onKeyDown={(event) => handleOrderKeyDown(event, project.id, index)}
                         >
-                          <Trash size={15} strokeWidth={2} aria-hidden />
-                          <span className={styles.srOnly}>
-                            Supprimer « {project.title} »
-                          </span>
-                        </ConfirmButton>
-                      </form>
-                    </span>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                          <Menu size={15} strokeWidth={2} aria-hidden />
+                        </button>
+                        <span className={styles.orderIndex} aria-hidden>
+                          {index + 1}
+                        </span>
+                        <span className={styles.orderFallback}>
+                          <form action={moveProjectAction}>
+                            <input type="hidden" name="id" value={project.id} />
+                            <input type="hidden" name="direction" value="up" />
+                            <button
+                              type="submit"
+                              className={styles.iconAction}
+                              disabled={index === 0}
+                              aria-label={`Monter « ${project.title} »`}
+                              title="Monter"
+                            >
+                              <ChevronUp size={14} strokeWidth={2.2} aria-hidden />
+                            </button>
+                          </form>
+                          <form action={moveProjectAction}>
+                            <input type="hidden" name="id" value={project.id} />
+                            <input type="hidden" name="direction" value="down" />
+                            <button
+                              type="submit"
+                              className={styles.iconAction}
+                              disabled={index === lastIndex}
+                              aria-label={`Descendre « ${project.title} »`}
+                              title="Descendre"
+                            >
+                              <ChevronDown size={14} strokeWidth={2.2} aria-hidden />
+                            </button>
+                          </form>
+                        </span>
+                      </span>
+                    </td>
+                    <td className={styles.rowTitle}>{project.title}</td>
+                    <td>
+                      <code className={styles.code}>{project.slug}</code>
+                    </td>
+                    <td>
+                      {project.published ? (
+                        <span className={styles.badgeOk}>Publiée</span>
+                      ) : (
+                        <span className={styles.badgeDraft}>Brouillon</span>
+                      )}
+                    </td>
+                    <td className={styles.actionsCell}>
+                      <span className={styles.actionsFlex}>
+                        <Link
+                          href={`/admin/realisations/${project.id}`}
+                          className={styles.iconAction}
+                          aria-label={`Éditer « ${project.title} »`}
+                          title="Éditer"
+                        >
+                          <Edit size={15} strokeWidth={2} aria-hidden />
+                        </Link>
+                        <Link
+                          href={`/admin/realisations/${project.id}/apercu`}
+                          className={styles.iconAction}
+                          aria-label={`Aperçu de « ${project.title} »`}
+                          title="Aperçu"
+                        >
+                          <Eye size={15} strokeWidth={2} aria-hidden />
+                        </Link>
+                        <form action={deleteProjectAction}>
+                          <input type="hidden" name="id" value={project.id} />
+                          <ConfirmButton
+                            message={`Supprimer « ${project.title} » et tout son contenu ?`}
+                            className={`${styles.iconAction} ${styles.iconActionDanger}`}
+                          >
+                            <Trash size={15} strokeWidth={2} aria-hidden />
+                            <span className={styles.srOnly}>
+                              Supprimer « {project.title} »
+                            </span>
+                          </ConfirmButton>
+                        </form>
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
     </>
   );

@@ -3623,13 +3623,17 @@
   background: #f8fafc;
 }
 
+/* Texte d'onglet volontairement plus petit que la base des onglets (0,85 rem) :
+   la barre reste une navigation secondaire, les libellés ne doivent pas
+   concurrencer le titre de la page. */
 .panel .formTabs .tab {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.45rem 0.95rem;
+  gap: 0.35rem;
+  padding: 0.38rem 0.8rem;
   border-color: transparent;
   background: transparent;
+  font-size: 0.76rem;
 }
 
 .panel .formTabs .tab:hover {
@@ -3788,4 +3792,65 @@
   margin: 0;
   padding: 0;
   border-top: 0;
+}
+
+/* ——— Liste des réalisations (ADMIN-UI) ——— */
+/* Le tableau reprend la carte blanche des formulaires (`formCard`) : même bord
+   1 px, même rayon 16 px, même ombre discrète. Il ne flotte plus à même le fond
+   clair du panneau, et son en-tête devient une bande grise en petites capitales
+   séparée des lignes par un filet : la liste se lit comme une carte de contenu,
+   pas comme une grille nue. */
+.panel .tableCard {
+  overflow: hidden;
+  border: 1px solid #e6ebf2;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.panel .tableCard .table th {
+  padding: 0.6rem 0.9rem;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-bottom: 1px solid #e9eef4;
+  white-space: nowrap;
+}
+
+.panel .tableCard .table td {
+  padding: 0.7rem 0.9rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+/* Dernière ligne : aucun filet, la carte ferme déjà la liste. */
+.panel .tableCard .table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.panel .tableCard .table tbody tr:hover td {
+  background: #f8fafc;
+}
+
+/* Le titre est le seul texte fort de la ligne : il guide la lecture. */
+.panel .tableCard .rowTitle {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+/* Suppression de ligne : discrète au repos, rouge seulement au survol — même
+   traitement que la suppression d'image de la galerie, pour qu'une action
+   destructrice ne domine plus la liste. */
+.panel .tableCard .iconActionDanger {
+  border-color: transparent;
+  background: transparent;
+  color: #94a3b8;
+}
+
+.panel .tableCard .iconActionDanger:hover {
+  border-color: #fecdd3;
+  background: #fff1f2;
+  color: #b42318;
 }
