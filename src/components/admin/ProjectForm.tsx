@@ -404,7 +404,11 @@ function Group({
         {group.title}
       </p>
       {inline.length > 0 && (
-        <div className={styles.formGrid}>
+        <div
+          className={`${styles.formGrid} ${
+            inline.length >= 4 ? styles.formGridWide : ""
+          }`}
+        >
           {inline.map((spec) => (
             <Field
               key={spec.name}

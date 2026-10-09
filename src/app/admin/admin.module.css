@@ -2963,9 +2963,12 @@
    et icônes de champ. Tout est scopé à `.panel` (thème clair) et aux classes
    `formCard` / `formTabs` / `fieldGroup`, pour ne pas repeindre les autres
    formulaires de l'administration. ——— */
+/* Aucun plafond de largeur : la carte occupe toute la place du panneau (les
+   `max-width: 900px` hérités de `.form`, `.tabs` et `.section` sont neutralisés
+   plus bas, dans le périmètre de la carte uniquement). */
 .panel .formCard {
   gap: 1.15rem;
-  max-width: 900px;
+  max-width: none;
   padding: clamp(1.1rem, 2.4vw, 1.6rem);
   border: 1px solid #e6ebf2;
   border-radius: 16px;
@@ -2983,16 +2986,31 @@
   gap: 0.45rem;
 }
 
-/* Champs courts sur deux colonnes au plus (le libellé de la carte fait 900 px),
-   une seule dès que la place manque : les groupes de 4 champs tiennent donc en
-   2 × 2 au lieu de laisser un champ orphelin sur une ligne. */
+/* Champs courts sur deux colonnes, une seule dès que la place manque. Le nombre
+   de colonnes est fixé (et non laissé à `auto-fit`) pour qu'un groupe de 4
+   champs tienne toujours en 2 × 2 sans laisser de champ orphelin, quelle que
+   soit la largeur de la carte — désormais non plafonnée. */
 .panel .formCard .formGrid {
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1.1rem 1.3rem;
+}
+
+/* Écran très large : les groupes de 4 champs passent sur une seule ligne. */
+@media (min-width: 1500px) {
+  .panel .formCard .formGridWide {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .panel .formCard .formGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .panel .formCard .tabIntro {
   margin-bottom: 1.2rem;
+  max-width: none;
 }
 
 /* Pastille d'icône devant un libellé de champ, ou devant la case « Publiée ».
@@ -3056,6 +3074,7 @@
 /* Barre d'onglets du formulaire : barre segmentée posée au-dessus de la carte. */
 .panel .formTabs {
   gap: 0.3rem;
+  max-width: none;
   margin: 0 0 1rem;
   padding: 0.35rem;
   border: 1px solid #e6ebf2;
@@ -3086,6 +3105,7 @@
 /* Onglet « Images » : la carte porte la galerie ; la `section` interne n'a plus
    besoin du filet qui la séparait du reste de la page. */
 .panel .imagesCard .section {
+  max-width: none;
   margin: 0;
   padding: 0;
   border-top: 0;
