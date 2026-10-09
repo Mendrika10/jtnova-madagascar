@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ImagePlus } from "@deemlol/next-icons";
 import { addImagesAction } from "@/app/admin/actions";
 import styles from "@/app/admin/admin.module.css";
 
@@ -156,7 +157,12 @@ export default function ImageUploader({ projectId }: { projectId: string }) {
   return (
     <div className={styles.uploader}>
       <label className={styles.field}>
-        <span className={styles.fieldLabel}>Ajouter des images</span>
+        <span className={styles.fieldLabel}>
+          <span className={styles.fieldIcon} aria-hidden>
+            <ImagePlus size={13} strokeWidth={2} />
+          </span>
+          Ajouter des images
+        </span>
         <input
           type="file"
           accept="image/png,image/jpeg,image/webp,image/gif"

@@ -2958,3 +2958,135 @@
     animation: none;
   }
 }
+
+/* ——— Formulaire de réalisation (ADMIN-UI) : carte encadrée, groupes de champs
+   et icônes de champ. Tout est scopé à `.panel` (thème clair) et aux classes
+   `formCard` / `formTabs` / `fieldGroup`, pour ne pas repeindre les autres
+   formulaires de l'administration. ——— */
+.panel .formCard {
+  gap: 1.15rem;
+  max-width: 900px;
+  padding: clamp(1.1rem, 2.4vw, 1.6rem);
+  border: 1px solid #e6ebf2;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.panel .formCard .field {
+  gap: 0.5rem;
+}
+
+.panel .formCard .fieldLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+/* Champs courts sur deux colonnes au plus (le libellé de la carte fait 900 px),
+   une seule dès que la place manque : les groupes de 4 champs tiennent donc en
+   2 × 2 au lieu de laisser un champ orphelin sur une ligne. */
+.panel .formCard .formGrid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 1.1rem 1.3rem;
+}
+
+.panel .formCard .tabIntro {
+  margin-bottom: 1.2rem;
+}
+
+/* Pastille d'icône devant un libellé de champ, ou devant la case « Publiée ».
+   Volontairement clair : elle n'est utilisée que dans le panneau. */
+.fieldIcon {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+/* Groupe de champs : un titre, puis ses champs — séparés par un filet. */
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.fieldGroup + .fieldGroup {
+  margin-top: 0.4rem;
+  padding-top: 1.2rem;
+  border-top: 1px dashed #eef2f6;
+}
+
+.fieldGroupTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.fieldGroupIcon {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  background: #eef2f6;
+  color: #334155;
+}
+
+/* La case « Publiée » se présente comme un groupe encadré, en fin d'onglet. */
+.panel .formCard .checkboxCard {
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.4rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid #e6ebf2;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+/* Barre d'onglets du formulaire : barre segmentée posée au-dessus de la carte. */
+.panel .formTabs {
+  gap: 0.3rem;
+  margin: 0 0 1rem;
+  padding: 0.35rem;
+  border: 1px solid #e6ebf2;
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+.panel .formTabs .tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.95rem;
+  border-color: transparent;
+  background: transparent;
+}
+
+.panel .formTabs .tab:hover {
+  background: #eef2f6;
+}
+
+.panel .formTabs .tabActive,
+.panel .formTabs .tabActive:hover {
+  border-color: transparent;
+  background: #111827;
+  color: #ffffff;
+}
+
+/* Onglet « Images » : la carte porte la galerie ; la `section` interne n'a plus
+   besoin du filet qui la séparait du reste de la page. */
+.panel .imagesCard .section {
+  margin: 0;
+  padding: 0;
+  border-top: 0;
+}
