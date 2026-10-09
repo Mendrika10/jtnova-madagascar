@@ -108,36 +108,58 @@ export default async function EditProjectPage({
               <h2 className={styles.sectionTitle}>Images ({data.images.length})</h2>
             </div>
 
-            {data.images.length === 0 ? (
-              <p className={styles.placeholder}>Aucune image pour l&apos;instant.</p>
-            ) : (
-              <ul className={styles.imageList}>
-                {data.images.map((img) => (
-                  <li key={img.id} className={styles.imageItem}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={img.url} alt={img.alt} className={styles.imageThumb} />
-                    <div className={styles.imageMeta}>
-                      <code className={styles.code}>{img.alt}</code>
-                      <form action={deleteImageAction}>
-                        <input type="hidden" name="image_id" value={img.id} />
-                        <input type="hidden" name="project_id" value={p.id} />
-                        <ConfirmButton
-                          message="Supprimer cette image ?"
-                          className={`${styles.iconAction} ${styles.iconActionDanger}`}
-                        >
-                          <Trash size={15} strokeWidth={2} aria-hidden />
-                          <span className={styles.srOnly}>
-                            Supprimer l&apos;image « {img.alt} »
-                          </span>
-                        </ConfirmButton>
-                      </form>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
+            {/* Deux blocs côte à côte : la galerie à gauche, l'envoi à droite
+                (empilés sous 1100 px, voir `imagesLayout`). */}
+            <div className={styles.imagesLayout}>
+              <div className={styles.imagesGallery}>
+                {data.images.length === 0 ? (
+                  <p className={styles.placeholder}>
+                    Aucune image pour l&apos;instant.
+                  </p>
+                ) : (
+                  <ul className={styles.imageList}>
+                    {data.images.map((img) => (
+                      <li key={img.id} className={styles.imageItem}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={img.url}
+                          alt={img.alt}
+                          className={styles.imageThumb}
+                        />
+                        <div className={styles.imageMeta}>
+                          <code className={styles.code}>{img.alt}</code>
+                          <form action={deleteImageAction}>
+                            <input
+                              type="hidden"
+                              name="image_id"
+                              value={img.id}
+                            />
+                            <input
+                              type="hidden"
+                              name="project_id"
+                              value={p.id}
+                            />
+                            <ConfirmButton
+                              message="Supprimer cette image ?"
+                              className={`${styles.iconAction} ${styles.iconActionDanger}`}
+                            >
+                              <Trash size={15} strokeWidth={2} aria-hidden />
+                              <span className={styles.srOnly}>
+                                Supprimer l&apos;image « {img.alt} »
+                              </span>
+                            </ConfirmButton>
+                          </form>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
 
-            <ImageUploader projectId={p.id} />
+              <aside className={styles.imagesSide}>
+                <ImageUploader projectId={p.id} />
+              </aside>
+            </div>
           </section>
         }
       />

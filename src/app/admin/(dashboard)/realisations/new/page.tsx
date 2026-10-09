@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { FilePlus } from "@deemlol/next-icons";
+import { FilePlus, ImagePlus } from "@deemlol/next-icons";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { listTechLabels } from "@/lib/admin-projects";
 import ProjectForm from "@/components/admin/ProjectForm";
@@ -57,11 +57,17 @@ export default async function NewProjectPage() {
         }}
         techOptions={techOptions}
         imagesPanel={
-          <p className={styles.placeholder}>
-            Les images s&apos;ajoutent après l&apos;enregistrement : créez la
-            réalisation, puis ouvrez l&apos;onglet « Images » de sa fiche pour
-            envoyer la galerie.
-          </p>
+          <div className={styles.emptyState}>
+            <span className={styles.emptyIcon} aria-hidden>
+              <ImagePlus size={20} strokeWidth={1.8} />
+            </span>
+            <p className={styles.emptyTitle}>Aucune image pour l&apos;instant</p>
+            <p className={styles.emptyText}>
+              Les images s&apos;ajoutent après l&apos;enregistrement : créez la
+              réalisation, puis ouvrez l&apos;onglet « Images » de sa fiche pour
+              glisser-déposer votre galerie.
+            </p>
+          </div>
         }
       />
     </div>
