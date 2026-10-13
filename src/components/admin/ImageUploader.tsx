@@ -46,6 +46,35 @@ const IMAGEKIT_UPLOAD_URL = "https://upload.imagekit.io/api/v1/files/upload";
 const MAX_BYTES = 2 * 1024 * 1024;
 const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
 
+/**
+ * Une Server Action qui appelle `redirect()` **rejette** sa promesse avec une
+ * erreur de contrôle, sans résultat à lire : la navigation est déjà faite par
+ * le routeur. Ce n'est donc pas un échec d'envoi. On relit la cible dans le
+ * digest (`NEXT_REDIRECT;<type>;<cible>;<statut>;`) pour distinguer un ajout
+ * réussi (`uploaded=1`) d'un refus côté base (`images_error=1`).
+ *
+ * Bornes `slice(2, -2)` comme le parseur de Next : la cible peut contenir des
+ * « ; ». Renvoie `null` si l'erreur n'est pas une redirection.
+ */
+function redirectTarget(error: unknown): string | null {
+  const digest =
+    typeof error === "object" && error !== null
+      ? (error as { digest?: unknown }).digest
+      : undefined;
+  if (typeof digest !== "string" || !digest.startsWith("NEXT_REDIRECT;")) {
+    return null;
+  }
+
+  const parts = digest.split(";");
+  const type = parts[1];
+  const status = parts.at(-2);
+  if ((type !== "push" && type !== "replace") || Number.isNaN(Number(status))) {
+    return null;
+  }
+
+  return parts.slice(2, -2).join(";");
+}
+
 function formatSize(bytes: number): string {
   return bytes < 1024 * 1024
     ? `${Math.max(1, Math.round(bytes / 1024))} Ko`
@@ -123,6 +152,21 @@ export default function ImageUploader({ projectId }: { projectId: string }) {
       if (target) URL.revokeObjectURL(target.preview);
       return prev.filter((it) => it.id !== id);
     });
+  }
+
+  /**
+   * Après un envoi réussi, la galerie relue du serveur affiche déjà les
+   * images : la file d'envoi doit se vider au même instant et le bouton
+   * reprendre la main. Sans ce nettoyage, la navigation RSC conserve cette
+   * instance (donc les lignes « Envoyée » et `busy`) et l'écran reste figé
+   * sur « Envoi en cours… » alors que tout est enregistré.
+   */
+  function clearQueue() {
+    setItems((prev) => {
+      for (const it of prev) URL.revokeObjectURL(it.preview);
+      return [];
+    });
+    setBusy(false);
   }
 
   /**
@@ -245,12 +289,36 @@ export default function ImageUploader({ projectId }: { projectId: string }) {
       }
     }
 
-    // addImagesAction redirige (NEXT_REDIRECT) : volontairement HORS du
-    // try/catch pour ne pas intercepter la redirection.
     const formData = new FormData();
     formData.set("project_id", projectId);
     formData.set("entries", JSON.stringify(entries));
-    await addImagesAction(formData);
+
+    try {
+      await addImagesAction(formData);
+    } catch (error) {
+      const target = redirectTarget(error);
+
+      // Erreur réelle (réseau, action absente…) : la file reste en place pour
+      // pouvoir réessayer, et l'échec est annoncé.
+      if (target === null) {
+        toast.error(
+          "Enregistrement impossible.",
+          error instanceof Error ? error.message : "Réessayez dans un instant.",
+        );
+        setBusy(false);
+        return;
+      }
+
+      // Ajout refusé côté base : les fichiers sont déjà sur ImageKit, on garde
+      // donc la file (déjà marquée « Envoyée ») pour pouvoir renvoyer sans
+      // rechoisir les images ; l'erreur est signalée par le toast de la page.
+      if (target.includes("images_error=1")) {
+        setBusy(false);
+        return;
+      }
+    }
+
+    clearQueue();
   }
 
   return (
