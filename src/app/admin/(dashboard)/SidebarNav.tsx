@@ -1,7 +1,7 @@
 "use client";
 
 import type { ComponentType } from "react";
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BarChart,
@@ -51,6 +51,25 @@ function isActive(pathname: string, href: string): boolean {
   return href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
 }
 
+/**
+ * Point d'attente de l'entrée en cours de chargement.
+ *
+ * `useLinkStatus` doit être appelé **dans** le `<Link>` : il ne renseigne que
+ * la navigation déclenchée par ce lien-là. Le retour est donc immédiat, avant
+ * même que le serveur ait répondu — le voile de `loading.tsx`, lui, n'apparaît
+ * qu'après un court délai pour ne pas clignoter sur une réponse rapide.
+ */
+function NavPending() {
+  const { pending } = useLinkStatus();
+  return (
+    <span
+      className={styles.sidePending}
+      data-on={pending ? "true" : undefined}
+      aria-hidden
+    />
+  );
+}
+
 export default function SidebarNav({
   unreadMessages,
   unresolvedErrors,
@@ -95,6 +114,7 @@ export default function SidebarNav({
                         {count}
                       </span>
                     ) : null}
+                    <NavPending />
                   </Link>
                 </li>
               );

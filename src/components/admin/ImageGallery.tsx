@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { ChevronDown, ChevronUp, Menu, Trash } from "@deemlol/next-icons";
 import { deleteImageAction, reorderImagesAction } from "@/app/admin/actions";
 import ConfirmButton from "@/components/admin/ConfirmButton";
+import { useToast } from "@/components/admin/Toaster";
 import styles from "@/app/admin/admin.module.css";
 
 export type GalleryImage = {
@@ -50,6 +51,7 @@ export default function ImageGallery({
     nonce: number;
   } | null>(null);
   const [pending, startTransition] = useTransition();
+  const toast = useToast();
   const rowRefs = useRef(new Map<string, HTMLLIElement>());
 
   // Relance l'animation de la ligne déplacée après chaque déplacement : React
@@ -118,7 +120,18 @@ export default function ImageGallery({
         setOrder(previous);
         setMoved(null);
         setStatus(result.message ?? "L'ordre n'a pas pu être enregistré.");
+        toast.error(
+          "Ordre non enregistré.",
+          result.message ?? "Réessayez dans un instant.",
+        );
+        return;
       }
+      toast.push({
+        tone: "success",
+        title: "Ordre des images enregistré.",
+        description: `« ${byId.get(id)?.alt ?? "Image"} » est en position ${position}.`,
+        duration: 3200,
+      });
     });
   }
 
