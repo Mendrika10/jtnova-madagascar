@@ -7,6 +7,7 @@ import {
   type ReactNode,
   type SVGAttributes,
 } from "react";
+import { useActionFeedback } from "@/components/admin/Toaster";
 import {
   AlignLeft,
   BookOpen,
@@ -478,6 +479,9 @@ export default function ProjectForm({
     saveProjectAction,
     INITIAL_STATE,
   );
+  // Refus de validation → notification. Les erreurs de champ restent sous leur
+  // champ, et l'onglet fautif s'ouvre déjà tout seul.
+  useActionFeedback(state);
   // Champs contrôlés : la saisie vit dans React, donc elle survit à la
   // réinitialisation que React 19 applique aux champs d'un `<form action>` à la
   // fin de l'action (sans cela, tout se vide même quand l'enregistrement est
@@ -533,12 +537,6 @@ export default function ProjectForm({
   // Personnalisation : les deux écrans doivent présenter les mêmes onglets.
   return (
     <>
-      {state.errors._ && (
-        <p className={styles.error} role="alert">
-          {state.errors._}
-        </p>
-      )}
-
       <div
         role="tablist"
         aria-label="Sections de la réalisation"

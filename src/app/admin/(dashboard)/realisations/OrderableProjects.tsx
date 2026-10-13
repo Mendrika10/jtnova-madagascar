@@ -16,6 +16,7 @@ import {
   reorderProjectsAction,
 } from "@/app/admin/actions";
 import ConfirmButton from "@/components/admin/ConfirmButton";
+import { useToast } from "@/components/admin/Toaster";
 import styles from "../../admin.module.css";
 
 export type OrderableProject = {
@@ -60,6 +61,7 @@ export default function OrderableProjects({
     nonce: number;
   } | null>(null);
   const [pending, startTransition] = useTransition();
+  const toast = useToast();
   const rowRefs = useRef(new Map<string, HTMLTableRowElement>());
 
   // Relance l'animation de la ligne déplacée après chaque déplacement. React
@@ -139,7 +141,20 @@ export default function OrderableProjects({
         setOrder(previous);
         setMoved(null);
         setStatus(result.message ?? "L'ordre n'a pas pu être enregistré.");
+        toast.error(
+          "Ordre non enregistré.",
+          result.message ?? "Réessayez dans un instant.",
+        );
+        return;
       }
+      // Toast court : déplacer plusieurs lignes d'affilée ne doit pas empiler
+      // quatre notifications. La ligne mise en avant reste le repère principal.
+      toast.push({
+        tone: "success",
+        title: "Ordre enregistré.",
+        description: `« ${byId.get(id)?.title ?? "Réalisation"} » est en position ${position}.`,
+        duration: 3200,
+      });
     });
   }
 

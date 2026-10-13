@@ -964,6 +964,9 @@
 .content {
   flex: 1;
   min-width: 0;
+  /* Repère du voile de chargement (`loading.tsx`) : le verre se pose sur la
+     zone de contenu, pas sur la barre latérale qui doit rester utilisable. */
+  position: relative;
   display: flex;
   flex-direction: column;
   /* Gouttière portée par .shell : le panneau du tableau de bord touche
@@ -5347,5 +5350,336 @@ a.vitalCard:hover {
   }
   .santePage .pageHeader {
     flex-wrap: wrap;
+  }
+}
+
+/* ── Notifications (toasts) ────────────────────────────────────────────────
+   Canal unique du retour des mutations : succès, erreur, information. Verre
+   posé sur la coquille sombre (liséré haut, ombre profonde), rail de couleur
+   selon la tonalité, compte à rebours en bas. La pile vit en bas à droite et
+   ne consomme aucun clic hors de ses cartes (`pointer-events`). */
+
+.toastViewport {
+  position: fixed;
+  right: 1.15rem;
+  bottom: 1.15rem;
+  z-index: 80;
+  width: min(23rem, calc(100vw - 2rem));
+  pointer-events: none;
+}
+
+.toastStack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.toast {
+  --toastAccent: #38bdf8;
+  --toastTint: rgba(56, 189, 248, 0.16);
+  --toastEdge: rgba(56, 189, 248, 0.36);
+  --toastGlow: rgba(56, 189, 248, 0.24);
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.7rem;
+  padding: 0.8rem 0.85rem 0.9rem;
+  border-radius: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: linear-gradient(160deg, rgba(13, 22, 43, 0.9), rgba(5, 10, 24, 0.94));
+  box-shadow:
+    0 18px 44px rgba(2, 4, 14, 0.6),
+    0 0 0 1px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(18px) saturate(1.25);
+  -webkit-backdrop-filter: blur(18px) saturate(1.25);
+  color: #eaf2ff;
+  pointer-events: auto;
+  overflow: hidden;
+  animation: toastIn 0.36s cubic-bezier(0.16, 1, 0.3, 1) both;
+  transition:
+    opacity 0.22s ease,
+    transform 0.22s ease;
+}
+
+/* Rail de tonalité : la couleur se voit même sans lire le texte. */
+.toast::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--toastAccent);
+  box-shadow: 0 0 18px var(--toastAccent);
+}
+
+.toastSuccess {
+  --toastAccent: #34d399;
+  --toastTint: rgba(52, 211, 153, 0.16);
+  --toastEdge: rgba(52, 211, 153, 0.38);
+  --toastGlow: rgba(52, 211, 153, 0.26);
+}
+
+.toastError {
+  --toastAccent: #fb7185;
+  --toastTint: rgba(251, 113, 133, 0.16);
+  --toastEdge: rgba(251, 113, 133, 0.4);
+  --toastGlow: rgba(251, 113, 133, 0.28);
+}
+
+.toastInfo {
+  --toastAccent: #38bdf8;
+  --toastTint: rgba(56, 189, 248, 0.16);
+  --toastEdge: rgba(56, 189, 248, 0.38);
+  --toastGlow: rgba(56, 189, 248, 0.26);
+}
+
+.toastOut {
+  opacity: 0;
+  transform: translateX(0.75rem) scale(0.98);
+}
+
+.toastIcon {
+  display: grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 11px;
+  color: var(--toastAccent);
+  background: var(--toastTint);
+  border: 1px solid var(--toastEdge);
+  box-shadow: 0 0 18px var(--toastGlow);
+}
+
+.toastBody {
+  display: block;
+  min-width: 0;
+}
+
+.toastTitle {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.toastText {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: rgba(203, 224, 255, 0.72);
+}
+
+.toastClose {
+  display: grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: rgba(203, 224, 255, 0.55);
+  cursor: pointer;
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease;
+}
+
+.toastClose:hover {
+  background: rgba(255, 255, 255, 0.09);
+  color: #eaf2ff;
+}
+
+.toastClose:focus-visible {
+  outline: 2px solid var(--toastAccent);
+  outline-offset: 1px;
+}
+
+.toastTimer {
+  position: absolute;
+  left: 3px;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--toastAccent), transparent);
+  transform-origin: left center;
+  animation: toastTimer var(--toastTtl, 4.8s) linear both;
+}
+
+.toast[data-paused="true"] .toastTimer {
+  animation-play-state: paused;
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(0.6rem) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes toastTimer {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+/* ── Attente entre deux écrans (`loading.tsx`) ─────────────────────────────
+   Voile **blanc dépoli** sur la zone de contenu : le fond s'éclaircit et se
+   colore au lieu de s'assombrir, le panneau et ses libellés restent
+   devinables derrière la vitre, et l'indicateur de chargement vit **au
+   centre** de la zone. La barre latérale n'est jamais recouverte : on peut
+   repartir vers un autre écran pendant l'attente. Le voile n'apparaît
+   qu'après un court délai, donc une réponse immédiate ne produit aucun flash. */
+
+.pageLoader {
+  position: absolute;
+  inset: 0;
+  z-index: 25;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  /* Vitre blanche : le fond passe en flou clair, la page transparaît délavée. */
+  background: rgba(255, 255, 255, 0.62);
+  backdrop-filter: blur(20px) saturate(1.1) brightness(1.03);
+  -webkit-backdrop-filter: blur(20px) saturate(1.1) brightness(1.03);
+  animation: loaderIn 0.3s ease 0.12s both;
+}
+
+/* Filet lumineux qui balaie le haut de la zone : le mouvement dit « ça
+   travaille » même quand l'attente dure. */
+.loaderRail {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #06b6d4, #a78bfa, transparent);
+  background-size: 40% 100%;
+  background-repeat: no-repeat;
+  animation: loaderRail 1.25s ease-in-out infinite;
+}
+
+/* Capsule de verre clair au centre, avec son anneau qui tourne. */
+.loaderBox {
+  display: grid;
+  justify-items: center;
+  gap: 0.85rem;
+  padding: 1.6rem 2rem 1.7rem;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: linear-gradient(
+    165deg,
+    rgba(255, 255, 255, 0.92),
+    rgba(255, 255, 255, 0.62)
+  );
+  box-shadow:
+    0 24px 60px rgba(13, 26, 43, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px) saturate(1.1);
+  -webkit-backdrop-filter: blur(10px) saturate(1.1);
+}
+
+.loaderRing {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 3px solid rgba(0, 104, 125, 0.16);
+  border-top-color: #0891b2;
+  animation: loaderSpin 0.85s linear infinite;
+}
+
+.loaderText {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #0d1a2b;
+  /* À peine flouté, comme lu à travers la vitre. */
+  filter: blur(0.3px);
+}
+
+@keyframes loaderIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes loaderRail {
+  from {
+    background-position: -40% 0;
+  }
+  to {
+    background-position: 140% 0;
+  }
+}
+
+@keyframes loaderSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Point d'attente sur l'entrée de navigation cliquée : le retour est immédiat,
+   avant même que la page ait répondu. */
+.sidePending {
+  width: 6px;
+  height: 6px;
+  margin-left: auto;
+  border-radius: 50%;
+  background: #38bdf8;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.8);
+  opacity: 0;
+  transform: scale(0.6);
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+}
+
+.sidePending[data-on="true"] {
+  opacity: 1;
+  transform: none;
+  animation: sidePulse 1.1s ease-in-out infinite;
+}
+
+@keyframes sidePulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast,
+  .toastTimer,
+  .pageLoader,
+  .loaderRail,
+  .loaderRing,
+  .sidePending[data-on="true"] {
+    animation: none;
+  }
+
+  /* Le voile reste visible (il informe), seule son apparition est instantanée. */
+  .pageLoader {
+    opacity: 1;
+  }
+
+  .toastTimer {
+    opacity: 0.45;
   }
 }

@@ -11,6 +11,7 @@ import {
   X,
 } from "@deemlol/next-icons";
 import { addImagesAction } from "@/app/admin/actions";
+import { useToast } from "@/components/admin/Toaster";
 import styles from "@/app/admin/admin.module.css";
 
 type PendingStatus = "ready" | "uploading" | "done" | "error";
@@ -70,9 +71,9 @@ const STATUS_LABELS: Record<PendingStatus, string> = {
 };
 
 export default function ImageUploader({ projectId }: { projectId: string }) {
+  const toast = useToast();
   const [items, setItems] = useState<Pending[]>([]);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
 
   const ready = items.filter((it) => it.status === "ready");
@@ -110,7 +111,9 @@ export default function ImageUploader({ projectId }: { projectId: string }) {
         progress: 0,
       });
     }
-    setError(rejected.length > 0 ? rejected.join(" ") : null);
+    // Un refus de fichier est signalé par un toast : le bandeau en bas de
+    // carte a laissé la place aux notifications.
+    for (const reason of rejected) toast.error("Fichier refusé.", reason);
     if (next.length > 0) setItems((prev) => [...prev, ...next]);
   }
 
@@ -197,18 +200,19 @@ export default function ImageUploader({ projectId }: { projectId: string }) {
 
       xhr.send(form);
     });
-  }
-
-  async function upload() {
-    setError(null);
+  }  async function upload() {
     if (items.length === 0) return;
     const invalid = items.map((it) => rejectReason(it.file)).find(Boolean);
     if (invalid) {
-      setError(invalid);
+      toast.error("Envoi refusé.", invalid);
       return;
     }
+
     if (items.some((it) => it.alt.trim() === "")) {
-      setError("Un texte alternatif (alt) est obligatoire pour chaque image.");
+      toast.error(
+        "Texte alternatif manquant.",
+        "Chaque image doit porter un texte alternatif avant l'envoi.",
+      );
       return;
     }
 
@@ -235,7 +239,7 @@ export default function ImageUploader({ projectId }: { projectId: string }) {
         const message =
           e instanceof Error ? e.message : "Échec de l'envoi vers ImageKit.";
         patch(it.id, { status: "error", error: message });
-        setError(message);
+        toast.error("Envoi interrompu.", message);
         setBusy(false);
         return;
       }
@@ -401,12 +405,6 @@ export default function ImageUploader({ projectId }: { projectId: string }) {
             </li>
           ))}
         </ul>
-      )}
-
-      {error && (
-        <p className={styles.error} role="alert">
-          {error}
-        </p>
       )}
 
       <div className={styles.uploaderFoot}>

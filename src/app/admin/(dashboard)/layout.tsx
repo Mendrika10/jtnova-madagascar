@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ChevronUp, LogOut, Plus, Search, User } from "@deemlol/next-icons";
@@ -5,6 +6,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getDashboardCounts } from "@/lib/admin-data";
 import { syncContactReadStatuses } from "@/lib/mail-sync";
 import { logoutAction } from "../login/actions";
+import FlashToasts, { ToastProvider } from "@/components/admin/Toaster";
 import SidebarNav from "./SidebarNav";
 import styles from "../admin.module.css";
 
@@ -43,75 +45,88 @@ export default async function AdminLayout({
   const counts = await getDashboardCounts(supabase);
 
   return (
-    <div className={styles.shell}>
-      <aside className={styles.sidebar}>
-        <div className={styles.sideHead}>
-          <span className={styles.sideMark} aria-hidden>
-            JT
-          </span>
-          <span className={styles.sideIdent}>
-            <span className={styles.sideBrand}>Jtnova</span>
-            <span className={styles.sideRole}>Administration</span>
-          </span>
-          <span className={styles.sideCaret} aria-hidden>
-            <ChevronUp size={14} strokeWidth={2} />
-          </span>
-        </div>
+    // Le fournisseur de toasts enveloppe toute la coquille : il survit donc aux
+    // navigations entre écrans, et le message déclenché par une Server Action
+    // s'affiche bien sur la page d'arrivée (cf. `components/admin/Toaster`).
+    <ToastProvider>
+      <div className={styles.shell}>
+        <aside className={styles.sidebar}>
+          <div className={styles.sideHead}>
+            <span className={styles.sideMark} aria-hidden>
+              JT
+            </span>
+            <span className={styles.sideIdent}>
+              <span className={styles.sideBrand}>Jtnova</span>
+              <span className={styles.sideRole}>Administration</span>
+            </span>
+            <span className={styles.sideCaret} aria-hidden>
+              <ChevronUp size={14} strokeWidth={2} />
+            </span>
+          </div>
 
-        <Link href="/admin/realisations/new" className={styles.sidePrimary}>
-          <Plus size={16} strokeWidth={2.2} aria-hidden />
-          Nouvelle réalisation
-        </Link>
+          <Link href="/admin/realisations/new" className={styles.sidePrimary}>
+            <Plus size={16} strokeWidth={2.2} aria-hidden />
+            Nouvelle réalisation
+          </Link>
 
-        <nav className={styles.sideNav} aria-label="Navigation administration">
-          <SidebarNav
-            unreadMessages={counts.unreadMessages}
-            unresolvedErrors={counts.unresolvedErrors}
-          />
+          <nav className={styles.sideNav} aria-label="Navigation administration">
+            <SidebarNav
+              unreadMessages={counts.unreadMessages}
+              unresolvedErrors={counts.unresolvedErrors}
+            />
 
-          <div className={styles.sideGroup}>
-            <p className={styles.sideGroupTitle}>Recherche</p>
-            <form
-              className={styles.sideSearch}
-              action="/admin"
-              method="get"
-              role="search"
-            >
-              <span className={styles.sideSearchIcon} aria-hidden>
-                <Search size={14} strokeWidth={2} />
+            <div className={styles.sideGroup}>
+              <p className={styles.sideGroupTitle}>Recherche</p>
+              <form
+                className={styles.sideSearch}
+                action="/admin"
+                method="get"
+                role="search"
+              >
+                <span className={styles.sideSearchIcon} aria-hidden>
+                  <Search size={14} strokeWidth={2} />
+                </span>
+                <input
+                  type="search"
+                  name="q"
+                  placeholder="Réalisation, message…"
+                  aria-label="Rechercher une réalisation ou un message"
+                  className={styles.sideSearchInput}
+                />
+              </form>
+            </div>
+          </nav>
+
+          <div className={styles.sideFoot}>
+            <div className={styles.sideUser}>
+              <span className={styles.sideAvatar} aria-hidden>
+                <User size={14} strokeWidth={2} />
               </span>
-              <input
-                type="search"
-                name="q"
-                placeholder="Réalisation, message…"
-                aria-label="Rechercher une réalisation ou un message"
-                className={styles.sideSearchInput}
-              />
+              <span className={styles.sideEmail} title={user.email ?? ""}>
+                {profile.email ?? user.email}
+              </span>
+            </div>
+            <form action={logoutAction}>
+              <button type="submit" className={styles.sideLogout}>
+                <LogOut size={14} strokeWidth={2} aria-hidden />
+                Déconnexion
+              </button>
             </form>
           </div>
-        </nav>
+        </aside>
 
-        <div className={styles.sideFoot}>
-          <div className={styles.sideUser}>
-            <span className={styles.sideAvatar} aria-hidden>
-              <User size={14} strokeWidth={2} />
-            </span>
-            <span className={styles.sideEmail} title={user.email ?? ""}>
-              {profile.email ?? user.email}
-            </span>
-          </div>
-          <form action={logoutAction}>
-            <button type="submit" className={styles.sideLogout}>
-              <LogOut size={14} strokeWidth={2} aria-hidden />
-              Déconnexion
-            </button>
-          </form>
+        <div className={styles.main}>
+          {/* Le repli de chargement de ce segment (loading.tsx) s'affiche ici,
+              pendant la réponse du serveur, sans recouvrir la barre latérale. */}
+          <div className={styles.content}>{children}</div>
         </div>
-      </aside>
 
-      <div className={styles.main}>
-        <div className={styles.content}>{children}</div>
+        {/* `useSearchParams` impose une frontière Suspense : le pont est monté
+            une seule fois et lit les codes de résultat des Server Actions. */}
+        <Suspense fallback={null}>
+          <FlashToasts />
+        </Suspense>
       </div>
-    </div>
+    </ToastProvider>
   );
 }

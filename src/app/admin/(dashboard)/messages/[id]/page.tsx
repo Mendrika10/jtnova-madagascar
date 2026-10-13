@@ -51,13 +51,10 @@ const BTN_BY_STATUS: Record<string, string> = {
  */
 export default async function MessageDetailPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ saved?: string; noted?: string; error?: string }>;
 }) {
   const { id } = await params;
-  const flags = await searchParams;
   if (!UUID_RE.test(id)) notFound();
 
   const supabase = await createSupabaseServerClient();
@@ -88,11 +85,6 @@ export default async function MessageDetailPage({
       ? "pillNew"
       : (BTN_BY_STATUS[message.status] ?? "pillRead");
   const tone = styles[toneOf(message.name + message.email)];
-  const errorLabels: Record<string, string> = {
-    invalid: "Requête invalide — la modification a été refusée.",
-    save: "L'enregistrement a échoué. Merci de réessayer.",
-    unavailable: "Service indisponible sur cet environnement.",
-  };
 
   return (
     <div className={`${styles.panel} ${styles.inboxPanel}`}>
@@ -118,14 +110,6 @@ export default async function MessageDetailPage({
           Répondre
         </a>
       </div>
-
-      {flags.saved && <p className={styles.notice}>Statut mis à jour.</p>}
-      {flags.noted && <p className={styles.notice}>Note enregistrée.</p>}
-      {flags.error && (
-        <p className={styles.fieldError}>
-          {errorLabels[flags.error] ?? "Une erreur est survenue."}
-        </p>
-      )}
 
       <div className={styles.inboxDetail}>
         {/* ── Carte du message ── */}

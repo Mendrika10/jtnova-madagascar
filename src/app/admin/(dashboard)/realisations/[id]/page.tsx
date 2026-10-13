@@ -20,8 +20,6 @@ export default async function EditProjectPage({
 }: {
   params: Promise<{ id: string }>;
   searchParams: Promise<{
-    saved?: string;
-    created?: string;
     images?: string;
     images_error?: string;
   }>;
@@ -65,15 +63,9 @@ export default async function EditProjectPage({
         </Link>
       </div>
 
-      {flags.created && <p className={styles.notice}>Réalisation créée.</p>}
-      {flags.saved && <p className={styles.notice}>Modifications enregistrées.</p>}
-      {flags.images && <p className={styles.notice}>Images mises à jour.</p>}
-      {flags.images_error && (
-        <p className={styles.error} role="alert">
-          L&apos;enregistrement des images a échoué. Réessayez.
-        </p>
-      )}
-
+      {/* Résultat des enregistrements : notification (cf. `Toaster`), plus de
+          bandeau en tête de page. Les codes d'URL restent lus ici pour rouvrir
+          l'onglet Images après un ajout ou un échec. */}
       <ProjectForm
         initial={{
           id: p.id,
