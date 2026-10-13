@@ -10,9 +10,11 @@ import styles from "../admin.module.css";
  * affichée et utilisable, on peut donc repartir vers une autre page sans
  * attendre.
  *
- * Deux garde-fous visuels : le voile ne devient visible qu'après un court
- * délai (une réponse instantanée ne produit pas de flash) et les animations
- * sont coupées sous `prefers-reduced-motion`.
+ * Rendu : un voile **blanc dépoli** (flou + éclaircissement) qui laisse
+ * deviner la page en dessous, et l'indicateur de chargement **au centre** de
+ * la zone. Le voile ne devient visible qu'après un court délai (une réponse
+ * instantanée ne produit pas de flash) et les animations sont coupées sous
+ * `prefers-reduced-motion`.
  */
 export default function AdminLoading() {
   return (
@@ -24,14 +26,9 @@ export default function AdminLoading() {
     >
       <span className={styles.loaderRail} aria-hidden />
 
-      <div className={styles.loaderCard} aria-hidden>
-        <span className={styles.loaderMark}>JT</span>
-        <span className={styles.loaderText}>Chargement</span>
-        <span className={styles.loaderLines}>
-          <i />
-          <i />
-          <i />
-        </span>
+      <div className={styles.loaderBox}>
+        <span className={styles.loaderRing} aria-hidden />
+        <span className={styles.loaderText}>Chargement…</span>
       </div>
     </div>
   );

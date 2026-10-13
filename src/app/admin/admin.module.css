@@ -5534,11 +5534,12 @@ a.vitalCard:hover {
 }
 
 /* ── Attente entre deux écrans (`loading.tsx`) ─────────────────────────────
-   Voile de verre sur la zone de contenu : le panneau et ses libellés
-  s'effacent derrière un flou, une lueur balaie le haut de la zone et une
-   carte de verre annonce le chargement — sans jamais bloquer la navigation
-   latérale, qui reste affichée et cliquable. Le voile n'apparaît qu'après un
-   court délai : une réponse immédiate ne produit aucun flash. */
+   Voile **blanc dépoli** sur la zone de contenu : le fond s'éclaircit et se
+   colore au lieu de s'assombrir, le panneau et ses libellés restent
+   devinables derrière la vitre, et l'indicateur de chargement vit **au
+   centre** de la zone. La barre latérale n'est jamais recouverte : on peut
+   repartir vers un autre écran pendant l'attente. Le voile n'apparaît
+   qu'après un court délai, donc une réponse immédiate ne produit aucun flash. */
 
 .pageLoader {
   position: absolute;
@@ -5547,95 +5548,64 @@ a.vitalCard:hover {
   display: grid;
   place-items: center;
   padding: 1.5rem;
-  background: rgba(4, 8, 20, 0.5);
-  backdrop-filter: blur(16px) saturate(1.2);
-  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  /* Vitre blanche : le fond passe en flou clair, la page transparaît délavée. */
+  background: rgba(255, 255, 255, 0.62);
+  backdrop-filter: blur(20px) saturate(1.1) brightness(1.03);
+  -webkit-backdrop-filter: blur(20px) saturate(1.1) brightness(1.03);
   animation: loaderIn 0.3s ease 0.12s both;
 }
 
+/* Filet lumineux qui balaie le haut de la zone : le mouvement dit « ça
+   travaille » même quand l'attente dure. */
 .loaderRail {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(90deg, transparent, #38bdf8, #a78bfa, transparent);
+  background: linear-gradient(90deg, transparent, #06b6d4, #a78bfa, transparent);
   background-size: 40% 100%;
   background-repeat: no-repeat;
   animation: loaderRail 1.25s ease-in-out infinite;
 }
 
-.loaderCard {
+/* Capsule de verre clair au centre, avec son anneau qui tourne. */
+.loaderBox {
   display: grid;
   justify-items: center;
-  gap: 0.5rem;
-  min-width: 15rem;
-  padding: 1.5rem 1.9rem 1.6rem;
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  background: linear-gradient(165deg, rgba(14, 23, 45, 0.86), rgba(5, 10, 24, 0.92));
+  gap: 0.85rem;
+  padding: 1.6rem 2rem 1.7rem;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: linear-gradient(
+    165deg,
+    rgba(255, 255, 255, 0.92),
+    rgba(255, 255, 255, 0.62)
+  );
   box-shadow:
-    0 24px 60px rgba(2, 4, 14, 0.6),
-    inset 0 1px 0 rgba(255, 255, 255, 0.07);
-  backdrop-filter: blur(10px) saturate(1.15);
-  -webkit-backdrop-filter: blur(10px) saturate(1.15);
+    0 24px 60px rgba(13, 26, 43, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px) saturate(1.1);
+  -webkit-backdrop-filter: blur(10px) saturate(1.1);
 }
 
-.loaderMark {
-  display: grid;
-  place-items: center;
-  width: 2.4rem;
-  height: 2.4rem;
-  border-radius: 13px;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  color: #04101f;
-  background: linear-gradient(150deg, #7dd3fc, #22d3ee 45%, #a78bfa);
-  box-shadow: 0 0 26px rgba(56, 189, 248, 0.35);
-  animation: loaderMark 1.6s ease-in-out infinite;
+.loaderRing {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 3px solid rgba(0, 104, 125, 0.16);
+  border-top-color: #0891b2;
+  animation: loaderSpin 0.85s linear infinite;
 }
 
 .loaderText {
   font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: rgba(214, 233, 255, 0.78);
-  /* Le libellé est à peine flouté, comme lu à travers le verre, puis respire
-     lentement pendant l'attente. */
-  filter: blur(0.35px);
-  animation: loaderBreathe 1.8s ease-in-out infinite;
-}
-
-.loaderLines {
-  display: grid;
-  gap: 0.35rem;
-  width: 8.5rem;
-  margin-top: 0.4rem;
-}
-
-.loaderLines i {
-  height: 5px;
-  border-radius: 99px;
-  background: linear-gradient(
-    90deg,
-    rgba(148, 197, 255, 0.14),
-    rgba(148, 197, 255, 0.34),
-    rgba(148, 197, 255, 0.14)
-  );
-  background-size: 200% 100%;
-  animation: loaderShimmer 1.4s linear infinite;
-}
-
-.loaderLines i:nth-child(2) {
-  width: 78%;
-  animation-delay: 0.12s;
-}
-
-.loaderLines i:nth-child(3) {
-  width: 56%;
-  animation-delay: 0.24s;
+  color: #0d1a2b;
+  /* À peine flouté, comme lu à travers la vitre. */
+  filter: blur(0.3px);
 }
 
 @keyframes loaderIn {
@@ -5656,32 +5626,9 @@ a.vitalCard:hover {
   }
 }
 
-@keyframes loaderShimmer {
-  from {
-    background-position: 200% 0;
-  }
+@keyframes loaderSpin {
   to {
-    background-position: -100% 0;
-  }
-}
-
-@keyframes loaderMark {
-  0%,
-  100% {
-    transform: translateY(0) scale(1);
-  }
-  50% {
-    transform: translateY(-2px) scale(1.04);
-  }
-}
-
-@keyframes loaderBreathe {
-  0%,
-  100% {
-    opacity: 0.7;
-  }
-  50% {
-    opacity: 1;
+    transform: rotate(360deg);
   }
 }
 
@@ -5722,9 +5669,7 @@ a.vitalCard:hover {
   .toastTimer,
   .pageLoader,
   .loaderRail,
-  .loaderMark,
-  .loaderText,
-  .loaderLines i,
+  .loaderRing,
   .sidePending[data-on="true"] {
     animation: none;
   }
