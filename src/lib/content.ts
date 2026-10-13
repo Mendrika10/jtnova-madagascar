@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { getSupabasePublicClient } from "./supabase/server";
 import type { Database } from "./database.types";
 import type { ProjectData } from "@/components/projets/ProjectDetail";
@@ -125,20 +126,51 @@ export async function getPublishedProjects(): Promise<
 
   const { data, error } = await supabase
     .from("projects")
-    .select("slug, title, tag, category, year, cover_image")
+    .select("id, slug, title, tag, category, year, cover_image")
     .eq("published", true)
     .order("sort_order");
 
   if (error || !data || data.length === 0) return null;
+
+  // Une réalisation créée depuis l'admin n'a **pas** d'image de couverture :
+  // l'admin n'expose aucun champ pour la définir, les images vivent dans
+  // `project_images`. Sans ce repli, la carte de la section Projets recevait une
+  // `src` vide et affichait un cadre blanc, alors que la galerie du projet est
+  // pleine. Même repli que le tableau de bord (`admin-search.ts`).
+  const covers = await getFirstImageByProject(supabase, data);
 
   return data.map((p) => ({
     title: p.title,
     category: p.category ?? "",
     year: p.year ?? "",
     tag: p.tag ?? "",
-    image: p.cover_image ?? "",
+    image: p.cover_image ?? covers.get(p.id) ?? "",
     href: `/projects/${p.slug}`,
   }));
+}
+
+/**
+ * Première capture (au sens de `sort_order`) de chaque réalisation, pour les
+ * seules lignes qui n'ont pas d'image de couverture. `id` → `url`.
+ */
+async function getFirstImageByProject(
+  supabase: SupabaseClient<Database>,
+  projects: { id: string; cover_image: string | null }[],
+): Promise<Map<string, string>> {
+  const covers = new Map<string, string>();
+  const missing = projects.filter((p) => !p.cover_image).map((p) => p.id);
+  if (missing.length === 0) return covers;
+
+  const { data: images } = await supabase
+    .from("project_images")
+    .select("project_id, url, sort_order")
+    .in("project_id", missing)
+    .order("sort_order");
+
+  for (const image of images ?? []) {
+    if (!covers.has(image.project_id)) covers.set(image.project_id, image.url);
+  }
+  return covers;
 }
 
 type ProjectRow = Database["public"]["Tables"]["projects"]["Row"];

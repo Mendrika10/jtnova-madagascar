@@ -97,6 +97,30 @@ const projectsFallback = [
   },
 ];
 
+/**
+ * Écran sans aperçu : la réalisation n'a ni couverture ni capture. Ce cadre
+ * dessiné remplace l'ancien `<img>` sans `src`, qui laissait un rectangle vide
+ * (une réalisation créée depuis l'admin n'a pas de `cover_image`).
+ */
+function ScreenPlaceholder() {
+  return (
+    <div className={styles.devicePlaceholder}>
+      <svg
+        width="28"
+        height="28"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="rgba(0,180,216,0.35)"
+        strokeWidth="1.4"
+      >
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <circle cx="8.5" cy="8.5" r="1.5" />
+        <path d="m21 15-5-5L5 21" />
+      </svg>
+    </div>
+  );
+}
+
 function DeviceFrame({
   frame,
   image,
@@ -128,20 +152,7 @@ function DeviceFrame({
               (e.target as HTMLImageElement).style.display = "none";
             }}
           />
-          <div className={styles.devicePlaceholder}>
-            <svg
-              width="28"
-              height="28"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="rgba(0,180,216,0.35)"
-              strokeWidth="1.4"
-            >
-              <rect x="3" y="3" width="18" height="18" rx="2" />
-              <circle cx="8.5" cy="8.5" r="1.5" />
-              <path d="m21 15-5-5L5 21" />
-            </svg>
-          </div>
+          <ScreenPlaceholder />
           <div className={styles.scanLine} />
         </div>
       </div>
@@ -161,18 +172,22 @@ function DeviceFrame({
         </span>
       </div> */}
       <div className={styles.deviceScreen}>
-        {/* F7.4 — aperçu de réalisation optimisé (WebP, ~420 px de large). */}
-        <Image
-          src={image}
-          alt={title}
-          className={styles.deviceImg}
-          fill
-          sizes="(max-width: 900px) 90vw, 420px"
-          unoptimized={shouldSkipOptimizer(image)}
-          onError={(e) => {
-            (e.target as HTMLImageElement).style.display = "none";
-          }}
-        />
+        {image ? (
+          /* F7.4 — aperçu de réalisation optimisé (WebP, ~420 px de large). */
+          <Image
+            src={image}
+            alt={title}
+            className={styles.deviceImg}
+            fill
+            sizes="(max-width: 900px) 90vw, 420px"
+            unoptimized={shouldSkipOptimizer(image)}
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = "none";
+            }}
+          />
+        ) : (
+          <ScreenPlaceholder />
+        )}
       </div>
     </div>
   );
