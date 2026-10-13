@@ -120,9 +120,7 @@ export default async function AdminLoginPage({
           <p className={styles.loginHeadline}>
             Publiez{" "}
             <span className={styles.loginHeadlineAccent}>vos réalisations</span>
-            , ajustez chaque texte et répondez à{" "}
-            <span className={styles.loginHeadlineAccent}>vos messages</span>{" "}
-            depuis un seul endroit.
+            , ajustez chaque texte depuis un seul endroit.
           </p>
 
           {/* Bande défilante : les 5 sections de l'admin, chacune précédée de

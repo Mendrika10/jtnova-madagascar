@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Eye, FileText, Folder } from "@deemlol/next-icons";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { getProjectForEdit } from "@/lib/admin-projects";
-import { deleteImageAction } from "@/app/admin/actions";
+import { getProjectForEdit, listTechLabels } from "@/lib/admin-projects";
 import ProjectForm from "@/components/admin/ProjectForm";
 import ImageUploader from "@/components/admin/ImageUploader";
-import ConfirmButton from "@/components/admin/ConfirmButton";
+import ImageGallery from "@/components/admin/ImageGallery";
 import styles from "../../../admin.module.css";
 
 export const metadata: Metadata = {
@@ -31,22 +31,36 @@ export default async function EditProjectPage({
 
   const supabase = await createSupabaseServerClient();
   if (!supabase) notFound();
-  const data = await getProjectForEdit(supabase, id);
+  const [data, techOptions] = await Promise.all([
+    getProjectForEdit(supabase, id),
+    listTechLabels(supabase),
+  ]);
   if (!data) notFound();
 
   const p = data.project;
 
   return (
-    <>
+    <div className={styles.panel}>
       <p className={styles.breadcrumb}>
         <Link href="/admin/realisations">← Réalisations</Link>
       </p>
       <div className={styles.pageHeader}>
-        <h1 className={styles.pageTitle}>{p.title}</h1>
+        <div className={styles.titleRow}>
+          <span className={styles.titleIcon} aria-hidden>
+            <Folder size={18} strokeWidth={2} />
+          </span>
+          <span className={styles.titleBlock}>
+            <h1 className={styles.pageTitle}>{p.title}</h1>
+            <p className={styles.subtitle}>
+              {p.slug} · {p.published ? "publiée" : "brouillon"}
+            </p>
+          </span>
+        </div>
         <Link
           href={`/admin/realisations/${p.id}/apercu`}
           className={styles.secondaryBtn}
         >
+          <Eye size={14} strokeWidth={2} aria-hidden />
           Aperçu
         </Link>
       </div>
@@ -82,39 +96,37 @@ export default async function EditProjectPage({
           tech: data.tech.map((t) => t.label).join("\n"),
           highlights: data.highlights.map((h) => h.text).join("\n"),
         }}
+        initialTab={flags.images || flags.images_error ? "images" : undefined}
+        techOptions={techOptions}
+        imagesPanel={
+          <section className={styles.section}>
+            <div className={styles.sectionTitleRow}>
+              <span className={styles.sectionIcon} aria-hidden>
+                <FileText size={15} strokeWidth={2} />
+              </span>
+              <h2 className={styles.sectionTitle}>Images ({data.images.length})</h2>
+            </div>
+
+            {/* Deux blocs côte à côte : la galerie à gauche, l'envoi à droite
+                (empilés sous 1100 px, voir `imagesLayout`). */}
+            <div className={styles.imagesLayout}>
+              <div className={styles.imagesGallery}>
+                {data.images.length === 0 ? (
+                  <p className={styles.placeholder}>
+                    Aucune image pour l&apos;instant.
+                  </p>
+                ) : (
+                  <ImageGallery projectId={p.id} images={data.images} />
+                )}
+              </div>
+
+              <aside className={styles.imagesSide}>
+                <ImageUploader projectId={p.id} />
+              </aside>
+            </div>
+          </section>
+        }
       />
-
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Images ({data.images.length})</h2>
-
-        {data.images.length === 0 ? (
-          <p className={styles.placeholder}>Aucune image pour l&apos;instant.</p>
-        ) : (
-          <ul className={styles.imageList}>
-            {data.images.map((img) => (
-              <li key={img.id} className={styles.imageItem}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={img.url} alt={img.alt} className={styles.imageThumb} />
-                <div className={styles.imageMeta}>
-                  <code className={styles.code}>{img.alt}</code>
-                  <form action={deleteImageAction}>
-                    <input type="hidden" name="image_id" value={img.id} />
-                    <input type="hidden" name="project_id" value={p.id} />
-                    <ConfirmButton
-                      message="Supprimer cette image ?"
-                      className={styles.dangerBtn}
-                    >
-                      Supprimer
-                    </ConfirmButton>
-                  </form>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        <ImageUploader projectId={p.id} />
-      </section>
-    </>
+    </div>
   );
 }

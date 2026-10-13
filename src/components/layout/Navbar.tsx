@@ -5,8 +5,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, cubicBezier, type Variants } from "framer-motion";
-import { Moon, Sun } from "@deemlol/next-icons";
 import { shouldSkipOptimizer } from "@/lib/images";
+import ThemeToggle from "./ThemeToggle";
 import styles from "./Navbar.module.css";
 
 const expo = cubicBezier(0.16, 1, 0.3, 1);
@@ -58,7 +58,6 @@ const navLinks = [
 export default function Navbar({ logoUrl }: { logoUrl?: string }) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
-  const [dark, setDark] = useState(true);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -66,13 +65,6 @@ export default function Navbar({ logoUrl }: { logoUrl?: string }) {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
-  useEffect(() => {
-    document.documentElement.setAttribute(
-      "data-theme",
-      dark ? "dark" : "light",
-    );
-  }, [dark]);
 
   return (
     <motion.nav
@@ -123,29 +115,16 @@ export default function Navbar({ logoUrl }: { logoUrl?: string }) {
           ))}
         </motion.ul>
 
-        {/* Bouton thème */}
-        {/* <motion.div
+        {/* Thème clair / sombre — le choix est mémorisé dans un cookie et
+            rejoué avant le premier rendu, donc sans flash. */}
+        <motion.div
           className={styles.ctaWrap}
           variants={ctaVariant}
           initial="hidden"
           animate="show"
         >
-          <button
-            className={styles.themeBtn}
-            onClick={() => setDark((d) => !d)}
-            aria-label={dark ? "Passer en mode clair" : "Passer en mode sombre"}
-          >
-            <motion.span
-              key={dark ? "moon" : "sun"}
-              initial={{ opacity: 0, rotate: -30, scale: 0.7 }}
-              animate={{ opacity: 1, rotate: 0, scale: 1 }}
-              exit={{ opacity: 0, rotate: 30, scale: 0.7 }}
-              transition={{ duration: 0.3, ease: expo }}
-            >
-              {dark ? <Moon size={20} /> : <Sun size={20} />}
-            </motion.span>
-          </button>
-        </motion.div> */}
+          <ThemeToggle />
+        </motion.div>
 
         {/* Burger mobile */}
         <button

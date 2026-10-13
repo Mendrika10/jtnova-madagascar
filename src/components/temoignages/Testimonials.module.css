@@ -5,8 +5,8 @@
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(0, 180, 216, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 180, 216, 0.04) 1px, transparent 1px);
+    linear-gradient(light-dark(rgba(0, 104, 125, 0.04), rgba(0, 180, 216, 0.04)) 1px, transparent 1px),
+    linear-gradient(90deg, light-dark(rgba(0, 104, 125, 0.04), rgba(0, 180, 216, 0.04)) 1px, transparent 1px);
   background-size: 64px 64px;
   mask-image: radial-gradient(ellipse 85% 65% at 50% 50%, black, transparent);
   -webkit-mask-image: radial-gradient(
@@ -29,16 +29,16 @@
 .star {
   position: absolute;
   border-radius: 50%;
-  background: rgba(220, 240, 255, 0.55);
-  box-shadow: 0 0 3px rgba(180, 220, 255, 0.3);
+  background: light-dark(rgba(58, 79, 105, 0.65), rgba(220, 240, 255, 0.55));
+  box-shadow: 0 0 3px light-dark(rgba(58, 79, 105, 0.4), rgba(180, 220, 255, 0.3));
   animation: testiTwinkle var(--dur, 3s) ease-in-out infinite;
 }
 
 .starBright {
-  background: rgba(200, 235, 255, 0.9);
+  background: light-dark(rgba(58, 79, 105, 0.95), rgba(200, 235, 255, 0.9));
   box-shadow:
-    0 0 6px rgba(0, 212, 255, 0.55),
-    0 0 12px rgba(0, 180, 216, 0.25);
+    0 0 6px light-dark(rgba(0, 150, 200, 0.55), rgba(0, 212, 255, 0.55)),
+    0 0 12px light-dark(rgba(0, 104, 125, 0.25), rgba(0, 180, 216, 0.25));
 }
 
 @keyframes testiTwinkle {
@@ -70,15 +70,15 @@
   border-radius: 100px;
   background: linear-gradient(
     90deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(0, 180, 216, 0.35) 55%,
-    rgba(255, 255, 255, 0.6) 100%
+    light-dark(rgba(13, 26, 43, 0), rgba(255, 255, 255, 0)) 0%,
+    light-dark(rgba(0, 104, 125, 0.35), rgba(0, 180, 216, 0.35)) 55%,
+    light-dark(rgba(13, 26, 43, 0.72), rgba(255, 255, 255, 0.6)) 100%
   );
   transform-origin: right center;
   transform: rotate(var(--angle, 35deg));
   opacity: 0;
   animation: testiShoot linear forwards;
-  box-shadow: 0 0 3px rgba(0, 180, 216, 0.2);
+  box-shadow: 0 0 3px light-dark(rgba(0, 104, 125, 0.2), rgba(0, 180, 216, 0.2));
 }
 
 @keyframes testiShoot {
@@ -144,13 +144,13 @@
   font-size: clamp(1.6rem, 3vw, 2.4rem);
   font-weight: 800;
   line-height: 1.15;
-  color: #ffffff;
+  color: light-dark(#0d1a2b, #ffffff);
   margin: 0;
   letter-spacing: -0.025em;
 }
 
 .accent {
-  background: linear-gradient(90deg, #7dd9f5, #00d4ff);
+  background: linear-gradient(90deg, light-dark(#1d7fa3, #7dd9f5), light-dark(#00687d, #00d4ff));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -158,7 +158,7 @@
 
 .subtitle {
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: light-dark(rgba(13, 26, 43, 0.52), rgba(255, 255, 255, 0.4));
   line-height: 1.8;
   margin: 0;
   max-width: 300px;
@@ -175,7 +175,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.18);
+  background: light-dark(rgba(13, 26, 43, 0.3), rgba(255, 255, 255, 0.18));
   border: none;
   cursor: pointer;
   padding: 0;
@@ -204,10 +204,10 @@
   position: relative;
   background: linear-gradient(
     145deg,
-    rgba(5, 15, 35, 0.95) 0%,
-    rgba(2, 8, 22, 0.98) 100%
+    light-dark(rgba(255, 255, 255, 0.96), rgba(5, 15, 35, 0.95)) 0%,
+    light-dark(rgba(255, 255, 255, 0.96), rgba(2, 8, 22, 0.98)) 100%
   );
-  border: 1px solid rgba(0, 180, 216, 0.12);
+  border: 1px solid light-dark(rgba(0, 104, 125, 0.12), rgba(0, 180, 216, 0.12));
   border-radius: 20px;
   padding: 2.25rem 2.25rem 1.75rem;
   display: flex;
@@ -227,7 +227,7 @@
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(0, 212, 255, 0.55),
+    light-dark(rgba(0, 150, 200, 0.55), rgba(0, 212, 255, 0.55)),
     transparent
   );
 }
@@ -241,7 +241,7 @@
   height: 200px;
   background: radial-gradient(
     circle,
-    rgba(0, 180, 216, 0.08) 0%,
+    light-dark(rgba(0, 104, 125, 0.08), rgba(0, 180, 216, 0.08)) 0%,
     transparent 65%
   );
   pointer-events: none;
@@ -256,7 +256,7 @@
   font-size: 7rem;
   line-height: 1;
   font-family: Georgia, serif;
-  color: rgba(0, 180, 216, 0.07);
+  color: light-dark(rgba(0, 104, 125, 0.07), rgba(0, 180, 216, 0.07));
   pointer-events: none;
   user-select: none;
   z-index: 0;
@@ -265,7 +265,7 @@
 /* ─── Citation ─── */
 .quote {
   font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.75);
+  color: light-dark(rgba(13, 26, 43, 0.87), rgba(255, 255, 255, 0.75));
   line-height: 1.8;
   margin: 0;
   position: relative;
@@ -287,7 +287,7 @@
 /* Divider */
 .divider {
   height: 1px;
-  background: linear-gradient(90deg, rgba(0, 180, 216, 0.15), transparent);
+  background: linear-gradient(90deg, light-dark(rgba(0, 104, 125, 0.15), rgba(0, 180, 216, 0.15)), transparent);
   position: relative;
   z-index: 1;
 }
@@ -320,9 +320,9 @@
   inset: -3px;
   border-radius: 50%;
   background: conic-gradient(
-    rgba(0, 212, 255, 0.45),
+    light-dark(rgba(0, 150, 200, 0.45), rgba(0, 212, 255, 0.45)),
     transparent 60%,
-    rgba(0, 212, 255, 0.2)
+    light-dark(rgba(0, 150, 200, 0.2), rgba(0, 212, 255, 0.2))
   );
   z-index: -1;
   animation: avatarSpin 6s linear infinite;
@@ -340,10 +340,10 @@
   border-radius: 50%;
   background: linear-gradient(
     135deg,
-    rgba(0, 180, 216, 0.18),
-    rgba(0, 80, 140, 0.12)
+    light-dark(rgba(0, 104, 125, 0.18), rgba(0, 180, 216, 0.18)),
+    light-dark(rgba(0, 104, 125, 0.168), rgba(0, 80, 140, 0.12))
   );
-  border: 1px solid rgba(0, 180, 216, 0.3);
+  border: 1px solid light-dark(rgba(0, 104, 125, 0.3), rgba(0, 180, 216, 0.3));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -363,13 +363,13 @@
 .authorName {
   font-size: 0.92rem;
   font-weight: 700;
-  color: #ffffff;
+  color: light-dark(#0d1a2b, #ffffff);
   line-height: 1.2;
 }
 
 .authorRole {
   font-size: 0.76rem;
-  color: rgba(255, 255, 255, 0.35);
+  color: light-dark(rgba(13, 26, 43, 0.47), rgba(255, 255, 255, 0.35));
   letter-spacing: 0.02em;
 }
 
@@ -385,9 +385,9 @@
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  border: 1px solid rgba(0, 180, 216, 0.18);
-  background: rgba(0, 180, 216, 0.04);
-  color: rgba(255, 255, 255, 0.5);
+  border: 1px solid light-dark(rgba(0, 104, 125, 0.18), rgba(0, 180, 216, 0.18));
+  background: light-dark(rgba(0, 104, 125, 0.04), rgba(0, 180, 216, 0.04));
+  color: light-dark(rgba(13, 26, 43, 0.62), rgba(255, 255, 255, 0.5));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -401,8 +401,8 @@
 }
 
 .navBtn:hover {
-  border-color: rgba(0, 212, 255, 0.55);
-  background: rgba(0, 180, 216, 0.1);
+  border-color: light-dark(rgba(0, 150, 200, 0.55), rgba(0, 212, 255, 0.55));
+  background: light-dark(rgba(0, 104, 125, 0.1), rgba(0, 180, 216, 0.1));
   color: var(--color-accent);
   transform: scale(1.08);
 }
@@ -410,7 +410,7 @@
 .counter {
   font-size: 0.75rem;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.3);
+  color: light-dark(rgba(13, 26, 43, 0.42), rgba(255, 255, 255, 0.3));
   letter-spacing: 0.08em;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -425,7 +425,7 @@
   left: 0;
   right: 0;
   height: 2px;
-  background: rgba(0, 180, 216, 0.07);
+  background: light-dark(rgba(0, 104, 125, 0.07), rgba(0, 180, 216, 0.07));
   overflow: hidden;
   border-radius: 0 0 20px 20px;
 }
@@ -435,8 +435,8 @@
   width: 100%;
   background: linear-gradient(
     90deg,
-    rgba(0, 180, 216, 0.4),
-    rgba(0, 212, 255, 0.9)
+    light-dark(rgba(0, 104, 125, 0.4), rgba(0, 180, 216, 0.4)),
+    light-dark(rgba(0, 150, 200, 0.9), rgba(0, 212, 255, 0.9))
   );
   transform-origin: left;
 }
@@ -448,7 +448,7 @@
   gap: 6px;
   font-size: 0.78rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.4);
+  color: light-dark(rgba(13, 26, 43, 0.52), rgba(255, 255, 255, 0.4));
   text-decoration: none;
   transition: color 0.25s;
   align-self: flex-start;
@@ -456,5 +456,5 @@
 }
 
 .linkedinLink:hover {
-  color: rgba(0, 212, 255, 0.85);
+  color: light-dark(rgba(0, 150, 200, 0.85), rgba(0, 212, 255, 0.85));
 }

@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { Fragment } from "react";
 import { motion, cubicBezier, type Variants } from "framer-motion";
 import StarField from "./StarField";
 import FloatingLogos from "./FloatingLogos";
@@ -169,16 +170,22 @@ export default function Hero({
           animate="show"
         >
           {titleWords.map((word, i) => (
-            <motion.span
-              key={`${word}-${i}`}
-              variants={wordVariant}
-              className={
-                accentWords.has(normalizeWord(word)) ? styles.accent : undefined
-              }
-              style={{ display: "inline-block" }}
-            >
-              {word}
-            </motion.span>
+            /* Chaque mot est un `inline-block` : sans nœud texte entre eux,
+               les espaces du titre dégénèrent et les mots se collent. */
+            <Fragment key={`${word}-${i}`}>
+              <motion.span
+                variants={wordVariant}
+                className={
+                  accentWords.has(normalizeWord(word))
+                    ? styles.accent
+                    : undefined
+                }
+                style={{ display: "inline-block" }}
+              >
+                {word}
+              </motion.span>
+              {i < titleWords.length - 1 ? " " : null}
+            </Fragment>
           ))}
         </motion.h1>
 

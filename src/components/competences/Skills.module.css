@@ -28,7 +28,7 @@
   font-weight: 800;
   letter-spacing: -0.03em;
   line-height: 1.1;
-  color: #fff;
+  color: light-dark(#0d1a2b, #fff);
   margin: 0 0 3rem;
 }
 
@@ -40,7 +40,7 @@
   margin-bottom: 3rem;
 }
 
-/* Accord�on */
+/* Accord�on */
 .accordion {
   display: flex;
   flex-direction: column;
@@ -75,7 +75,7 @@
   font-family: var(--font-heading, "Space Grotesk", sans-serif);
   font-size: 1.05rem;
   font-weight: 600;
-  color: #fff;
+  color: light-dark(#0d1a2b, #fff);
   flex: 1;
   letter-spacing: -0.01em;
 }
@@ -115,10 +115,12 @@
 
 .imageMock {
   width: 80%;
-  background: #1a1a2e;
+  /* Éditeur de code en miniature : il suit le thème, sinon les lignes
+     colorées sur fond sombre deviennent illisibles en mode clair. */
+  background: light-dark(#f6f9fc, #1a1a2e);
   border-radius: 10px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid light-dark(rgba(13, 26, 43, 0.1), rgba(255, 255, 255, 0.1));
 }
 
 .imageMockScreen {
@@ -134,7 +136,14 @@
 .codeLine {
   font-family: "Fira Code", "Courier New", monospace;
   font-size: 0.82rem;
-  color: var(--color-accent);
+  /* Sarcelle très sombre sur l'éditeur clair, accent éclairci sur l'éditeur
+     sombre : les lignes atténuées (opacité posée dans le composant) gardent le
+     contraste AA. L'accent est celui de l'admin, donc `color-mix` le compose
+     plutôt que de figer une teinte. */
+  color: light-dark(
+    #004c5e,
+    color-mix(in srgb, var(--color-accent) 55%, #ffffff)
+  );
   white-space: pre;
 }
 
@@ -163,8 +172,8 @@
     border-color 0.2s;
 }
 .techTag:hover {
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.2);
+  color: light-dark(#0d1a2b, #fff);
+  border-color: light-dark(rgba(13, 26, 43, 0.32), rgba(255, 255, 255, 0.2));
 }
 
 @media (max-width: 900px) {

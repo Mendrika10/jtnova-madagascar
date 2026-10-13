@@ -80,8 +80,14 @@ export default function Skills() {
               <div className={styles.imageMock}>
                 <div className={styles.imageMockScreen}>
                   <div className={styles.codeLines}>
+                    {/* Plancher d'opacité : sous 0,6 la ligne passait sous le
+                        seuil de contraste, dans les deux thèmes. */}
                     {["const dev = () => {", '  return "Jtnova";', "};", "", "// Full Stack"].map((line, i) => (
-                      <span key={i} className={styles.codeLine} style={{ opacity: 1 - i * 0.15 }}>
+                      <span
+                        key={i}
+                        className={styles.codeLine}
+                        style={{ opacity: Math.max(0.75, 1 - i * 0.1) }}
+                      >
                         {line}
                       </span>
                     ))}

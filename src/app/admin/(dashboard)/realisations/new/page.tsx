@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { FilePlus, ImagePlus } from "@deemlol/next-icons";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { listTechLabels } from "@/lib/admin-projects";
 import ProjectForm from "@/components/admin/ProjectForm";
 import styles from "../../../admin.module.css";
 
@@ -8,13 +11,29 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function NewProjectPage() {
+export default async function NewProjectPage() {
+  // Propositions du sélecteur de technologies : celles déjà utilisées. Sans
+  // banque configurée, le sélecteur garde sa liste de base.
+  const supabase = await createSupabaseServerClient();
+  const techOptions = supabase ? await listTechLabels(supabase) : [];
+
   return (
-    <>
+    <div className={styles.panel}>
       <p className={styles.breadcrumb}>
         <Link href="/admin/realisations">← Réalisations</Link>
       </p>
-      <h1 className={styles.pageTitle}>Nouvelle réalisation</h1>
+      <div className={styles.titleRow}>
+        <span className={styles.titleIcon} aria-hidden>
+          <FilePlus size={18} strokeWidth={2} />
+        </span>
+        <span className={styles.titleBlock}>
+          <h1 className={styles.pageTitle}>Nouvelle réalisation</h1>
+          <p className={styles.subtitle}>
+            Renseignez les informations puis enregistrez : elle apparaîtra sur le
+            site dès qu&apos;elle sera publiée.
+          </p>
+        </span>
+      </div>
       <ProjectForm
         initial={{
           title: "",
@@ -36,7 +55,21 @@ export default function NewProjectPage() {
           tech: "",
           highlights: "",
         }}
+        techOptions={techOptions}
+        imagesPanel={
+          <div className={styles.emptyState}>
+            <span className={styles.emptyIcon} aria-hidden>
+              <ImagePlus size={20} strokeWidth={1.8} />
+            </span>
+            <p className={styles.emptyTitle}>Aucune image pour l&apos;instant</p>
+            <p className={styles.emptyText}>
+              Les images s&apos;ajoutent après l&apos;enregistrement : créez la
+              réalisation, puis ouvrez l&apos;onglet « Images » de sa fiche pour
+              glisser-déposer votre galerie.
+            </p>
+          </div>
+        }
       />
-    </>
+    </div>
   );
 }
