@@ -76,12 +76,13 @@ export default async function AdminPersonnalisationPage({
 
   const supabase = await createSupabaseServerClient();
 
-  const [hero, about, cta, seo, identity] = await Promise.all([
+  const [hero, about, cta, seo, identity, contact] = await Promise.all([
     getSiteSetting("hero"),
     getSiteSetting("about"),
     getSiteSetting("cta"),
     getSiteSetting("seo"),
     getSiteSetting("identity"),
+    getSiteSetting("contact_info"),
   ]);
 
   const servicesRows: ServiceRow[] = [];
@@ -208,16 +209,25 @@ export default async function AdminPersonnalisationPage({
         ))}
       </nav>
 
-      {/* Carte unique : l'éditeur de la section ouverte, avec son aperçu. */}
+      {/* Carte unique : l'éditeur de la section ouverte, avec son aperçu.
+          L'aperçu rend les **vrais composants du site** : il lui faut donc
+          aussi les réglages enregistrés qu'il ne modifie pas (liens sociaux,
+          coordonnées, valeurs de la page « À propos »). */}
       <div className={styles.settingsCard}>
-        {active === "hero" && <HeroEditor values={heroValues} />}
-        {active === "about" && <AboutEditor values={aboutValues} />}
+        {active === "hero" && (
+          <HeroEditor values={heroValues} setting={hero} socials={cta.socials} />
+        )}
+        {active === "about" && (
+          <AboutEditor values={aboutValues} setting={about} />
+        )}
         {active === "services" && <ServicesEditor initial={servicesRows} />}
         {active === "testimonials" && (
           <TestimonialsEditor initial={testimonialRows} />
         )}
         {active === "faq" && <FaqEditor initial={faqRows} />}
-        {active === "cta" && <CtaEditor values={ctaValues} />}
+        {active === "cta" && (
+          <CtaEditor values={ctaValues} setting={cta} contact={contact} />
+        )}
         {active === "seo" && <SeoEditor values={seoValues} />}
         {active === "identity" && <IdentityEditor values={identityValues} />}
       </div>

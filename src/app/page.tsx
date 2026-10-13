@@ -33,7 +33,8 @@ export default async function Home() {
   return (
     <>
       <Hero hero={hero} socials={cta.socials} />
-      <Services items={services ?? undefined} />
+      {/* F7.6 — la section accueil affiche le showreel vidéo à la place de la grille. */}
+      <Services items={services ?? undefined} showreel />
       <Projects items={projects ?? undefined} />
       <Testimonials items={testimonials ?? undefined} />
       <TechBanner items={techs ?? undefined} />

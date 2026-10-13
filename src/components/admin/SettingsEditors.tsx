@@ -44,6 +44,13 @@ import {
 } from "@/app/admin/site-actions";
 import SortableRows from "@/components/admin/SortableRows";
 import styles from "@/app/admin/admin.module.css";
+import type {
+  AboutSetting,
+  ContactInfoSetting,
+  CtaSetting,
+  HeroSetting,
+  SocialLink,
+} from "@/lib/site-settings";
 import {
   PreviewPanel,
   HeroPreview,
@@ -51,9 +58,9 @@ import {
   CtaPreview,
   SeoPreview,
   IdentityPreview,
-  ServicesPreview,
-  TestimonialsPreview,
-  FaqPreview,
+  buildServicesPreview,
+  buildTestimonialsPreview,
+  buildFaqPreview,
 } from "@/components/admin/SectionPreview";
 
 /**
@@ -292,7 +299,16 @@ const buildHero = (fd: FormData): HeroValues => ({
   cta_secondary_href: field(fd, "cta_secondary_href"),
 });
 
-export function HeroEditor({ values }: { values: HeroValues }) {
+export function HeroEditor({
+  values,
+  setting,
+  socials,
+}: {
+  values: HeroValues;
+  /** Réglages enregistrés : l'aperçu montre le **site**, pas seulement la forme. */
+  setting: HeroSetting;
+  socials: SocialLink[];
+}) {
   const [state, action, pending] = useActionState(saveHeroAction, INITIAL);
   const { draft, dirty, formRef, refresh, resetForm } = useLivePreview(buildHero, values);
   return (
@@ -323,8 +339,8 @@ export function HeroEditor({ values }: { values: HeroValues }) {
         </div>
         <Actions pending={pending} dirty={dirty} onReset={resetForm} />
       </form>
-      <PreviewPanel title="Hero" dirty={dirty}>
-        <HeroPreview values={draft} />
+      <PreviewPanel title="Hero" dirty={dirty} full>
+        <HeroPreview values={draft} setting={setting} socials={socials} />
       </PreviewPanel>
     </div>
   );
@@ -346,7 +362,13 @@ const buildAbout = (fd: FormData): AboutValues => ({
   stats_lines: field(fd, "stats"),
 });
 
-export function AboutEditor({ values }: { values: AboutValues }) {
+export function AboutEditor({
+  values,
+  setting,
+}: {
+  values: AboutValues;
+  setting: AboutSetting;
+}) {
   const [state, action, pending] = useActionState(saveAboutAction, INITIAL);
   const { draft, dirty, formRef, refresh, resetForm } = useLivePreview(buildAbout, values);
   return (
@@ -369,8 +391,8 @@ export function AboutEditor({ values }: { values: AboutValues }) {
         />
         <Actions pending={pending} dirty={dirty} onReset={resetForm} />
       </form>
-      <PreviewPanel title="À propos" dirty={dirty}>
-        <AboutPreview values={draft} />
+      <PreviewPanel title="À propos" dirty={dirty} full>
+        <AboutPreview values={draft} setting={setting} />
       </PreviewPanel>
     </div>
   );
@@ -394,7 +416,15 @@ const buildCta = (fd: FormData): CtaValues => ({
   socials_lines: field(fd, "socials"),
 });
 
-export function CtaEditor({ values }: { values: CtaValues }) {
+export function CtaEditor({
+  values,
+  setting,
+  contact,
+}: {
+  values: CtaValues;
+  setting: CtaSetting;
+  contact: ContactInfoSetting;
+}) {
   const [state, action, pending] = useActionState(saveCtaAction, INITIAL);
   const { draft, dirty, formRef, refresh, resetForm } = useLivePreview(buildCta, values);
   return (
@@ -420,8 +450,8 @@ export function CtaEditor({ values }: { values: CtaValues }) {
         />
         <Actions pending={pending} dirty={dirty} onReset={resetForm} />
       </form>
-      <PreviewPanel title="CTA & réseaux" dirty={dirty}>
-        <CtaPreview values={draft} />
+      <PreviewPanel title="CTA & réseaux" dirty={dirty} full>
+        <CtaPreview values={draft} setting={setting} contact={contact} />
       </PreviewPanel>
     </div>
   );
@@ -605,6 +635,7 @@ export function ServicesEditor({ initial }: { initial: ServiceRow[] }) {
     useRows<ServiceRow>(initial, () => ({ title: "", description: "", icon: "" }));
   const { draft, dirty, formRef, refresh, resetForm } = useLivePreview(buildServices, initialRows);
   useRowsPreviewRefresh(rows, refresh);
+  const preview = buildServicesPreview(draft);
   const handleReset = useCallback(() => {
     resetForm();
     resetRows();
@@ -651,8 +682,8 @@ export function ServicesEditor({ initial }: { initial: ServiceRow[] }) {
         </button>
         <Actions pending={pending} dirty={dirty} onReset={handleReset} label="Enregistrer les services" />
       </form>
-      <PreviewPanel title="Services" dirty={dirty}>
-        <ServicesPreview rows={draft} />
+      <PreviewPanel title="Services" dirty={dirty} full note={preview.note}>
+        {preview.block}
       </PreviewPanel>
     </div>
   );
@@ -693,6 +724,7 @@ export function TestimonialsEditor({ initial }: { initial: TestimonialRow[] }) {
     }));
   const { draft, dirty, formRef, refresh, resetForm } = useLivePreview(buildTestimonials, initialRows);
   useRowsPreviewRefresh(rows, refresh);
+  const preview = buildTestimonialsPreview(draft);
   const handleReset = useCallback(() => {
     resetForm();
     resetRows();
@@ -761,8 +793,8 @@ export function TestimonialsEditor({ initial }: { initial: TestimonialRow[] }) {
         </button>
         <Actions pending={pending} dirty={dirty} onReset={handleReset} label="Enregistrer les témoignages" />
       </form>
-      <PreviewPanel title="Témoignages" dirty={dirty}>
-        <TestimonialsPreview rows={draft} />
+      <PreviewPanel title="Témoignages" dirty={dirty} full note={preview.note}>
+        {preview.block}
       </PreviewPanel>
     </div>
   );
@@ -788,6 +820,7 @@ export function FaqEditor({ initial }: { initial: FaqRow[] }) {
     useRows<FaqRow>(initial, () => ({ question: "", answer: "" }));
   const { draft, dirty, formRef, refresh, resetForm } = useLivePreview(buildFaqs, initialRows);
   useRowsPreviewRefresh(rows, refresh);
+  const preview = buildFaqPreview(draft);
   const handleReset = useCallback(() => {
     resetForm();
     resetRows();
@@ -829,8 +862,8 @@ export function FaqEditor({ initial }: { initial: FaqRow[] }) {
         </button>
         <Actions pending={pending} dirty={dirty} onReset={handleReset} label="Enregistrer la FAQ" />
       </form>
-      <PreviewPanel title="FAQ" dirty={dirty}>
-        <FaqPreview rows={draft} />
+      <PreviewPanel title="FAQ" dirty={dirty} full note={preview.note}>
+        {preview.block}
       </PreviewPanel>
     </div>
   );

@@ -45,6 +45,15 @@ export default function VideoShowcase({ video, particleCount = 55 }: Props) {
   const rotateY = useTransform(mx, [-0.5, 0.5], [-5, 5]);
 
   const [playing, setPlaying] = useState(false);
+  /*
+   * **Muet par défaut**, et c'est volontaire : le reel a une bande-son (nappe et
+   * effets), mais un site qui se met à parler tout seul est un site qu'on coupe.
+   * La lecture démarre donc sans un décibel, et c'est un clic explicite — sur la
+   * pastille « Activer le son » — qui la fait entendre. `muted` reste **piloté** :
+   * si le visiteur baisse le son par les commandes natives du lecteur,
+   * `onVolumeChange` nous le dit, donc la pastille ne réapparaît pas à contretemps.
+   */
+  const [muted, setMuted] = useState(true);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
@@ -179,14 +188,46 @@ export default function VideoShowcase({ video, particleCount = 55 }: Props) {
                   </div>
                 </div>
               ) : (
-                <video
-                  ref={videoRef}
-                  controls
-                  playsInline
-                  src={video.src}
-                  poster={video.poster}
-                  className={styles.video}
-                />
+                <div className={videoStyles.playerWrap}>
+                  <video
+                    ref={videoRef}
+                    controls
+                    playsInline
+                    muted={muted}
+                    onVolumeChange={(e) => setMuted(e.currentTarget.muted)}
+                    src={video.src}
+                    poster={video.poster}
+                    className={styles.video}
+                  />
+                  {muted ? (
+                    <button
+                      type="button"
+                      className={videoStyles.soundButton}
+                      onClick={() => {
+                        setMuted(false);
+                        videoRef.current?.play().catch(() => {
+                          /* ignore play rejection */
+                        });
+                      }}
+                    >
+                      <svg
+                        className={videoStyles.soundIcon}
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M11 5 6 9H3v6h3l5 4V5Z" />
+                        <path d="M16 9.5a4 4 0 0 1 0 5" />
+                        <path d="M18.5 7a7 7 0 0 1 0 10" />
+                      </svg>
+                      Activer le son
+                    </button>
+                  ) : null}
+                </div>
               )}
             </div>
           ) : (
