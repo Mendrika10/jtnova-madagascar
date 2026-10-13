@@ -19,7 +19,7 @@ import {
 } from "@deemlol/next-icons";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getHealthReport } from "@/lib/admin-health";
-import { toggleErrorResolvedAction } from "./actions";
+import ResolveButton from "./ResolveButton";
 import styles from "../../admin.module.css";
 
 export const metadata: Metadata = {
@@ -420,20 +420,7 @@ export default async function AdminHealthPage() {
                           >
                             {row.resolved ? "Traité" : "À traiter"}
                           </span>
-                          <form action={toggleErrorResolvedAction}>
-                            <input type="hidden" name="id" value={row.id} />
-                            <input
-                              type="hidden"
-                              name="resolved"
-                              value={row.resolved ? "0" : "1"}
-                            />
-                            <button
-                              type="submit"
-                              className={styles.secondaryBtn}
-                            >
-                              {row.resolved ? "Rouvrir" : "Marquer traité"}
-                            </button>
-                          </form>
+                          <ResolveButton id={row.id} resolved={row.resolved} />
                         </span>
                       </td>
                     </tr>

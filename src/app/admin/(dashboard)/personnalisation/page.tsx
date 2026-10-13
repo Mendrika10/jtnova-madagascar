@@ -69,7 +69,7 @@ function isSection(value: string | undefined): value is SectionId {
 export default async function AdminPersonnalisationPage({
   searchParams,
 }: {
-  searchParams: Promise<{ section?: string; saved?: string }>;
+  searchParams: Promise<{ section?: string }>;
 }) {
   const params = await searchParams;
   const active: SectionId = isSection(params.section) ? params.section : "hero";
@@ -185,12 +185,6 @@ export default async function AdminPersonnalisationPage({
           </span>
         </div>
       </div>
-
-      {params.saved === "1" && (
-        <p className={styles.notice} role="status">
-          Modifications enregistrées. Le site public est mis à jour.
-        </p>
-      )}
 
       <nav
         className={`${styles.tabs} ${styles.segmentedTabs}`}

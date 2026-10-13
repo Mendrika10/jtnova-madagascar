@@ -227,22 +227,27 @@ export async function moveProjectAction(formData: FormData): Promise<void> {
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: true });
 
+  let moved = false;
   if (list) {
     const ordered = list.map((p) => p.id);
     const index = ordered.indexOf(id);
     const target = direction === "up" ? index - 1 : index + 1;
     if (index >= 0 && target >= 0 && target < ordered.length) {
-      const [moved] = ordered.splice(index, 1);
-      ordered.splice(target, 0, moved);
-      await Promise.all(
+      const [row] = ordered.splice(index, 1);
+      ordered.splice(target, 0, row);
+      const results = await Promise.all(
         ordered.map((projectId, i) =>
           supabase.from("projects").update({ sort_order: i + 1 }).eq("id", projectId),
         ),
       );
-      revalidateProject();
+      moved = !results.some((result) => result.error);
+      if (moved) revalidateProject();
     }
   }
-  redirect(ADMIN_LIST);
+  // Code de résultat : cette voie (flèches ↑/↓, seul moyen sans souris ni
+  // clavier) doit notifier comme le glisser-déposer, sans quoi un déplacement
+  // réussi resterait muet sur écran tactile.
+  redirect(`${ADMIN_LIST}${moved ? "?moved=1" : ""}`);
 }
 
 export async function addImagesAction(formData: FormData): Promise<void> {
@@ -291,6 +296,10 @@ export async function addImagesAction(formData: FormData): Promise<void> {
         .eq("id", projectId)
         .maybeSingle();
       revalidateProject(project?.slug);
+      // `images=1` rouvre l'onglet Images ; `uploaded=1` dit qu'un ajout a
+      // bien eu lieu. Sans ce second code, un simple passage sur l'onglet
+      // annoncerait à tort des images ajoutées.
+      redirect(`${ADMIN_LIST}/${projectId}?images=1&uploaded=1`);
     }
   }
   redirect(`${ADMIN_LIST}/${projectId}?images=1`);
@@ -357,8 +366,15 @@ export async function deleteImageAction(formData: FormData): Promise<void> {
   const imageId = String(formData.get("image_id") ?? "").trim();
   const projectId = String(formData.get("project_id") ?? "").trim();
   const supabase = await createSupabaseServerClient();
+  let deleted = false;
+  let failed = false;
   if (supabase && imageId) {
-    await supabase.from("project_images").delete().eq("id", imageId);
+    const { error } = await supabase
+      .from("project_images")
+      .delete()
+      .eq("id", imageId);
+    deleted = !error;
+    failed = Boolean(error);
     const { data: project } = await supabase
       .from("projects")
       .select("slug")
@@ -366,5 +382,10 @@ export async function deleteImageAction(formData: FormData): Promise<void> {
       .maybeSingle();
     revalidateProject(project?.slug);
   }
-  redirect(`${ADMIN_LIST}/${projectId}?images=1`);
+  // Résultat explicite : le toast ne doit pas annoncer une suppression qui
+  // n'a pas eu lieu.
+  if (failed) redirect(`${ADMIN_LIST}/${projectId}?images=1&image_error=1`);
+  redirect(
+    `${ADMIN_LIST}/${projectId}?images=1${deleted ? "&image_deleted=1" : ""}`,
+  );
 }

@@ -43,6 +43,7 @@ import {
   type SettingsFormState,
 } from "@/app/admin/site-actions";
 import SortableRows from "@/components/admin/SortableRows";
+import { useActionFeedback } from "@/components/admin/Toaster";
 import styles from "@/app/admin/admin.module.css";
 import type {
   AboutSetting,
@@ -145,15 +146,6 @@ function fieldIconPill(name: string): ReactNode {
     <span className={styles.fieldIcon} aria-hidden>
       <Icon size={13} strokeWidth={2} />
     </span>
-  );
-}
-
-function Notice({ error }: { error?: string }) {
-  if (!error) return null;
-  return (
-    <p className={styles.error} role="alert">
-      {error}
-    </p>
   );
 }
 
@@ -310,11 +302,13 @@ export function HeroEditor({
   socials: SocialLink[];
 }) {
   const [state, action, pending] = useActionState(saveHeroAction, INITIAL);
+  // Erreur de validation → notification (les erreurs de champ restent sous
+  // leur champ, là où elles servent).
+  useActionFeedback(state);
   const { draft, dirty, formRef, refresh, resetForm } = useLivePreview(buildHero, values);
   return (
     <div className={styles.editorSplit}>
       <form ref={formRef} onInput={refresh} action={action} className={styles.form}>
-        <Notice error={state.errors._} />
         <TextField name="badge" label="Badge" defaultValue={values.badge} error={state.errors.badge} />
         <TextField
           name="title"
@@ -370,11 +364,11 @@ export function AboutEditor({
   setting: AboutSetting;
 }) {
   const [state, action, pending] = useActionState(saveAboutAction, INITIAL);
+  useActionFeedback(state);
   const { draft, dirty, formRef, refresh, resetForm } = useLivePreview(buildAbout, values);
   return (
     <div className={styles.editorSplit}>
       <form ref={formRef} onInput={refresh} action={action} className={styles.form}>
-        <Notice error={state.errors._} />
         <div className={styles.formGrid}>
           <TextField name="mission_title" label="Mission — titre" defaultValue={values.mission_title} error={state.errors.mission_title} />
           <TextField name="vision_title" label="Vision — titre" defaultValue={values.vision_title} error={state.errors.vision_title} />
@@ -426,11 +420,11 @@ export function CtaEditor({
   contact: ContactInfoSetting;
 }) {
   const [state, action, pending] = useActionState(saveCtaAction, INITIAL);
+  useActionFeedback(state);
   const { draft, dirty, formRef, refresh, resetForm } = useLivePreview(buildCta, values);
   return (
     <div className={styles.editorSplit}>
       <form ref={formRef} onInput={refresh} action={action} className={styles.form}>
-        <Notice error={state.errors._} />
         <TextField name="badge" label="Badge de disponibilité" defaultValue={values.badge} error={state.errors.badge} />
         <div className={styles.formGrid}>
           <TextField name="title_line1" label="Titre — ligne 1" defaultValue={values.title_line1} error={state.errors.title_line1} />
@@ -475,11 +469,11 @@ const buildSeo = (fd: FormData): SeoValues => ({
 
 export function SeoEditor({ values }: { values: SeoValues }) {
   const [state, action, pending] = useActionState(saveSeoAction, INITIAL);
+  useActionFeedback(state);
   const { draft, dirty, formRef, refresh, resetForm } = useLivePreview(buildSeo, values);
   return (
     <div className={styles.editorSplit}>
       <form ref={formRef} onInput={refresh} action={action} className={styles.form}>
-        <Notice error={state.errors._} />
         <div className={styles.formGrid}>
           <TextField name="site_name" label="Nom du site" defaultValue={values.site_name} error={state.errors.site_name} />
           <TextField name="locale" label="Locale" defaultValue={values.locale} hint="ex. fr, fr-FR" error={state.errors.locale} />
@@ -516,11 +510,11 @@ const buildIdentity = (fd: FormData): IdentityValues => ({
 
 export function IdentityEditor({ values }: { values: IdentityValues }) {
   const [state, action, pending] = useActionState(saveIdentityAction, INITIAL);
+  useActionFeedback(state);
   const { draft, dirty, formRef, refresh, resetForm } = useLivePreview(buildIdentity, values);
   return (
     <div className={styles.editorSplit}>
       <form ref={formRef} onInput={refresh} action={action} className={styles.form}>
-        <Notice error={state.errors._} />
         <TextField
           name="logo_url"
           label="URL du logo"
@@ -631,6 +625,7 @@ const buildServices = (fd: FormData): ServiceRow[] => {
 
 export function ServicesEditor({ initial }: { initial: ServiceRow[] }) {
   const [state, action, pending] = useActionState(saveServicesAction, INITIAL);
+  useActionFeedback(state);
   const { rows, add, remove, reorder, reset: resetRows, initialRows } =
     useRows<ServiceRow>(initial, () => ({ title: "", description: "", icon: "" }));
   const { draft, dirty, formRef, refresh, resetForm } = useLivePreview(buildServices, initialRows);
@@ -644,7 +639,6 @@ export function ServicesEditor({ initial }: { initial: ServiceRow[] }) {
   return (
     <div className={styles.editorSplit}>
       <form ref={formRef} onInput={refresh} action={action} className={styles.form}>
-        <Notice error={state.errors._} />
         <input type="hidden" name="count" value={rows.length} />
         <SortableRows
           rows={rows}
@@ -714,6 +708,7 @@ const buildTestimonials = (fd: FormData): TestimonialRow[] => {
 
 export function TestimonialsEditor({ initial }: { initial: TestimonialRow[] }) {
   const [state, action, pending] = useActionState(saveTestimonialsAction, INITIAL);
+  useActionFeedback(state);
   const { rows, add, remove, reorder, reset: resetRows, initialRows } =
     useRows<TestimonialRow>(initial, () => ({
       name: "",
@@ -733,7 +728,6 @@ export function TestimonialsEditor({ initial }: { initial: TestimonialRow[] }) {
   return (
     <div className={styles.editorSplit}>
       <form ref={formRef} onInput={refresh} action={action} className={styles.form}>
-        <Notice error={state.errors._} />
         <input type="hidden" name="count" value={rows.length} />
         <SortableRows
           rows={rows}
@@ -816,6 +810,7 @@ const buildFaqs = (fd: FormData): FaqRow[] => {
 
 export function FaqEditor({ initial }: { initial: FaqRow[] }) {
   const [state, action, pending] = useActionState(saveFaqsAction, INITIAL);
+  useActionFeedback(state);
   const { rows, add, remove, reorder, reset: resetRows, initialRows } =
     useRows<FaqRow>(initial, () => ({ question: "", answer: "" }));
   const { draft, dirty, formRef, refresh, resetForm } = useLivePreview(buildFaqs, initialRows);
@@ -829,7 +824,6 @@ export function FaqEditor({ initial }: { initial: FaqRow[] }) {
   return (
     <div className={styles.editorSplit}>
       <form ref={formRef} onInput={refresh} action={action} className={styles.form}>
-        <Notice error={state.errors._} />
         <input type="hidden" name="count" value={rows.length} />
         <SortableRows
           rows={rows}
