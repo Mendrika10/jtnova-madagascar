@@ -71,7 +71,12 @@ export default async function AdminLayout({
 
           <div className={styles.sideGroup}>
             <p className={styles.sideGroupTitle}>Recherche</p>
-            <form className={styles.sideSearch} action="/admin" method="get" role="search">
+            <form
+              className={styles.sideSearch}
+              action="/admin"
+              method="get"
+              role="search"
+            >
               <span className={styles.sideSearchIcon} aria-hidden>
                 <Search size={14} strokeWidth={2} />
               </span>

@@ -25,6 +25,12 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# Projet Remotion du Reel — montage vidéo maison, volontairement gardé en local
+# (voir docs/REEL-REMOTION.md). Rien de ce dossier ne part dans le dépôt : ni les
+# sources, ni les binaires retéléchargés (Chrome Headless Shell, ffmpeg), ni les
+# rendus de reel/out/. Pour le versionner un jour, retirer la ligne ci-dessous.
+/reel/
+
 # Médias lourds : à héberger sur Supabase Storage ou une plateforme vidéo,
 # jamais dans le dépôt (limite d'upload Vercel Hobby : 100 Mo).
 *.mp4

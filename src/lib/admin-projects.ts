@@ -34,6 +34,33 @@ export async function listAllProjects(
   return data;
 }
 
+/**
+ * Libellés de technologies déjà utilisés quelque part, dédupliqués sans tenir
+ * compte de la casse : ils alimentent les propositions du sélecteur multiple de
+ * l'onglet « Détails ».
+ */
+export async function listTechLabels(
+  supabase: SupabaseClient<Database>,
+): Promise<string[]> {
+  const { data, error } = await supabase
+    .from("project_tech")
+    .select("label")
+    .order("label", { ascending: true });
+
+  if (error || !data) return [];
+
+  const seen = new Set<string>();
+  const labels: string[] = [];
+  for (const row of data) {
+    const label = row.label.trim();
+    const key = label.toLowerCase();
+    if (label === "" || seen.has(key)) continue;
+    seen.add(key);
+    labels.push(label);
+  }
+  return labels;
+}
+
 /** Une réalisation complète (projet + images, technologies, points forts). */
 export async function getProjectForEdit(
   supabase: SupabaseClient<Database>,

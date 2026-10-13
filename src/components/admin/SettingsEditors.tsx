@@ -1,6 +1,36 @@
 "use client";
 
-import { useActionState, useCallback, useEffect, useRef, useState } from "react";
+import {
+  useActionState,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ComponentType,
+  type ReactNode,
+  type SVGAttributes,
+} from "react";
+import {
+  Aperture,
+  AlignLeft,
+  Award,
+  BarChart,
+  Briefcase,
+  Droplet,
+  Eye,
+  Globe,
+  HelpCircle,
+  House,
+  Image as ImageIcon,
+  Link as LinkIcon,
+  LinkedIn,
+  MessageSquare,
+  Share2,
+  Sparkles2,
+  Tag,
+  Type,
+  User,
+} from "@deemlol/next-icons";
 import {
   saveHeroAction,
   saveAboutAction,
@@ -12,7 +42,15 @@ import {
   saveFaqsAction,
   type SettingsFormState,
 } from "@/app/admin/site-actions";
+import SortableRows from "@/components/admin/SortableRows";
 import styles from "@/app/admin/admin.module.css";
+import type {
+  AboutSetting,
+  ContactInfoSetting,
+  CtaSetting,
+  HeroSetting,
+  SocialLink,
+} from "@/lib/site-settings";
 import {
   PreviewPanel,
   HeroPreview,
@@ -20,9 +58,9 @@ import {
   CtaPreview,
   SeoPreview,
   IdentityPreview,
-  ServicesPreview,
-  TestimonialsPreview,
-  FaqPreview,
+  buildServicesPreview,
+  buildTestimonialsPreview,
+  buildFaqPreview,
 } from "@/components/admin/SectionPreview";
 
 /**
@@ -38,6 +76,77 @@ import {
  */
 
 const INITIAL: SettingsFormState = { errors: {}, values: {} };
+
+/** Icônes du paquet @deemlol/next-icons (mêmes props que celles déjà utilisées). */
+type IconProps = SVGAttributes<SVGElement> & {
+  size?: string | number;
+  strokeWidth?: string | number;
+};
+type FieldIcon = ComponentType<IconProps>;
+
+/**
+ * Une icône par champ, choisie pour lui — même traitement que le formulaire de
+ * réalisation. La table est indexée par **nom de champ**, et les champs des
+ * listes (`rows_3_title`) sont ramenés à leur nom de base (`title`) : les 40
+ * champs des huit éditeurs sont donc couverts sans toucher aux appels — le nom
+ * du champ reste la seule source de vérité.
+ */
+const FIELD_ICONS: Record<string, FieldIcon> = {
+  badge: Award,
+  title: Type,
+  title_line1: Type,
+  title_line2: Type,
+  title_accent: Sparkles2,
+  subtitle: AlignLeft,
+  description: AlignLeft,
+  mission_title: Type,
+  vision_title: Type,
+  mission_text: AlignLeft,
+  vision_text: AlignLeft,
+  stats: BarChart,
+  socials: Share2,
+  site_name: House,
+  locale: Globe,
+  logo_url: ImageIcon,
+  favicon_url: Aperture,
+  og_image: ImageIcon,
+  accent_color: Droplet,
+  cta_primary_label: Tag,
+  cta_primary_href: LinkIcon,
+  cta_secondary_label: Tag,
+  cta_secondary_href: LinkIcon,
+  button_label: Tag,
+  button_href: LinkIcon,
+  icon: Tag,
+  name: User,
+  role: Briefcase,
+  text: MessageSquare,
+  linkedin_url: LinkedIn,
+  question: HelpCircle,
+  answer: AlignLeft,
+};
+
+/**
+ * Nom de champ d'un éditeur de liste (`rows_2_linkedin_url` → `linkedin_url`),
+ * pour retrouver l'icône du champ quel que soit le rang de la ligne.
+ */
+function baseFieldName(name: string): string {
+  return name.replace(/^rows_\d+_/, "");
+}
+
+/**
+ * Pastille d'icône d'un champ, prête à poser devant son libellé. C'est un
+ * **élément** (et non un composant) : le type d'icône est choisi au moment du
+ * rendu à partir du nom du champ, sans redéfinir de composant.
+ */
+function fieldIconPill(name: string): ReactNode {
+  const Icon = FIELD_ICONS[baseFieldName(name)] ?? Type;
+  return (
+    <span className={styles.fieldIcon} aria-hidden>
+      <Icon size={13} strokeWidth={2} />
+    </span>
+  );
+}
 
 function Notice({ error }: { error?: string }) {
   if (!error) return null;
@@ -106,7 +215,11 @@ function TextField({
 }) {
   return (
     <label className={styles.field}>
-      <span className={styles.fieldLabel}>{label}</span>
+      <span className={styles.fieldLabel}>
+        {/* Icône déduite du nom du champ : aucun appel n'a à la passer. */}
+        {fieldIconPill(name)}
+        {label}
+      </span>
       {textarea ? (
         <textarea
           name={name}
@@ -186,7 +299,16 @@ const buildHero = (fd: FormData): HeroValues => ({
   cta_secondary_href: field(fd, "cta_secondary_href"),
 });
 
-export function HeroEditor({ values }: { values: HeroValues }) {
+export function HeroEditor({
+  values,
+  setting,
+  socials,
+}: {
+  values: HeroValues;
+  /** Réglages enregistrés : l'aperçu montre le **site**, pas seulement la forme. */
+  setting: HeroSetting;
+  socials: SocialLink[];
+}) {
   const [state, action, pending] = useActionState(saveHeroAction, INITIAL);
   const { draft, dirty, formRef, refresh, resetForm } = useLivePreview(buildHero, values);
   return (
@@ -217,8 +339,8 @@ export function HeroEditor({ values }: { values: HeroValues }) {
         </div>
         <Actions pending={pending} dirty={dirty} onReset={resetForm} />
       </form>
-      <PreviewPanel title="Hero" dirty={dirty}>
-        <HeroPreview values={draft} />
+      <PreviewPanel title="Hero" dirty={dirty} full>
+        <HeroPreview values={draft} setting={setting} socials={socials} />
       </PreviewPanel>
     </div>
   );
@@ -240,7 +362,13 @@ const buildAbout = (fd: FormData): AboutValues => ({
   stats_lines: field(fd, "stats"),
 });
 
-export function AboutEditor({ values }: { values: AboutValues }) {
+export function AboutEditor({
+  values,
+  setting,
+}: {
+  values: AboutValues;
+  setting: AboutSetting;
+}) {
   const [state, action, pending] = useActionState(saveAboutAction, INITIAL);
   const { draft, dirty, formRef, refresh, resetForm } = useLivePreview(buildAbout, values);
   return (
@@ -263,8 +391,8 @@ export function AboutEditor({ values }: { values: AboutValues }) {
         />
         <Actions pending={pending} dirty={dirty} onReset={resetForm} />
       </form>
-      <PreviewPanel title="À propos" dirty={dirty}>
-        <AboutPreview values={draft} />
+      <PreviewPanel title="À propos" dirty={dirty} full>
+        <AboutPreview values={draft} setting={setting} />
       </PreviewPanel>
     </div>
   );
@@ -288,7 +416,15 @@ const buildCta = (fd: FormData): CtaValues => ({
   socials_lines: field(fd, "socials"),
 });
 
-export function CtaEditor({ values }: { values: CtaValues }) {
+export function CtaEditor({
+  values,
+  setting,
+  contact,
+}: {
+  values: CtaValues;
+  setting: CtaSetting;
+  contact: ContactInfoSetting;
+}) {
   const [state, action, pending] = useActionState(saveCtaAction, INITIAL);
   const { draft, dirty, formRef, refresh, resetForm } = useLivePreview(buildCta, values);
   return (
@@ -314,8 +450,8 @@ export function CtaEditor({ values }: { values: CtaValues }) {
         />
         <Actions pending={pending} dirty={dirty} onReset={resetForm} />
       </form>
-      <PreviewPanel title="CTA & réseaux" dirty={dirty}>
-        <CtaPreview values={draft} />
+      <PreviewPanel title="CTA & réseaux" dirty={dirty} full>
+        <CtaPreview values={draft} setting={setting} contact={contact} />
       </PreviewPanel>
     </div>
   );
@@ -440,12 +576,20 @@ function useRows<T>(
   function remove(index: number) {
     setRows((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== index) : prev));
   }
-  function move(index: number, delta: number) {
+  /**
+   * Déplacement d'une ligne (glisser-déposer, flèches, repli tactile) :
+   * retrait puis insertion à la nouvelle place. L'ordre des lignes **est**
+   * l'ordre enregistré — les noms de champs sont positionnels (`rows_i_…`).
+   */
+  function reorder(from: number, to: number) {
     setRows((prev) => {
+      if (from === to) return prev;
+      if (from < 0 || to < 0 || from >= prev.length || to >= prev.length) {
+        return prev;
+      }
       const next = [...prev];
-      const target = index + delta;
-      if (target < 0 || target >= next.length) return prev;
-      [next[index], next[target]] = [next[target], next[index]];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
       return next;
     });
   }
@@ -453,7 +597,7 @@ function useRows<T>(
   function reset() {
     setRows(initialRows.map((data, i) => ({ key: `init-${i}`, data })));
   }
-  return { rows, add, remove, move, reset, initialRows };
+  return { rows, add, remove, reorder, reset, initialRows };
 }
 
 /**
@@ -468,37 +612,6 @@ function useRowsPreviewRefresh(
   useEffect(() => {
     refresh();
   }, [rows, refresh]);
-}
-
-function RowActions({
-  onUp,
-  onDown,
-  onRemove,
-  canRemove,
-}: {
-  onUp: () => void;
-  onDown: () => void;
-  onRemove: () => void;
-  canRemove: boolean;
-}) {
-  return (
-    <div className={styles.formActions}>
-      <button type="button" className={styles.linkBtn} onClick={onUp}>
-        ↑
-      </button>
-      <button type="button" className={styles.linkBtn} onClick={onDown}>
-        ↓
-      </button>
-      <button
-        type="button"
-        className={styles.linkBtn}
-        onClick={onRemove}
-        disabled={!canRemove}
-      >
-        Retirer
-      </button>
-    </div>
-  );
 }
 
 export type ServiceRow = { title: string; description: string; icon: string };
@@ -518,12 +631,11 @@ const buildServices = (fd: FormData): ServiceRow[] => {
 
 export function ServicesEditor({ initial }: { initial: ServiceRow[] }) {
   const [state, action, pending] = useActionState(saveServicesAction, INITIAL);
-  const { rows, add, remove, move, reset: resetRows, initialRows } = useRows<ServiceRow>(
-    initial,
-    () => ({ title: "", description: "", icon: "" }),
-  );
+  const { rows, add, remove, reorder, reset: resetRows, initialRows } =
+    useRows<ServiceRow>(initial, () => ({ title: "", description: "", icon: "" }));
   const { draft, dirty, formRef, refresh, resetForm } = useLivePreview(buildServices, initialRows);
   useRowsPreviewRefresh(rows, refresh);
+  const preview = buildServicesPreview(draft);
   const handleReset = useCallback(() => {
     resetForm();
     resetRows();
@@ -534,43 +646,44 @@ export function ServicesEditor({ initial }: { initial: ServiceRow[] }) {
       <form ref={formRef} onInput={refresh} action={action} className={styles.form}>
         <Notice error={state.errors._} />
         <input type="hidden" name="count" value={rows.length} />
-        {rows.map((row, i) => (
-          <div key={row.key} className={styles.section}>
-            <TextField
-              name={`rows_${i}_title`}
-              label={`Service ${i + 1} — titre`}
-              defaultValue={row.data.title}
-              error={state.errors[`row_${i}_title`]}
-            />
-            <TextField
-              name={`rows_${i}_description`}
-              label="Description"
-              defaultValue={row.data.description}
-              textarea
-              error={state.errors[`row_${i}_description`]}
-            />
-            <TextField
-              name={`rows_${i}_icon`}
-              label="Étiquette / icône (texte)"
-              defaultValue={row.data.icon}
-              hint="Texte court affiché sur la carte (ex. « UI/UX »)."
-              error={state.errors[`row_${i}_icon`]}
-            />
-            <RowActions
-              onUp={() => move(i, -1)}
-              onDown={() => move(i, 1)}
-              onRemove={() => remove(i)}
-              canRemove={rows.length > 1}
-            />
-          </div>
-        ))}
+        <SortableRows
+          rows={rows}
+          nameOf={(row, i) => `le service ${i + 1} « ${row.data.title.trim() || "sans titre"} »`}
+          onReorder={reorder}
+          onRemove={remove}
+          canRemove={rows.length > 1}
+          renderRow={(row, i) => (
+            <>
+              <TextField
+                name={`rows_${i}_title`}
+                label={`Service ${i + 1} — titre`}
+                defaultValue={row.data.title}
+                error={state.errors[`row_${i}_title`]}
+              />
+              <TextField
+                name={`rows_${i}_description`}
+                label="Description"
+                defaultValue={row.data.description}
+                textarea
+                error={state.errors[`row_${i}_description`]}
+              />
+              <TextField
+                name={`rows_${i}_icon`}
+                label="Étiquette / icône (texte)"
+                defaultValue={row.data.icon}
+                hint="Texte court affiché sur la carte (ex. « UI/UX »)."
+                error={state.errors[`row_${i}_icon`]}
+              />
+            </>
+          )}
+        />
         <button type="button" className={styles.secondaryBtn} onClick={add}>
           + Ajouter un service
         </button>
         <Actions pending={pending} dirty={dirty} onReset={handleReset} label="Enregistrer les services" />
       </form>
-      <PreviewPanel title="Services" dirty={dirty}>
-        <ServicesPreview rows={draft} />
+      <PreviewPanel title="Services" dirty={dirty} full note={preview.note}>
+        {preview.block}
       </PreviewPanel>
     </div>
   );
@@ -601,12 +714,17 @@ const buildTestimonials = (fd: FormData): TestimonialRow[] => {
 
 export function TestimonialsEditor({ initial }: { initial: TestimonialRow[] }) {
   const [state, action, pending] = useActionState(saveTestimonialsAction, INITIAL);
-  const { rows, add, remove, move, reset: resetRows, initialRows } = useRows<TestimonialRow>(
-    initial,
-    () => ({ name: "", role: "", text: "", linkedin_url: "", published: true }),
-  );
+  const { rows, add, remove, reorder, reset: resetRows, initialRows } =
+    useRows<TestimonialRow>(initial, () => ({
+      name: "",
+      role: "",
+      text: "",
+      linkedin_url: "",
+      published: true,
+    }));
   const { draft, dirty, formRef, refresh, resetForm } = useLivePreview(buildTestimonials, initialRows);
   useRowsPreviewRefresh(rows, refresh);
+  const preview = buildTestimonialsPreview(draft);
   const handleReset = useCallback(() => {
     resetForm();
     resetRows();
@@ -617,60 +735,66 @@ export function TestimonialsEditor({ initial }: { initial: TestimonialRow[] }) {
       <form ref={formRef} onInput={refresh} action={action} className={styles.form}>
         <Notice error={state.errors._} />
         <input type="hidden" name="count" value={rows.length} />
-        {rows.map((row, i) => (
-          <div key={row.key} className={styles.section}>
-            <div className={styles.formGrid}>
-              <TextField
-                name={`rows_${i}_name`}
-                label={`Témoignage ${i + 1} — nom`}
-                defaultValue={row.data.name}
-                error={state.errors[`row_${i}_name`]}
-              />
-              <TextField
-                name={`rows_${i}_role`}
-                label="Rôle / entreprise"
-                defaultValue={row.data.role}
-                error={state.errors[`row_${i}_role`]}
-              />
-            </div>
-            <TextField
-              name={`rows_${i}_text`}
-              label="Témoignage"
-              defaultValue={row.data.text}
-              textarea
-              error={state.errors[`row_${i}_text`]}
-            />
-            <div className={styles.formGrid}>
-              <TextField
-                name={`rows_${i}_linkedin_url`}
-                label="LinkedIn (optionnel)"
-                defaultValue={row.data.linkedin_url}
-                error={state.errors[`row_${i}_linkedin_url`]}
-              />
-              <label className={styles.checkboxRow}>
-                <input
-                  type="checkbox"
-                  name={`published_${i}`}
-                  defaultChecked={row.data.published}
+        <SortableRows
+          rows={rows}
+          nameOf={(row, i) =>
+            `le témoignage ${i + 1} « ${row.data.name.trim() || "sans nom"} »`
+          }
+          onReorder={reorder}
+          onRemove={remove}
+          canRemove={rows.length > 1}
+          renderRow={(row, i) => (
+            <>
+              <div className={styles.formGrid}>
+                <TextField
+                  name={`rows_${i}_name`}
+                  label={`Témoignage ${i + 1} — nom`}
+                  defaultValue={row.data.name}
+                  error={state.errors[`row_${i}_name`]}
                 />
-                Publié (visible dans le carrousel)
-              </label>
-            </div>
-            <RowActions
-              onUp={() => move(i, -1)}
-              onDown={() => move(i, 1)}
-              onRemove={() => remove(i)}
-              canRemove={rows.length > 1}
-            />
-          </div>
-        ))}
+                <TextField
+                  name={`rows_${i}_role`}
+                  label="Rôle / entreprise"
+                  defaultValue={row.data.role}
+                  error={state.errors[`row_${i}_role`]}
+                />
+              </div>
+              <TextField
+                name={`rows_${i}_text`}
+                label="Témoignage"
+                defaultValue={row.data.text}
+                textarea
+                error={state.errors[`row_${i}_text`]}
+              />
+              <div className={styles.formGrid}>
+                <TextField
+                  name={`rows_${i}_linkedin_url`}
+                  label="LinkedIn (optionnel)"
+                  defaultValue={row.data.linkedin_url}
+                  error={state.errors[`row_${i}_linkedin_url`]}
+                />
+                <label className={styles.checkboxRow}>
+                  <input
+                    type="checkbox"
+                    name={`published_${i}`}
+                    defaultChecked={row.data.published}
+                  />
+                  <span className={styles.fieldIcon} aria-hidden>
+                    <Eye size={13} strokeWidth={2} />
+                  </span>
+                  <span>Publié (visible dans le carrousel)</span>
+                </label>
+              </div>
+            </>
+          )}
+        />
         <button type="button" className={styles.secondaryBtn} onClick={add}>
           + Ajouter un témoignage
         </button>
         <Actions pending={pending} dirty={dirty} onReset={handleReset} label="Enregistrer les témoignages" />
       </form>
-      <PreviewPanel title="Témoignages" dirty={dirty}>
-        <TestimonialsPreview rows={draft} />
+      <PreviewPanel title="Témoignages" dirty={dirty} full note={preview.note}>
+        {preview.block}
       </PreviewPanel>
     </div>
   );
@@ -692,12 +816,11 @@ const buildFaqs = (fd: FormData): FaqRow[] => {
 
 export function FaqEditor({ initial }: { initial: FaqRow[] }) {
   const [state, action, pending] = useActionState(saveFaqsAction, INITIAL);
-  const { rows, add, remove, move, reset: resetRows, initialRows } = useRows<FaqRow>(
-    initial,
-    () => ({ question: "", answer: "" }),
-  );
+  const { rows, add, remove, reorder, reset: resetRows, initialRows } =
+    useRows<FaqRow>(initial, () => ({ question: "", answer: "" }));
   const { draft, dirty, formRef, refresh, resetForm } = useLivePreview(buildFaqs, initialRows);
   useRowsPreviewRefresh(rows, refresh);
+  const preview = buildFaqPreview(draft);
   const handleReset = useCallback(() => {
     resetForm();
     resetRows();
@@ -708,36 +831,39 @@ export function FaqEditor({ initial }: { initial: FaqRow[] }) {
       <form ref={formRef} onInput={refresh} action={action} className={styles.form}>
         <Notice error={state.errors._} />
         <input type="hidden" name="count" value={rows.length} />
-        {rows.map((row, i) => (
-          <div key={row.key} className={styles.section}>
-            <TextField
-              name={`rows_${i}_question`}
-              label={`Question ${i + 1}`}
-              defaultValue={row.data.question}
-              error={state.errors[`row_${i}_question`]}
-            />
-            <TextField
-              name={`rows_${i}_answer`}
-              label="Réponse"
-              defaultValue={row.data.answer}
-              textarea
-              error={state.errors[`row_${i}_answer`]}
-            />
-            <RowActions
-              onUp={() => move(i, -1)}
-              onDown={() => move(i, 1)}
-              onRemove={() => remove(i)}
-              canRemove={rows.length > 1}
-            />
-          </div>
-        ))}
+        <SortableRows
+          rows={rows}
+          nameOf={(row, i) =>
+            `la question ${i + 1} « ${row.data.question.trim() || "sans intitulé"} »`
+          }
+          onReorder={reorder}
+          onRemove={remove}
+          canRemove={rows.length > 1}
+          renderRow={(row, i) => (
+            <>
+              <TextField
+                name={`rows_${i}_question`}
+                label={`Question ${i + 1}`}
+                defaultValue={row.data.question}
+                error={state.errors[`row_${i}_question`]}
+              />
+              <TextField
+                name={`rows_${i}_answer`}
+                label="Réponse"
+                defaultValue={row.data.answer}
+                textarea
+                error={state.errors[`row_${i}_answer`]}
+              />
+            </>
+          )}
+        />
         <button type="button" className={styles.secondaryBtn} onClick={add}>
           + Ajouter une question
         </button>
         <Actions pending={pending} dirty={dirty} onReset={handleReset} label="Enregistrer la FAQ" />
       </form>
-      <PreviewPanel title="FAQ" dirty={dirty}>
-        <FaqPreview rows={draft} />
+      <PreviewPanel title="FAQ" dirty={dirty} full note={preview.note}>
+        {preview.block}
       </PreviewPanel>
     </div>
   );

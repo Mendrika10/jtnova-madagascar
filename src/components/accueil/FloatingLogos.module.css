@@ -9,7 +9,7 @@
 .logo {
   position: absolute;
   top: 0;
-  color: #fff;
+  color: light-dark(#0d1a2b, #fff);
   display: flex;
   align-items: center;
   justify-content: center;

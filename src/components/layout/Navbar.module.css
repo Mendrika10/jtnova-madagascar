@@ -14,7 +14,7 @@
 
 /* ── Pill flottante au scroll ── */
 .scrolled {
-  background: rgba(7, 13, 26, 0.4);
+  background: light-dark(#ffffff, rgba(7, 13, 26, 0.4));
   border-bottom-color: transparent;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -45,14 +45,14 @@
   height: 50px;
   margin-top: 12px;
   padding: 0 1.4rem;
-  background: rgba(7, 13, 26, 0.92);
+  background: light-dark(#ffffff, rgba(7, 13, 26, 0.92));
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
   border-radius: 100px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid light-dark(rgba(13, 26, 43, 0.1), rgba(255, 255, 255, 0.1));
   box-shadow:
-    0 4px 24px rgba(0, 0, 0, 0.4),
-    0 1px 0 rgba(255, 255, 255, 0.04) inset;
+    0 4px 24px light-dark(rgba(13, 26, 43, 0.18), rgba(0, 0, 0, 0.4)),
+    0 1px 0 light-dark(rgba(13, 26, 43, 0.04), rgba(255, 255, 255, 0.04)) inset;
 }
 
 .logo {
@@ -70,17 +70,17 @@
   align-items: center;
   justify-content: center;
   background: #fff;
-  border: 1px solid rgba(0, 180, 216, 0.2);
+  border: 1px solid light-dark(rgba(0, 104, 125, 0.2), rgba(0, 180, 216, 0.2));
   border-radius: 10px;
   padding: 6px 5px;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 2px 12px rgba(0, 0, 0, 0.4);
+    inset 0 1px 0 light-dark(rgba(13, 26, 43, 0.06), rgba(255, 255, 255, 0.06)),
+    0 2px 12px light-dark(rgba(13, 26, 43, 0.18), rgba(0, 0, 0, 0.4));
   transition: border-color 0.25s;
 }
 
 .logo:hover .logoBadge {
-  border-color: rgba(0, 180, 216, 0.45);
+  border-color: light-dark(rgba(0, 104, 125, 0.45), rgba(0, 180, 216, 0.45));
 }
 
 .logoImg {
@@ -101,7 +101,7 @@
 .link {
   font-size: 0.875rem;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.55);
+  color: light-dark(rgba(13, 26, 43, 0.67), rgba(255, 255, 255, 0.55));
   text-decoration: none;
   padding: 6px 14px;
   border-radius: 100px;
@@ -113,11 +113,11 @@
     background 0.2s;
 }
 .link:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.06);
+  color: light-dark(#0d1a2b, #fff);
+  background: light-dark(rgba(13, 26, 43, 0.06), rgba(255, 255, 255, 0.06));
 }
 .link.active {
-  color: #fff;
+  color: light-dark(#0d1a2b, #fff);
 }
 /* Point vert sur le lien actif */
 .link.active::before {
@@ -146,18 +146,34 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.75);
+  background: light-dark(rgba(13, 26, 43, 0.07), rgba(255, 255, 255, 0.07));
+  border: 1px solid light-dark(rgba(13, 26, 43, 0.1), rgba(255, 255, 255, 0.1));
+  color: light-dark(rgba(13, 26, 43, 0.87), rgba(255, 255, 255, 0.75));
   cursor: pointer;
   transition:
     background 0.2s,
     color 0.2s,
     transform 0.2s;
 }
+/* Une seule icône visible — celle du thème courant, même règle que la
+   connexion : lune sur fond sombre, soleil sur fond clair. */
+.themeIconDark,
+.themeIconLight {
+  display: inline-flex;
+}
+.themeIconLight {
+  display: none;
+}
+html[data-theme="light"] .themeIconDark {
+  display: none;
+}
+html[data-theme="light"] .themeIconLight {
+  display: inline-flex;
+}
+
 .themeBtn:hover {
-  background: rgba(255, 255, 255, 0.13);
-  color: #fff;
+  background: light-dark(rgba(13, 26, 43, 0.13), rgba(255, 255, 255, 0.13));
+  color: light-dark(#0d1a2b, #fff);
   transform: rotate(15deg);
 }
 
@@ -175,7 +191,8 @@
   display: block;
   width: 22px;
   height: 2px;
-  background: #fff;
+  /* Sans cela les traits restaient blancs sur le fond clair du menu mobile. */
+  background: light-dark(#0d1a2b, #fff);
   border-radius: 2px;
   transition:
     transform 0.2s,
@@ -197,7 +214,7 @@
   padding: 1rem 1.5rem 1.5rem;
   gap: 0.5rem;
   border-top: 1px solid var(--color-border);
-  background: rgba(7, 13, 26, 0.98);
+  background: light-dark(rgba(255, 255, 255, 0.96), rgba(7, 13, 26, 0.98));
 }
 .mobileOpen {
   display: flex;
@@ -217,7 +234,7 @@
 }
 .mobileLink:hover,
 .mobileLink.active {
-  color: #fff;
+  color: light-dark(#0d1a2b, #fff);
 }
 
 .mobileCta {
@@ -225,7 +242,7 @@
   margin-top: 0.5rem;
   font-size: 0.9rem;
   font-weight: 600;
-  color: #070d1a;
+  color: light-dark(#eef3fa, #070d1a);
   background: var(--color-accent);
   text-decoration: none;
   padding: 12px 24px;
@@ -240,5 +257,9 @@
   }
   .burger {
     display: flex;
+  }
+  /* La bascule se décale à gauche du burger, qui occupe le bord droit. */
+  .ctaWrap {
+    right: 3.6rem;
   }
 }

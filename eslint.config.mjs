@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Projet Remotion du Reel : projet npm autonome (son propre tsconfig et ses
+    // propres dépendances). Le lint Next.js ne s'y applique pas — il est vérifié
+    // par `npm run typecheck` depuis `reel/`. Voir `docs/REEL-REMOTION.md` §3.1.
+    "reel/**",
   ]),
 ]);
 

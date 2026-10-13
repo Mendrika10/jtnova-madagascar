@@ -21,6 +21,21 @@ function hexToRgb(hex: string): string {
 }
 
 /**
+ * Variante assombrie de l'accent, pour le **thème clair** du site public : le
+ * cyan du thème sombre devient trop pâle sur blanc. `--color-accent-ink` est
+ * consommée par `html[data-theme="light"]` dans `globals.css`, ce qui respecte
+ * la couleur choisie par l'admin (elle-même validée en `#rrggbb`).
+ */
+function accentInk(hex: string): string {
+  const [r, g, b] = hexToRgb(hex)
+    .split(",")
+    .map((part) => Math.round(Number(part.trim()) * 0.58));
+  const channel = (value: number) =>
+    Math.max(0, Math.min(255, value)).toString(16).padStart(2, "0");
+  return `#${channel(r ?? 0)}${channel(g ?? 0)}${channel(b ?? 0)}`;
+}
+
+/**
  * F5.7 — Les réglages SEO globaux (table `site_settings`, clé « seo »)
  * alimentent la balise `<title>`, la description et les métadonnées Open Graph
  * du site. Les pages qui définissent leur propre `metadata` restent prioritaires.
@@ -74,7 +89,17 @@ export default async function RootLayout({
             en #rrggbb côté serveur avant écriture : pas d'injection CSS possible. */}
         <style
           dangerouslySetInnerHTML={{
-            __html: `:root{--color-accent:${identity.accent_color};--color-accent-rgb:${hexToRgb(identity.accent_color)};}`,
+            __html: `:root{--color-accent:${identity.accent_color};--color-accent-rgb:${hexToRgb(identity.accent_color)};--color-accent-ink:${accentInk(identity.accent_color)};}`,
+          }}
+        />
+        {/* Thème choisi par le visiteur (cookie `jtnova-theme`), appliqué avant
+            le premier rendu : le site s'ouvre directement dans le bon thème,
+            sans flash — et les pages publiques restent statiques (aucune
+            lecture de cookie côté serveur, donc pas d'ISR perdu). */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "(function(){try{var m=document.cookie.match(/(?:^|; )jtnova-theme=(light|dark)/);if(m){document.documentElement.dataset.theme=m[1];}}catch(e){}})();",
           }}
         />
       </head>

@@ -977,32 +977,6 @@
   font-weight: 700;
 }
 
-.cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 1rem;
-  max-width: 720px;
-}
-
-.card {
-  padding: 1.1rem 1.2rem;
-  border-radius: 12px;
-  border: 1px solid rgba(120, 170, 255, 0.16);
-  background: rgba(13, 20, 32, 0.9);
-}
-
-.cardValue {
-  font-size: 1.9rem;
-  font-weight: 700;
-  color: #eaf2ff;
-}
-
-.cardLabel {
-  margin-top: 0.25rem;
-  font-size: 0.85rem;
-  color: #8fa3c0;
-}
-
 .placeholder {
   max-width: 620px;
   padding: 1.5rem;
@@ -1101,16 +1075,29 @@
   vertical-align: middle;
 }
 
-.orderCell {
+/* Cellules à contenu en ligne (« Ordre », « Actions »). Elles restent de vraies
+   cellules de tableau (`display: table-cell`, la valeur par défaut) et le
+   conteneur flex vit dans un enfant : `display: flex` posé sur le `<td>`
+   lui-même le retire de la grille du tableau, si bien que son fond et sa
+   bordure se placent 1 à 3 px plus bas et 6 px plus courts que ceux de ses
+   voisines — d'où le bandeau et le trait d'insertion « en escalier » observés
+   sur la liste des réalisations. */
+.orderCell,
+.actionsCell {
+  vertical-align: middle;
+}
+
+.orderFlex {
   display: flex;
+  align-items: center;
   gap: 0.25rem;
 }
 
-.actionsCell {
+.actionsFlex {
   display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .code {
@@ -1256,62 +1243,602 @@
   font-weight: 700;
 }
 
+/* ——— Galerie : liste réordonnable, poignée à gauche de chaque ligne ———
+   Une ligne = une image : poignée de glisser-déposer, position, vignette,
+   texte alternatif, puis une suppression discrète à droite (rouge seulement
+   au survol : une action destructrice ne doit pas dominer la liste). */
 .imageList {
   list-style: none;
   margin: 0 0 1.25rem;
   padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-.imageItem {
-  border: 1px solid rgba(120, 170, 255, 0.16);
-  border-radius: 10px;
+.imageRow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid #e6ebf2;
+  border-radius: 12px;
+  background: #ffffff;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.imageRow:hover {
+  border-color: #d6dee8;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+
+.imageGrip {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.imageNumber {
+  flex: none;
+  min-width: 1rem;
+  text-align: right;
+  font-size: 0.76rem;
+  color: #94a3b8;
+  font-variant-numeric: tabular-nums;
+}
+
+.imageThumbBox {
+  flex: none;
+  width: 96px;
+  height: 68px;
+  display: grid;
+  place-items: center;
   overflow: hidden;
-  background: rgba(13, 20, 32, 0.9);
+  border: 1px solid #eef2f7;
+  border-radius: 9px;
+  background: #f1f5f9;
 }
 
 .imageThumb {
   width: 100%;
-  height: 120px;
+  height: 100%;
   object-fit: cover;
   display: block;
 }
 
-.imageMeta {
+.imageText {
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding: 0.6rem;
+  gap: 0.15rem;
 }
 
+.imageAlt {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #111827;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.imagePosition {
+  font-size: 0.72rem;
+  color: #8b98a9;
+}
+
+.imageActions {
+  flex: none;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+/* Suppression : discrète au repos (30 px, icône grise), rouge au survol. Sert
+   à la galerie d'une réalisation **et** aux listes de la Personnalisation. */
+.imageDelete,
+.listRemove {
+  width: 30px;
+  height: 30px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+}
+
+.imageDelete:hover:not(:disabled),
+.listRemove:hover:not(:disabled) {
+  border-color: #fecdd3;
+  background: #fff1f2;
+  color: #b42318;
+}
+
+.imageDelete:focus-visible,
+.listRemove:focus-visible {
+  border-color: #5d6ac0;
+  outline: 2px solid #5d6ac0;
+  outline-offset: 1px;
+}
+
+.listRemove:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Repli sans souris : les flèches ↑/↓ ne réapparaissent que sur écran tactile
+   (`hover: none`), seul cas où le glisser-déposer HTML5 est inexploitable. */
+.imageFallback {
+  display: none;
+  gap: 0.25rem;
+}
+
+@media (hover: none) {
+  .imageFallback {
+    display: flex;
+  }
+}
+
+/* ——— Glisser-déposer de la galerie (mêmes repères que la liste des
+   réalisations : trait d'insertion, ligne atténuée, poignée détachée). ——— */
+.panel .imageRowDragging {
+  opacity: 0.45;
+}
+
+.imageRowDropBefore::before,
+.imageRowDropAfter::after {
+  content: "";
+  position: absolute;
+  left: 0.5rem;
+  right: 0.5rem;
+  height: 2px;
+  border-radius: 2px;
+  background: #5d6ac0;
+}
+
+.imageRowDropBefore::before {
+  top: -0.32rem;
+}
+
+.imageRowDropAfter::after {
+  bottom: -0.32rem;
+}
+
+.imageRowDropBefore,
+.imageRowDropAfter {
+  border-color: #c7cff0;
+  background: #f7f8fd;
+}
+
+.imageRowDragging .dragHandle {
+  color: #334155;
+  background: #eef2ff;
+  box-shadow: 0 0 0 2px rgba(93, 106, 192, 0.35);
+}
+
+/* Ligne qui vient de changer de place : surbrillance qui s'estompe + léger
+   glissement venant du sens du mouvement (mêmes keyframes que le tableau). */
+.imageRowMoved {
+  border-color: #c7cff0;
+  background-color: rgba(93, 106, 192, 0.09);
+  box-shadow: inset 3px 0 0 #5d6ac0;
+}
+
+.imageRowMoved .imageNumber {
+  color: #4150a8;
+  font-weight: 600;
+}
+
+.imageRowMovedDown {
+  animation: rowMovedFlash 900ms ease-out both, rowMovedFromAbove 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.imageRowMovedUp {
+  animation: rowMovedFlash 900ms ease-out both, rowMovedFromBelow 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .imageRowMovedDown,
+  .imageRowMovedUp {
+    animation: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .imageThumbBox {
+    width: 64px;
+    height: 46px;
+  }
+  .imagePosition {
+    display: none;
+  }
+}
+
+/* ——— Envoi d'images (ADMIN-UI) : zone de dépôt, aperçus, progression.
+   Ces règles ne servent que dans le panneau clair (onglet « Images »), d'où
+   des couleurs claires directement, sans variante `.panel`. ——— */
 .uploader {
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
+  padding: 1.1rem;
+  border: 1px solid #e6ebf2;
+  border-radius: 16px;
+  background: #fbfcfe;
 }
 
+.uploaderHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+
+.uploaderHeadIcon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: #111827;
+  color: #ffffff;
+}
+
+.uploaderHeadText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.uploaderTitle {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.uploaderSubtitle {
+  margin: 0;
+  font-size: 0.76rem;
+  color: #6b7280;
+}
+
+/* Zone de dépôt : un `<label>`, donc un clic n'importe où ouvre le sélecteur de
+   fichiers ; le champ est masqué mais reste focusable (`:focus-within`). */
+.dropZone {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 1.5rem 1rem;
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 14px;
+  background: #ffffff;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.dropZone:hover {
+  border-color: #94a3b8;
+}
+
+.dropZone:focus-within {
+  border-color: #111827;
+  outline: 2px solid #111827;
+  outline-offset: 2px;
+}
+
+.dropZoneActive {
+  border-color: #111827;
+  background: #f1f5f9;
+}
+
+.dropInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.dropIcon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  margin-bottom: 0.35rem;
+  border-radius: 50%;
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.dropTitle {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.dropText {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.dropBrowse {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
+.dropMeta {
+  margin-top: 0.15rem;
+  font-size: 0.74rem;
+  color: #8b98a9;
+}
+
+/* File d'attente : aperçu, texte alternatif, progression par fichier. */
 .pendingList {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.6rem;
 }
 
 .pendingItem {
   display: flex;
+  gap: 0.7rem;
+  padding: 0.6rem;
+  border: 1px solid #e9eef4;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.pendingItemError {
+  border-color: #fecaca;
+  background: #fff8f8;
+}
+
+.pendingThumb {
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: 9px;
+  object-fit: cover;
+  background: #eef2f6;
+}
+
+.pendingBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.pendingHead {
+  display: flex;
   align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+  gap: 0.45rem;
 }
 
 .pendingName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 0.82rem;
-  color: #9fb1cb;
-  flex: 1 1 160px;
+  font-weight: 500;
+  color: #111827;
+}
+
+.pendingSize {
+  flex: none;
+  font-size: 0.72rem;
+  color: #8b98a9;
+}
+
+.pendingStatus {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.pendingStatusDone {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.pendingStatusError {
+  background: #fef2f2;
+  color: #b42318;
+}
+
+.pendingSpin {
+  animation: pendingSpin 1s linear infinite;
+}
+
+@keyframes pendingSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.pendingRemove {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid #e6ebf2;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.pendingRemove:hover:not(:disabled) {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #b42318;
+}
+
+.pendingRemove:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.pendingAlt {
+  display: block;
+}
+
+.pendingError {
+  margin: 0;
+  font-size: 0.74rem;
+  color: #b42318;
+}
+
+/* Progression : la piste et le pourcentage, lisibles dès 8 px de haut. */
+.progress {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.progressTrack {
+  flex: 1;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #eef2f6;
+}
+
+.progressBar {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #2a79ff 0%, #00b4d8 100%);
+  transition: width 0.2s ease;
+}
+
+.progressError .progressBar {
+  background: #ef4444;
+}
+
+.progressPct {
+  flex: none;
+  min-width: 2.4rem;
+  text-align: right;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.uploaderFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.uploaderHint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #6b7280;
+}
+
+.uploaderNotice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  margin: 0;
+  font-size: 0.74rem;
+  color: #8b98a9;
+}
+
+.uploaderNotice svg {
+  flex: none;
+  margin-top: 0.1rem;
+}
+
+/* ——— Onglet « Images » : galerie à gauche, envoi à droite ——— */
+.imagesLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(300px, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.imagesGallery {
+  min-width: 0;
+}
+
+.imagesSide {
+  min-width: 0;
+  position: sticky;
+  top: 1rem;
+}
+
+.imageCount {
+  display: block;
+  margin: -0.35rem 0 0.75rem;
+  font-size: 0.76rem;
+  color: #8b98a9;
+}
+
+/* État vide du même bloc (écran de création : aucune galerie possible). */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 2rem 1.25rem;
+  border: 1.5px dashed #dbe3ec;
+  border-radius: 14px;
+  background: #fbfcfe;
+  text-align: center;
+}
+
+.emptyIcon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  margin-bottom: 0.2rem;
+  border-radius: 50%;
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.emptyTitle {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.emptyText {
+  margin: 0;
+  max-width: 46ch;
+  font-size: 0.78rem;
+  color: #6b7280;
 }
 
 .previewBar {
@@ -1385,6 +1912,8 @@
   color: #f0c27b;
 }
 
+/* Aperçu explicatif (référencement, identité) : rembourré, sur le fond du
+   panneau. Les sections du site public, elles, passent par `.previewWindow`. */
 .previewBody {
   display: flex;
   flex-direction: column;
@@ -1392,13 +1921,62 @@
   padding: 1rem;
 }
 
-.previewBadge {
-  align-self: flex-start;
-  padding: 0.2rem 0.65rem;
-  border-radius: 999px;
-  border: 1px solid rgba(120, 170, 255, 0.28);
+/* ——— Fenêtre d'aperçu : le bloc du site public **tel quel**. ———
+   La page publique est conçue pour un écran large : le bloc est donc rendu à
+   la largeur d'un écran de bureau (1024–1440 px, posée en style en ligne par
+   `PreviewPanel`) puis réduit à l'échelle de la colonne par `transform:
+   scale`. C'est la fenêtre du site qui défile, et la miniature en est la
+   réduction exacte. */
+.previewStage {
+  max-height: min(78vh, 760px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  /* La réserve de la barre de défilement garde une largeur utile constante :
+     l'échelle de la miniature ne peut donc pas osciller. */
+  scrollbar-gutter: stable;
+  background-color: var(--color-bg, #070d1a);
+}
+
+/* Perspective qui réserve la place de la miniature (hauteur posée en style en
+   ligne : hauteur du site × échelle) ; le cadre réduit, lui, est hors flux
+   visuel mais garde ses dimensions de site. */
+.previewViewport {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Le cadre reprend les réglages du `<body>` du site (fond, texte, police),
+   que le panneau clair de l'admin ne fournit pas. Largeur et `transform` sont
+   posés en style en ligne, d'après la place disponible. */
+.previewWindow {
+  transform-origin: top left;
+  background-color: var(--color-bg, #070d1a);
+  background-image: radial-gradient(
+    ellipse 80% 50% at 50% -10%,
+    rgba(0, 180, 216, 0.07) 0%,
+    transparent 70%
+  );
+  color: var(--color-text, #e8f4f8);
+  font-family: var(--font-body, sans-serif);
+  overflow: hidden;
+}
+
+/* L'aperçu est une **image** du site : on ne clique pas dedans (lien,
+   accordéon, formulaire de contact). La fenêtre, elle, se fait défiler. */
+.previewStage > * {
+  pointer-events: none;
+}
+
+/* Note d'information sous un bloc dont l'aperçu ne peut pas tout montrer
+   (témoignages non publiés, liste vide : le site affiche alors son repli). */
+.previewNote {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid rgba(120, 170, 255, 0.14);
   font-size: 0.72rem;
-  color: #cfe0f5;
+  line-height: 1.5;
+  color: #8fa3c0;
 }
 
 .previewTitle {
@@ -1407,10 +1985,6 @@
   font-weight: 700;
   line-height: 1.3;
   color: #eaf2ff;
-}
-
-.previewAccent {
-  color: var(--color-accent, #00b4d8);
 }
 
 .previewText {
@@ -1426,33 +2000,6 @@
   gap: 0.5rem;
 }
 
-.previewPill {
-  padding: 0.35rem 0.8rem;
-  border-radius: 999px;
-  border: 1px solid rgba(120, 170, 255, 0.25);
-  font-size: 0.78rem;
-  color: #cfe0f5;
-}
-
-.previewPillAccent {
-  border-color: transparent;
-  background: linear-gradient(135deg, #2a79ff 0%, #00b4d8 100%);
-  color: #fff;
-  font-weight: 600;
-}
-
-.previewSocials {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.previewSocial {
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
-  color: #9fb1cb;
-}
-
 .previewCard {
   padding: 0.7rem 0.8rem;
   border-radius: 10px;
@@ -1460,46 +2007,8 @@
   background: rgba(7, 11, 18, 0.6);
 }
 
-.previewCardTitle {
-  margin: 0 0 0.35rem;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #eaf2ff;
-}
-
-.previewStack {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-}
-
-.previewStat {
-  display: inline-flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  padding: 0.45rem 0.7rem;
-  border-radius: 10px;
-  border: 1px solid rgba(120, 170, 255, 0.16);
-  background: rgba(13, 20, 32, 0.9);
-}
-
-.previewStatNum {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--color-accent, #00b4d8);
-}
-
-.previewStatLabel {
-  font-size: 0.7rem;
-  color: #8fa3c0;
-}
-
 .previewMuted {
   color: #7f93af;
-}
-
-.previewDraft {
-  opacity: 0.45;
 }
 
 .previewCode {
@@ -1561,15 +2070,6 @@
 }
 
 /* ── Messages (S6) ─────────────────────────────────────────────────────── */
-
-.inboxToolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 1.25rem;
-}
 
 .inboxTools {
   display: flex;
@@ -1659,16 +2159,6 @@
   max-width: 60ch;
 }
 
-.inboxSide {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.35rem;
-  flex-shrink: 0;
-  font-size: 0.8rem;
-  color: #8fa3c0;
-}
-
 .statusPill {
   display: inline-flex;
   align-items: center;
@@ -1710,34 +2200,6 @@
   margin-bottom: 1.5rem;
 }
 
-.detailMeta {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  margin: 0;
-}
-
-.detailRow {
-  display: flex;
-  gap: 0.6rem;
-  align-items: baseline;
-  margin: 0;
-}
-
-.detailRow dd {
-  margin: 0;
-  color: #eaf2ff;
-}
-
-.detailLabel {
-  min-width: 5.5rem;
-  flex-shrink: 0;
-  font-size: 0.78rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #8fa3c0;
-}
-
 .detailBody {
   white-space: pre-wrap;
   line-height: 1.6;
@@ -1748,35 +2210,10 @@
   padding: 1rem;
 }
 
-.statusActions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.statusBtn {
-  padding: 0.5rem 0.9rem;
-  border-radius: 9px;
-  border: 1px solid rgba(120, 170, 255, 0.25);
-  background: rgba(80, 150, 255, 0.1);
-  color: #9ec3ff;
-  font-size: 0.85rem;
-  cursor: pointer;
-}
-
-.statusBtn:hover:not(:disabled) {
-  border-color: rgba(80, 150, 255, 0.55);
-}
-
-.statusBtn:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-
 /* ── Tableau de bord (UI-ADMIN) ───────────────────────────────────────────── */
-/* Panneau clair de la capture : héros, composer de recherche, pastilles et
-   cartes de réalisations. Les écrans pas encore refaits n'utilisent aucune de
-   ces classes. */
+/* Panneau clair commun à l'administration (fond, tableau, formulaires) puis
+   vue d'ensemble : en-tête, recherche, indicateurs, tracé en aire, anneau des
+   contenus, diaporama des réalisations et fils d'activité. */
 
 .panel {
   flex: 1;
@@ -1788,183 +2225,6 @@
   border-radius: 20px;
   background: #fcfcfc;
   color: #111418;
-}
-
-.hero {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.6rem;
-  text-align: center;
-}
-
-.heroTitle {
-  margin: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  font-size: clamp(1.7rem, 3.2vw, 2.5rem);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: #101216;
-}
-
-.heroLogo {
-  display: inline-flex;
-  align-items: center;
-  height: clamp(1.6rem, 2.9vw, 2.2rem);
-}
-
-.heroLogo img {
-  height: 100%;
-  width: auto;
-}
-
-.heroSub {
-  margin: 0;
-  font-size: 0.9rem;
-  color: #6b7280;
-}
-
-.composer {
-  position: relative;
-  width: 100%;
-  max-width: 900px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0.7rem;
-  padding: 1rem 1.1rem 1.05rem;
-  border-radius: 22px;
-  border: 1px solid #e9eef4;
-  background: #ffffff;
-  box-shadow: 0 26px 60px -46px rgba(15, 23, 42, 0.55);
-}
-
-.composer::before {
-  content: "";
-  position: absolute;
-  left: 10%;
-  right: 10%;
-  top: -9px;
-  height: 18px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #ffd9a8, #ffb7d5, #b9d9ff, #ffd9a8);
-  filter: blur(13px);
-  opacity: 0.6;
-}
-
-.composerHead {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.55rem;
-}
-
-.composerFaces {
-  display: flex;
-  align-items: center;
-}
-
-.composerFace {
-  width: 22px;
-  height: 22px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  border: 2px solid #ffffff;
-  background: #f1f5f9;
-  color: #475569;
-}
-
-.composerFace + .composerFace {
-  margin-left: -7px;
-}
-
-.composerNote {
-  margin: 0;
-  font-size: 0.79rem;
-  color: #64748b;
-}
-
-.composerInput {
-  width: 100%;
-  min-height: 72px;
-  padding: 0.2rem 0.15rem;
-  border: 0;
-  background: transparent;
-  color: #0f172a;
-  font-family: inherit;
-  font-size: 0.95rem;
-  resize: vertical;
-  outline: none;
-}
-
-.composerInput::placeholder {
-  color: #9aa5b4;
-}
-
-.composerBar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.8rem;
-  flex-wrap: wrap;
-}
-
-.composerChips {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.composerChip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.45rem 0.85rem;
-  border-radius: 999px;
-  border: 1px solid #e6ebf2;
-  background: #ffffff;
-  color: #475569;
-  font-family: inherit;
-  font-size: 0.79rem;
-  cursor: pointer;
-  transition: background-color 0.18s ease, color 0.18s ease;
-}
-
-.composerChip:hover {
-  background: #f6f8fb;
-}
-
-.composerChip[data-on="true"] {
-  border-color: #111827;
-  background: #111827;
-  color: #ffffff;
-}
-
-.composerAsk {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0.5rem 1rem;
-  border: 0;
-  border-radius: 999px;
-  background: #111827;
-  color: #ffffff;
-  font-family: inherit;
-  font-size: 0.81rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.18s ease, color 0.18s ease;
-}
-
-.composerAsk[data-empty="true"] {
-  background: #eef1f5;
-  color: #9aa5b4;
 }
 
 .results {
@@ -2054,104 +2314,718 @@
   white-space: nowrap;
 }
 
-.pills {
-  list-style: none;
-  margin: 0 auto;
-  padding: 0;
-  width: 100%;
-  max-width: 900px;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: 0.6rem;
-}
-
-.pill {
+/* —— Vue d'ensemble : indicateurs, histogramme, fils d'activité —— */
+/* Le chef de page porte le titre et une recherche compacte (motif `.searchWrap`
+   + icône absolue déjà éprouvé sur la boîte de réception). */
+.dashHead {
   display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-  padding: 0.62rem 0.9rem;
-  border-radius: 999px;
-  border: 1px solid #e9eef4;
-  background: #ffffff;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem 1.4rem;
+  flex-wrap: wrap;
 }
 
-.pillValue {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: #111827;
-}
-
-.pillLabel {
-  font-size: 0.77rem;
-  color: #64748b;
-}
-
-.pillLink {
+.dashSearch {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.55rem 0.7rem 0.55rem 0.6rem;
+  flex-wrap: wrap;
+}
+
+.dashScope {
+  display: flex;
+  gap: 0.2rem;
+  padding: 0.2rem;
   border-radius: 999px;
-  border: 1px solid #e9eef4;
+  background: #f1f5f9;
+}
+
+.dashScopeChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.6rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #475569;
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+.dashScopeChip:hover {
+  background: #e6ebf2;
+}
+
+.dashScopeChip[data-on="true"] {
   background: #ffffff;
-  color: #334155;
-  font-size: 0.8rem;
+  color: #0f172a;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+.dashSearchGo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.42rem 0.85rem;
+  border: 0;
+  border-radius: 999px;
+  background: #111827;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.18s ease;
+}
+
+.dashSearchGo:hover {
+  background: #1f2937;
+}
+
+/* — Indicateurs clés — */
+.kpiGrid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  height: 100%;
+  padding: 0.95rem 1rem;
+  border: 1px solid #eef2f6;
+  border-radius: 14px;
+  background: #ffffff;
+  color: inherit;
   text-decoration: none;
-  transition: border-color 0.18s ease, background-color 0.18s ease;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
 }
 
-.pillLink:hover {
-  border-color: #d6dee8;
-  background: #f9fbfd;
+.kpi:hover {
+  border-color: #d8e0ea;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.07);
+  transform: translateY(-1px);
 }
 
-.pillIcon {
-  width: 24px;
-  height: 24px;
+.kpiTop {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.kpiIcon {
   flex: none;
   display: grid;
   place-items: center;
-  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
   background: #f1f5f9;
   color: #334155;
 }
 
-.pillChevron {
-  margin-left: auto;
-  display: grid;
-  place-items: center;
-  color: #94a3b8;
+.kpiIconNeutral {
+  background: #f1f5f9;
+  color: #334155;
 }
 
-.projects {
-  width: 100%;
-  max-width: 900px;
-  margin: 0 auto;
+.kpiIconOk {
+  background: #ecfdf3;
+  color: #067647;
+}
+
+.kpiIconInfo {
+  background: #e0e7ff;
+  color: #3538cd;
+}
+
+.kpiIconBad {
+  background: #ffebe9;
+  color: #ff1200;
+}
+
+.kpiLabel {
+  color: #667085;
+  font-size: 0.73rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kpiDelta {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.kpiDeltaUp {
+  background: #ecfdf3;
+  color: #067647;
+}
+
+.kpiDeltaDown {
+  background: #fffaeb;
+  color: #b54708;
+}
+
+.kpiValueRow {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.kpiValue {
+  color: #0f172a;
+  font-size: 1.75rem;
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.kpiUnit {
+  color: #98a2b3;
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+/* Mini-histogramme de la carte « messages » : 14 traits de largeur égale. */
+.kpiSpark {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 26px;
+}
+
+.kpiSparkBar {
+  flex: 1;
+  min-width: 0;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #93b4fb, #dbe4fe);
+}
+
+.kpiNote {
+  color: #98a2b3;
+  font-size: 0.71rem;
+  line-height: 1.35;
+}
+
+/* — Rangées : graphique + colonne latérale — */
+.dashRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 0.85rem;
+  align-items: start;
+}
+
+.dashCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  min-width: 0;
+  padding: 1rem 1.05rem;
+  border: 1px solid #eef2f6;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  height: 100%;
+}
+
+/* — Colonne empilée (diaporama puis derniers messages) : même largeur pour les
+   deux cartes, celle de la colonne large des autres rangées. — */
+.dashStack {
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
+  min-width: 0;
 }
 
-.projectsTitle {
+.dashCardHead {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.dashCardTitle {
   margin: 0;
-  font-size: 0.95rem;
-  font-weight: 600;
   color: #111827;
+  font-size: 0.86rem;
+  font-weight: 600;
 }
 
-.projectsEmpty {
+.dashCardMeta {
+  margin-left: auto;
+  color: #98a2b3;
+  font-size: 0.71rem;
+  white-space: nowrap;
+}
+
+.dashCardLink {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  color: #475569;
+  font-size: 0.72rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.dashCardLink:hover {
+  color: #0f172a;
+}
+
+/* — Tracé en aire des demandes — */
+/* La vue SVG est étirée en largeur : le trait garde 2,5 px (`vector-effect`)
+   et les points sont posés en HTML pour rester ronds. */
+.flowArea {
+  position: relative;
+  height: 132px;
+}
+
+.flowAreaSvg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.flowGrid line {
+  stroke: #eef2f6;
+  stroke-width: 1;
+  stroke-dasharray: 4 5;
+  vector-effect: non-scaling-stroke;
+}
+
+.flowLine {
+  filter: drop-shadow(0 4px 6px rgba(79, 70, 229, 0.22));
+}
+
+.flowDot {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #4f46e5;
+  box-shadow: 0 0 0 2px #ffffff;
+  transform: translate(-50%, -50%);
+}
+
+.flowDotToday {
+  width: 10px;
+  height: 10px;
+  background: #4338ca;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.22), 0 0 0 1.5px #ffffff;
+}
+
+.flowAxis {
+  display: flex;
+  gap: 0.28rem;
+}
+
+.flowAxisTick {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  color: #98a2b3;
+  font-size: 0.62rem;
+}
+
+.flowFoot {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex-wrap: wrap;
   margin: 0;
-  font-size: 0.84rem;
-  color: #6b7280;
+  padding-top: 0.65rem;
+  border-top: 1px solid #f1f5f9;
+  color: #667085;
+  font-size: 0.72rem;
 }
 
-.cardGrid {
+.flowStat b {
+  color: #0f172a;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.flowTrend {
+  margin-left: auto;
+  padding: 0.14rem 0.45rem;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #475569;
+  font-weight: 500;
+}
+
+.flowTrendUp {
+  background: #ecfdf3;
+  color: #067647;
+}
+
+.flowTrendDown {
+  background: #fffaeb;
+  color: #b54708;
+}
+
+/* — Répartition des contenus (anneau coloré) — */
+/* Deux teintes franches : indigo pour ce qui est en ligne, ambre pour ce qui
+   attend. Le fond de carte reprend un lavis de la teinte principale. */
+.dashCardTinted {
+  background: linear-gradient(150deg, #f5f6ff 0%, #ffffff 58%);
+  border-color: #e6e8fb;
+}
+
+.sectionIconTint {
+  background: #e0e7ff;
+  color: #4338ca;
+}
+
+.dashCardShare {
+  margin-left: auto;
+  padding: 0.14rem 0.5rem;
+  border-radius: 999px;
+  background: #e0e7ff;
+  color: #3730a3;
+  font-size: 0.68rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.mixRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.mixDonut {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  box-shadow: 0 8px 20px -14px rgba(79, 70, 229, 0.6);
+}
+
+.mixCenter {
+  display: grid;
+  place-items: center;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.04);
+}
+
+.mixValue {
+  color: #312e81;
+  font-size: 1.3rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.mixCaption {
+  color: #98a2b3;
+  font-size: 0.6rem;
+}
+
+.mixLegend {
   list-style: none;
   margin: 0;
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 9.5rem;
+  font-size: 0.74rem;
+}
+
+.mixLegendRow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.34rem 0.55rem;
+  border-radius: 9px;
+}
+
+.mixLegendPub {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.mixLegendDraft {
+  background: #fffaeb;
+  color: #b54708;
+}
+
+.mixLegendLabel {
+  white-space: nowrap;
+}
+
+.mixLegend b {
+  margin-left: auto;
+  color: #0f172a;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.mixShare {
+  flex: none;
+  width: 2.4rem;
+  text-align: right;
+  font-size: 0.68rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+}
+
+.mixSwatch {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  background: #4f46e5;
+}
+
+.mixSwatchDraft {
+  background: #fbbf24;
+}
+
+.mixFoot {
+  margin: 0;
+  color: #98a2b3;
+  font-size: 0.71rem;
+  line-height: 1.4;
+}
+
+/* — Fils d'activité — */
+.feed {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.feedRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.4rem;
+  border-radius: 10px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.feedRow:hover {
+  background: #f8fafc;
+}
+
+.feedBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.06rem;
+  min-width: 0;
+}
+
+.feedTitle {
+  color: #0f172a;
+  font-size: 0.78rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.feedSub {
+  color: #98a2b3;
+  font-size: 0.7rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.feedEnd {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.feedStamp {
+  flex: none;
+  color: #98a2b3;
+  font-size: 0.68rem;
+  white-space: nowrap;
+}
+
+.feedIcon {
+  flex: none;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.85rem;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.feedIconOk {
+  background: #ecfdf3;
+  color: #067647;
+}
+
+.feedIconDraft {
+  background: #fffaeb;
+  color: #b54708;
+}
+
+.feedEmpty {
+  margin: 0;
+  padding: 0.55rem 0.4rem;
+  color: #98a2b3;
+  font-size: 0.74rem;
+}
+
+/* — Diaporama des réalisations — */
+.slider {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.sliderTrack {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0.2rem;
+  display: flex;
+  gap: 0.7rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-left: 0.2rem;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+
+.sliderTrack::-webkit-scrollbar {
+  display: none;
+}
+
+.sliderTrack:focus-visible {
+  outline: 2px solid #111827;
+  outline-offset: 4px;
+  border-radius: 12px;
+}
+
+/* Vignettes larges (environ deux et demie visibles) : la piste déborde dès
+   trois réalisations, ce qui donne de la matière au défilement automatique. */
+.sliderCard {
+  flex: 0 0 clamp(200px, 44%, 420px);
+  scroll-snap-align: start;
+}
+
+.sliderNav {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
+
+.sliderBtn {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid #e6ebf2;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #334155;
+  cursor: pointer;
+  transition: background-color 0.18s ease, color 0.18s ease, opacity 0.18s ease;
+}
+
+.sliderBtn:hover:not(:disabled) {
+  background: #f6f8fb;
+  border-color: #d8e0ea;
+}
+
+.sliderBtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.dashCardTools {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.dashCardCount {
+  color: #98a2b3;
+  font-size: 0.71rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 1100px) {
+  .kpiGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .dashRow {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .kpiGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dashHead {
+    align-items: flex-start;
+  }
+  .dashSearch {
+    width: 100%;
+  }
+  .dashSearchGo {
+    flex: 1;
+    justify-content: center;
+  }
+  .flowArea {
+    height: 104px;
+  }
+  .sliderCard {
+    flex: 0 0 clamp(180px, 58%, 260px);
+  }
 }
 
 .cardTile {
@@ -2214,19 +3088,9 @@
   color: rgba(255, 255, 255, 0.74);
 }
 
-@media (max-width: 1100px) {
-  .cardGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 560px) {
-  .cardGrid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .composerBar {
-    justify-content: center;
+@media (max-width: 640px) {
+  .sliderCard {
+    flex: 0 0 168px;
   }
 }
 
@@ -2437,6 +3301,93 @@
   background: #1f2937;
 }
 
+/* Onglets du formulaire de réalisation (ADMIN-UI) : mêmes pastilles que
+   Personnalisation, en variante claire puisqu'elles vivent dans le panneau. */
+.panel .tabs {
+  gap: 0.4rem;
+  margin: 0 0 1.1rem;
+  padding-bottom: 0.7rem;
+  border-bottom: 1px solid #e9eef4;
+}
+
+/* Le formulaire est masqué quand l'onglet « Images » est ouvert : la barre
+   d'onglets et le panneau « Images » sont **frères** du `<form>`, jamais ses
+   enfants — les formulaires de suppression d'image ne peuvent pas être
+   imbriqués dans un autre formulaire (interdit en HTML). Sans cette règle, le
+   `display: flex` de `.form` l'emporterait sur l'attribut `hidden`. */
+.panel .form[hidden] {
+  display: none;
+}
+
+.panel .tab {
+  border: 1px solid #e6ebf2;
+  background: #ffffff;
+  color: #475569;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.panel .tab:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+.panel .tabActive,
+.panel .tabActive:hover {
+  border-color: transparent;
+  background: #111827;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* Compteur d'erreurs porté par un onglet : un champ fautif peut se trouver dans
+   un onglet masqué, l'onglet concerné le signale. Rouge volontairement : la
+   boîte de réception, désormais dans le panneau clair elle aussi, utilise son
+   propre compteur neutre (`.inboxCount`) — un total n'est pas une alerte. */
+.panel .tabCount {
+  display: inline-block;
+  min-width: 1.05rem;
+  margin-left: 0.35rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  background: #fee2e2;
+  color: #b42318;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.55;
+  text-align: center;
+}
+
+.panel .tabActive .tabCount {
+  background: rgba(255, 255, 255, 0.24);
+  color: #ffffff;
+}
+
+/* Phrase d'introduction de l'onglet ouvert. */
+.tabIntro {
+  margin: 0 0 0.9rem;
+  font-size: 0.82rem;
+  color: #6b7280;
+  max-width: 900px;
+}
+
+/* Le bouton d'enregistrement reste atteignable sous l'onglet ouvert. Règle
+   limitée aux deux cartes de formulaire : la fiche d'un message a, elle aussi,
+   des actions de formulaire, qui ne doivent pas devenir collantes. */
+.panel .formCard .formActions,
+.panel .settingsCard .formActions {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  margin-top: 0.2rem;
+  padding: 0.85rem 0;
+  background-image: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0) 0%,
+    #ffffff 45%
+  );
+}
+
 .panel .imageItem {
   border: 1px solid #e9eef4;
   border-radius: 14px;
@@ -2447,9 +3398,7 @@
   background: #eef2f6;
 }
 
-.panel .pendingName {
-  color: #475569;
-}
+
 
 /* Aperçu : le rendu réel du site public reste sombre, encadré dans le panneau
    clair comme une fenêtre de navigateur. */
@@ -2514,25 +3463,12 @@
 .sideLogout { padding: 0.45rem 0.6rem; font-size: 0.72rem; }
 
 .panel { gap: 1.1rem; }
-.heroTitle { font-size: clamp(1.45rem, 2.6vw, 2rem); }
-.heroLogo { height: clamp(1.3rem, 2.3vw, 1.75rem); }
-.heroSub { font-size: 0.82rem; }
-.composerNote { font-size: 0.74rem; }
-.composerInput { min-height: 62px; font-size: 0.87rem; }
-.composerChip { padding: 0.38rem 0.7rem; font-size: 0.74rem; }
-.composerAsk { padding: 0.42rem 0.85rem; font-size: 0.76rem; }
 .resultsCount { font-size: 0.78rem; }
 .result { padding: 0.5rem 0.7rem; }
 .resultIcon { width: 26px; height: 26px; }
 .resultTitle { font-size: 0.8rem; }
 .resultDetail { font-size: 0.71rem; }
 .resultStamp { font-size: 0.63rem; }
-.pill { gap: 0.4rem; padding: 0.5rem 0.75rem; }
-.pillValue { font-size: 0.92rem; }
-.pillLabel { font-size: 0.73rem; }
-.pillLink { padding: 0.45rem 0.6rem 0.45rem 0.5rem; font-size: 0.76rem; }
-.pillIcon { width: 22px; height: 22px; }
-.projectsTitle { font-size: 0.88rem; }
 .cardName { font-size: 0.88rem; }
 .cardRole { font-size: 0.69rem; }
 
@@ -2647,33 +3583,6 @@
 }
 
 /* Pastilles de statistiques : icône + valeur + libellé. */
-.statPill {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  padding: 0.5rem 0.8rem;
-  border-radius: 999px;
-  border: 1px solid #e9eef4;
-  background: #ffffff;
-}
-
-.statIcon {
-  flex: none;
-  width: 26px;
-  height: 26px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: #f1f5f9;
-  color: #334155;
-}
-
-.statBody {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.15;
-}
-
 /* Boutons à icône : alignement (UI-ADMIN). */
 .panel .primaryBtn,
 .panel .secondaryBtn,
@@ -2694,4 +3603,1749 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
+}
+
+/* Réordonnancement par glisser-déposer (UI-ADMIN, écrans Réalisations). */
+
+/* Ligne d'aide au-dessus du tableau. `position: relative` est nécessaire : la
+   région d'annonce `.srOnly` est en `position: absolute` et un parent non
+   positionné étend la zone de défilement du document (déjà rencontré à 390 px). */
+.orderHint {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 0.7rem;
+  font-size: 0.76rem;
+  color: #6b7280;
+}
+
+.orderSaving {
+  color: #5d6ac0;
+  font-weight: 600;
+}
+
+/* Poignée de glisser-déposer : cible large, mais discrète. */
+.dragHandle {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: #94a3b8;
+  cursor: grab;
+}
+
+.dragHandle:hover {
+  color: #334155;
+  background: #f1f5f9;
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+}
+
+.dragHandle:focus-visible {
+  border-color: #5d6ac0;
+  outline: 2px solid #5d6ac0;
+  outline-offset: 1px;
+  color: #334155;
+}
+
+/* Position affichée en clair ; la région d'annonce porte déjà l'information. */
+.orderIndex {
+  flex: none;
+  min-width: 1.1rem;
+  text-align: right;
+  font-size: 0.76rem;
+  color: #94a3b8;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Repli sans souris : les flèches ↑/↓ ne réapparaissent que sur écran tactile
+   (`hover: none`), seul cas où le glisser-déposer HTML5 est inexploitable. */
+.orderFallback {
+  display: none;
+  gap: 0.25rem;
+  margin-left: 0.15rem;
+}
+
+@media (hover: none) {
+  .orderFallback {
+    display: flex;
+  }
+}
+
+.panel .rowDragging td {
+  opacity: 0.45;
+}
+
+/* Trait d'insertion : matérialise la position de dépôt. */
+.panel .rowDropBefore td {
+  border-top: 2px solid #5d6ac0;
+}
+
+.panel .rowDropAfter td {
+  border-bottom: 2px solid #5d6ac0;
+}
+
+/* La ligne visée par le dépôt se teinte en plus du trait, pour épaissir le
+   repère pendant le survol. `tr.rowDrop…` dépasse la règle de survol du
+   tableau (`.panel .table tr:hover td`), sinon la teinte serait écrasée. */
+.panel .table tr.rowDropBefore td,
+.panel .table tr.rowDropAfter td {
+  background-color: rgba(93, 106, 192, 0.07);
+}
+
+/* La poignée de la ligne en cours de glissement se détache nettement. */
+.panel .rowDragging .dragHandle {
+  color: #334155;
+  background: #eef2ff;
+  box-shadow: 0 0 0 2px rgba(93, 106, 192, 0.35);
+}
+
+/* ── Retour visuel du déplacement ──
+   La ligne qui vient de changer de place clignote une fois puis se stabilise :
+   surbrillance qui s'estompe + léger glissement venant du sens du mouvement.
+   La teinte et la barre d'accent de `.rowMoved` restent affichées seules si
+   l'animation est coupée (mouvement réduit), pour ne jamais perdre le repère. */
+.panel .table tr.rowMoved td {
+  background-color: rgba(93, 106, 192, 0.09);
+}
+
+.panel .table tr.rowMoved td:first-child {
+  box-shadow: inset 3px 0 0 #5d6ac0;
+}
+
+.panel .table tr.rowMoved .orderIndex {
+  color: #4150a8;
+  font-weight: 600;
+}
+
+@keyframes rowMovedFlash {
+  from {
+    background-color: rgba(93, 106, 192, 0.28);
+  }
+  to {
+    background-color: rgba(93, 106, 192, 0.09);
+  }
+}
+
+/* Sens du glissement : une ligne descendue arrive d'en haut, et inversement. */
+@keyframes rowMovedFromAbove {
+  from {
+    transform: translateY(-8px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes rowMovedFromBelow {
+  from {
+    transform: translateY(8px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.panel .rowMovedDown td {
+  animation: rowMovedFlash 900ms ease-out both, rowMovedFromAbove 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.panel .rowMovedUp td {
+  animation: rowMovedFlash 900ms ease-out both, rowMovedFromBelow 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Mouvement réduit : plus de clignotement ni de glissement — la teinte et la
+   barre d'accent de `.rowMoved` suffisent à montrer le changement de place. */
+@media (prefers-reduced-motion: reduce) {
+  .panel .rowMovedDown td,
+  .panel .rowMovedUp td {
+    animation: none;
+  }
+}
+
+/* ——— Formulaire de réalisation (ADMIN-UI) : carte encadrée, groupes de champs
+   et icônes de champ. Tout est scopé à `.panel` (thème clair) et aux classes
+   `formCard` / `settingsCard` / `segmentedTabs` / `fieldGroup`, pour ne pas repeindre les autres
+   formulaires de l'administration. ——— */
+/* Aucun plafond de largeur : la carte occupe toute la place du panneau (les
+   `max-width: 900px` hérités de `.form`, `.tabs` et `.section` sont neutralisés
+   plus bas, dans le périmètre de la carte uniquement). */
+/* La même carte sert au formulaire de réalisation et à la page
+   Personnalisation : une seule surface à maintenir. */
+.panel .formCard,
+.panel .settingsCard {
+  gap: 1.15rem;
+  max-width: none;
+  padding: clamp(1.1rem, 2.4vw, 1.6rem);
+  border: 1px solid #e6ebf2;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.panel .formCard .field,
+.panel .settingsCard .field {
+  gap: 0.5rem;
+}
+
+.panel .formCard .fieldLabel,
+.panel .settingsCard .fieldLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+/* Champs courts sur deux colonnes, une seule dès que la place manque. Le nombre
+   de colonnes est fixé (et non laissé à `auto-fit`) pour qu'un groupe de 4
+   champs tienne toujours en 2 × 2 sans laisser de champ orphelin, quelle que
+   soit la largeur de la carte — désormais non plafonnée. */
+.panel .formCard .formGrid,
+.panel .settingsCard .formGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.1rem 1.3rem;
+}
+
+/* Écran très large : les groupes de 4 champs passent sur une seule ligne. */
+@media (min-width: 1500px) {
+  .panel .formCard .formGridWide {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .panel .formCard .formGrid,
+  .panel .settingsCard .formGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Sous 1100 px, la galerie et l'envoi s'empilent (et l'encart d'envoi cesse
+   d'être collant : il n'y a plus de colonne à suivre). */
+@media (max-width: 1100px) {
+  .imagesLayout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .imagesSide {
+    position: static;
+  }
+}
+
+.panel .formCard .tabIntro {
+  margin-bottom: 1.2rem;
+  max-width: none;
+}
+
+/* Pastille d'icône devant un libellé de champ, ou devant la case « Publiée ».
+   Volontairement clair : elle n'est utilisée que dans le panneau. */
+.fieldIcon {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+/* Groupe de champs : un titre, puis ses champs — séparés par un filet. */
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.fieldGroup + .fieldGroup {
+  margin-top: 0.4rem;
+  padding-top: 1.2rem;
+  border-top: 1px dashed #eef2f6;
+}
+
+.fieldGroupTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.fieldGroupIcon {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  background: #eef2f6;
+  color: #334155;
+}
+
+/* La case « Publiée » se présente comme un groupe encadré, en fin d'onglet. */
+.panel .formCard .checkboxCard {
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.4rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid #e6ebf2;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+/* Barre d'onglets segmentée, posée au-dessus d'une carte : elle sert au
+   formulaire de réalisation **et** à la page Personnalisation, dont les
+   onglets doivent se ressembler. */
+.panel .segmentedTabs {
+  gap: 0.3rem;
+  max-width: none;
+  margin: 0 0 1rem;
+  padding: 0.35rem;
+  border: 1px solid #e6ebf2;
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+/* Texte d'onglet volontairement plus petit que la base des onglets (0,85 rem) :
+   la barre reste une navigation secondaire, les libellés ne doivent pas
+   concurrencer le titre de la page. */
+.panel .segmentedTabs .tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.38rem 0.8rem;
+  border-color: transparent;
+  background: transparent;
+  font-size: 0.76rem;
+}
+
+.panel .segmentedTabs .tab:hover {
+  background: #eef2f6;
+}
+
+.panel .segmentedTabs .tabActive,
+.panel .segmentedTabs .tabActive:hover {
+  border-color: transparent;
+  background: #111827;
+  color: #ffffff;
+}
+
+/* ——— Sélecteur multiple de technologies (ADMIN-UI) ——— */
+.techPicker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+/* Ancre de la liste : elle doit suivre la hauteur de la zone de saisie (les
+   pastilles passent à la ligne), pas celle du champ entier. */
+.techAnchor {
+  position: relative;
+}
+
+/* Zone de saisie : les pastilles sélectionnées, puis l'input qui pousse à la
+   suite. Toute la zone ramène le curseur dans l'input. */
+.techField {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 46px;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid #e6ebf2;
+  border-radius: 10px;
+  background: #ffffff;
+  cursor: text;
+}
+
+.techField:focus-within {
+  border-color: #111827;
+  outline: 2px solid #111827;
+  outline-offset: 1px;
+}
+
+.techChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.22rem 0.3rem 0.22rem 0.6rem;
+  border-radius: 999px;
+  background: #111827;
+  color: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.techChipRemove {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.techChipRemove:hover {
+  background: rgba(255, 255, 255, 0.38);
+}
+
+.techInput {
+  flex: 1 1 140px;
+  min-width: 140px;
+  padding: 0.25rem 0.2rem;
+  border: 0;
+  background: transparent;
+  color: #111827;
+  font: inherit;
+  font-size: 0.95rem;
+}
+
+.techInput:focus {
+  outline: 0;
+}
+
+.techInput::placeholder {
+  color: #9aa5b4;
+}
+
+/* Propositions : liste flottante sous la zone de saisie. */
+.techSuggest {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 236px;
+  margin: 0;
+  padding: 0.3rem;
+  overflow: auto;
+  list-style: none;
+  border: 1px solid #e6ebf2;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.14);
+}
+
+.techSuggestItem {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.55rem;
+  border-radius: 8px;
+  color: #334155;
+  font-size: 0.86rem;
+  cursor: pointer;
+}
+
+.techSuggestItemActive {
+  background: #eef2f6;
+  color: #111827;
+}
+
+.techSuggestNew {
+  color: #1d4ed8;
+  font-weight: 500;
+}
+
+.techHint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #8b98a9;
+}
+
+.techHint kbd {
+  padding: 0.05rem 0.32rem;
+  border: 1px solid #dde3ec;
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: #f8fafc;
+  color: #475569;
+  font-family: inherit;
+  font-size: 0.72rem;
+}
+
+/* Onglet « Images » : la carte porte la galerie ; la `section` interne n'a plus
+   besoin du filet qui la séparait du reste de la page. */
+.panel .imagesCard .section {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  border-top: 0;
+}
+
+/* ——— Page Personnalisation (ADMIN-UI) ——— */
+/* Les éditeurs de sections reprennent le langage des formulaires : carte
+   blanche, champs clairs, onglets segmentés. Deux différences assumées :
+   chaque entrée des listes (services, témoignages, questions) vit dans son
+   propre encadré — comme une ligne de galerie — et l'**aperçu live reste
+   sombre**, parce qu'il montre le site public, qui est sombre : même
+   traitement que la page « Aperçu » d'une réalisation, encadrée dans le
+   panneau clair comme une fenêtre. */
+.panel .settingsCard .form {
+  max-width: none;
+}
+
+/* Une entrée de liste : encadré à coins arrondis, séparé des autres par le
+   `gap` du formulaire (le filet et la marge haute de `.section` disparaissent). */
+.panel .settingsCard .section {
+  max-width: none;
+  margin: 0;
+  padding: 0.9rem 1rem 0.6rem;
+  border: 1px solid #e6ebf2;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+/* Dans une entrée de liste, plus de `.formActions` : les actions de ligne
+   vivent dans la tête de la ligne (voir `.listRowHead`), et la barre collante
+   reste réservée au bouton d'enregistrement — sinon chacune des lignes
+   porterait son propre bandeau collant. */
+
+/* ——— Réordonnancement des listes (services, témoignages, FAQ) ——— */
+/* Mêmes repères que la galerie et la liste des réalisations : poignée à gauche
+   de chaque ligne, ligne d'origine atténuée, trait d'insertion, puis ligne
+   déplacée mise en avant une fois. L'ordre vit dans le formulaire (les champs
+   sont nommés par position) : il est enregistré par le bouton « Enregistrer »
+   déjà en place — aucune Server Action nouvelle. */
+.panel .settingsCard .listRowHead {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.6rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px dashed #eef2f6;
+}
+
+.panel .settingsCard .listRowGrip {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.panel .settingsCard .listRowNumber {
+  min-width: 1rem;
+  text-align: right;
+  font-size: 0.76rem;
+  color: #94a3b8;
+  font-variant-numeric: tabular-nums;
+}
+
+.panel .settingsCard .listRowActions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+/* Repli sans souris : les flèches ↑/↓ ne réapparaissent que sur écran tactile
+   (`hover: none`), seul cas où le glisser-déposer HTML5 est inexploitable. */
+.panel .settingsCard .listRowFallback {
+  display: none;
+  gap: 0.25rem;
+}
+
+@media (hover: none) {
+  .panel .settingsCard .listRowFallback {
+    display: flex;
+  }
+}
+
+.panel .settingsCard .listRowDragging {
+  opacity: 0.45;
+}
+
+.panel .settingsCard .listRowDragging .dragHandle {
+  color: #334155;
+  background: #eef2ff;
+  box-shadow: 0 0 0 2px rgba(93, 106, 192, 0.35);
+}
+
+/* Trait d'insertion : une barre de 2 px sur le bord visé. Contrairement aux
+   lignes de la galerie (filet posé dans l'interligne), la barre est **inset**
+   sur la bordure de l'encadré : les entrées de liste sont des blocs séparés
+   par 14 px, la barre reste ainsi collée à la ligne visée. */
+.panel .settingsCard .listRowDropBefore,
+.panel .settingsCard .listRowDropAfter {
+  border-color: #c7cff0;
+  background: #f7f8fd;
+}
+
+.panel .settingsCard .listRowDropBefore {
+  box-shadow: inset 0 2px 0 #5d6ac0;
+}
+
+.panel .settingsCard .listRowDropAfter {
+  box-shadow: inset 0 -2px 0 #5d6ac0;
+}
+
+.panel .settingsCard .listRowMoved {
+  border-color: #c7cff0;
+  background-color: rgba(93, 106, 192, 0.09);
+  box-shadow: inset 3px 0 0 #5d6ac0;
+}
+
+.panel .settingsCard .listRowMoved .listRowNumber {
+  color: #4150a8;
+  font-weight: 600;
+}
+
+/* Mise en avant d'une ligne déplacée : mêmes keyframes que le tableau des
+   réalisations et la galerie. */
+.panel .settingsCard .listRowMovedDown {
+  animation: rowMovedFlash 900ms ease-out both, rowMovedFromAbove 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.panel .settingsCard .listRowMovedUp {
+  animation: rowMovedFlash 900ms ease-out both, rowMovedFromBelow 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel .settingsCard .listRowMovedDown,
+  .panel .settingsCard .listRowMovedUp {
+    animation: none;
+  }
+}
+
+/* ——— Liste des réalisations (ADMIN-UI) ——— */
+/* Le tableau reprend la carte blanche des formulaires (`formCard`) : même bord
+   1 px, même rayon 16 px, même ombre discrète. Il ne flotte plus à même le fond
+   clair du panneau, et son en-tête devient une bande grise en petites capitales
+   séparée des lignes par un filet : la liste se lit comme une carte de contenu,
+   pas comme une grille nue. */
+.panel .tableCard {
+  overflow: hidden;
+  border: 1px solid #e6ebf2;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.panel .tableCard .table th {
+  padding: 0.6rem 0.9rem;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-bottom: 1px solid #e9eef4;
+  white-space: nowrap;
+}
+
+.panel .tableCard .table td {
+  padding: 0.7rem 0.9rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+/* Dernière ligne : aucun filet, la carte ferme déjà la liste. */
+.panel .tableCard .table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.panel .tableCard .table tbody tr:hover td {
+  background: #f8fafc;
+}
+
+/* Le titre est le seul texte fort de la ligne : il guide la lecture. */
+.panel .tableCard .rowTitle {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+/* Suppression de ligne : discrète au repos, rouge seulement au survol — même
+   traitement que la suppression d'image de la galerie, pour qu'une action
+   destructrice ne domine plus la liste. */
+.panel .tableCard .iconActionDanger {
+  border-color: transparent;
+  background: transparent;
+  color: #94a3b8;
+}
+
+.panel .tableCard .iconActionDanger:hover {
+  border-color: #fecdd3;
+  background: #fff1f2;
+  color: #b42318;
+}
+
+/* ——— Boîte de réception des messages (ADMIN-UI) ——— */
+/* La liste et la fiche d'un message rejoignent le langage des réalisations :
+   en-tête de page, onglets segmentés, carte blanche et pastilles de statut en
+   clair. Tout est scopé au `.panel` : l'écran Santé, encore sur fond sombre,
+   partage `.statusPill`, `.statusBtn` et `.detailMeta` et garde donc ses
+   couleurs d'origine. */
+.panel.inboxPanel .pageHeader {
+  flex-wrap: wrap;
+}
+
+.panel .inboxTools {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+/* Champ de recherche à icône intégrée : la loupe s'aligne sur le texte et
+   disparaît derrière le curseur ; le champ reste une pastille dans l'en-tête. */
+.panel .searchWrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.panel .searchIcon {
+  position: absolute;
+  left: 0.75rem;
+  display: grid;
+  place-items: center;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.panel .searchInput {
+  width: 250px;
+  padding: 0.45rem 0.85rem 0.45rem 2.1rem;
+  border: 1px solid #e6ebf2;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #111827;
+  font-size: 0.8rem;
+}
+
+.panel .searchInput::placeholder {
+  color: #9aa5b4;
+}
+
+.panel .searchInput:focus {
+  border-color: #111827;
+  outline: 2px solid #111827;
+  outline-offset: 1px;
+}
+
+/* Compteur porté par un filtre : neutre — il compte des messages, là où
+   `.tabCount` signale les champs fautifs d'un formulaire. */
+.panel .inboxCount {
+  display: inline-block;
+  min-width: 1.05rem;
+  margin-left: 0.35rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  background: #eef2f6;
+  color: #475569;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.55;
+  text-align: center;
+}
+
+.panel .tabActive .inboxCount {
+  background: rgba(255, 255, 255, 0.24);
+  color: #ffffff;
+}
+
+/* Bande d'en-tête de la liste : mêmes petites capitales que l'en-tête du
+   tableau des réalisations, **et** la même grille que les lignes (avatar
+   38 px, expéditeur, statut, date, chevron) pour que « Statut » et « Reçu le »
+   calent au-dessus de leurs valeurs. Le libellé occupe les deux premières
+   colonnes (emplacement de l'avatar + expéditeur), les tracks terminaux et la
+   gouttière sont identiques à celles de `.inboxRow` : l'alignement tient sans
+   mesure en dur de la colonne centrale. */
+.panel .messageHead {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) 110px 140px 16px;
+  gap: 0.9rem;
+  align-items: center;
+  margin: 0;
+  padding: 0.6rem 0.9rem;
+  border-bottom: 1px solid #e9eef4;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.panel .messageHeadLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  grid-column: 1 / 3;
+}
+
+/* Les libellés de colonnes sont posés dans le même flux que la grille. */
+.panel .messageHeadCols {
+  display: contents;
+}
+
+.panel .messageHead .inboxStatusCol,
+.panel .messageHead .inboxDateCol {
+  color: #94a3b8;
+  text-align: right;
+}
+
+.panel .messageHead .inboxStatusCol {
+  text-align: left;
+}
+
+/* La boîte de réception est la carte blanche des formulaires : mêmes bord,
+   rayon, relief et découpe. */
+.panel .messageCard {
+  overflow: hidden;
+  border: 1px solid #e6ebf2;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+/* Les messages se lisent comme des conversations : filet de séparation,
+   survol discret, dernier rang sans filet (la carte ferme la liste). Chaque
+   rang est une grille de 5 colonnes — avatar, expéditeur, statut, date,
+   chevron — dont les 3 dernières ont une largeur fixe : les libellés du
+   bandeau et les valeurs des lignes partagent la même grille. */
+.panel .inboxList {
+  gap: 0;
+}
+
+.panel .inboxRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 110px 140px 16px;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.75rem 0.9rem;
+  border: 0;
+  border-bottom: 1px solid #f1f5f9;
+  border-radius: 0;
+  background: #ffffff;
+  transition: background-color 0.14s ease;
+}
+
+.panel .inboxRow:last-child {
+  border-bottom: 0;
+}
+
+.panel .inboxRow:hover {
+  border-color: #f1f5f9;
+  background: #f8fafc;
+}
+
+/* Message non lu : nom en gras, point bleu et fond légèrement teinté — les
+   trois repères d'une boîte mail, sans pastille supplémentaire. */
+.panel .inboxRowNew {
+  background: #f8faff;
+}
+
+.panel .inboxRowNew:hover {
+  background: #f1f5fd;
+}
+
+.panel .inboxDot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2563eb;
+}
+
+/* Pastille d'initiales : teinte déterministe par expéditeur (`avatar.ts`). */
+.panel .inboxAvatar {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  user-select: none;
+}
+
+.panel .inboxAvatarLg {
+  width: 46px;
+  height: 46px;
+  font-size: 0.92rem;
+}
+
+.panel .toneBlue { background: #dbeafe; color: #1e40af; }
+.panel .toneViolet { background: #ede9fe; color: #5b21b6; }
+.panel .toneTeal { background: #ccfbf1; color: #115e59; }
+.panel .toneAmber { background: #fef3c7; color: #92400e; }
+.panel .toneRose { background: #ffe4e6; color: #9f1239; }
+.panel .toneSlate { background: #e2e8f0; color: #334155; }
+
+.panel .inboxMain {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+/* Ligne d'identité : point de non-lu, nom, e-mail, repère de note. */
+.panel .inboxLine1 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.panel .inboxName {
+  color: #0f172a;
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.panel .inboxRowNew .inboxName {
+  font-weight: 700;
+}
+
+.panel .inboxEmail {
+  min-width: 0;
+  color: #6b7280;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Note interne déjà rédigée : discret repère entre l'e-mail et l'extrait. */
+.panel .inboxNote {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: #fff7ed;
+  color: #9a3412;
+  font-size: 0.66rem;
+  font-weight: 600;
+}
+
+.panel .inboxSnippet {
+  color: #475569;
+  font-size: 0.82rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Colonnes statut / date : mêmes largeurs que le bandeau d'en-tête. */
+.panel .inboxStatusCol {
+  min-width: 0;
+}
+
+.panel .inboxDateCol {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.panel .inboxDate {
+  color: #94a3b8;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Chevron d'ouverture : apparaît au survol, comme l'affordance « clique
+   pour lire » des boîtes mail modernes. Invisible au repos sur écran tactile
+   (`hover: none`) — là, il n'aurait aucun sens. */
+.panel .inboxChevron {
+  color: #cbd5e1;
+  opacity: 0;
+  transition: opacity 0.14s ease, transform 0.14s ease;
+  justify-self: end;
+}
+
+.panel .inboxRow:hover .inboxChevron,
+.panel .inboxRow:focus-visible .inboxChevron {
+  opacity: 1;
+  transform: translateX(2px);
+}
+
+.panel .inboxChevronSpacer {
+  width: 16px;
+}
+
+@media (hover: none) {
+  .panel .inboxChevron {
+    opacity: 1;
+  }
+}
+
+/* Pastilles de statut en clair — la variante sombre reste pour Santé. */
+.panel .pillNew {
+  background: #ecfdf3;
+  color: #067647;
+}
+
+.panel .pillRead {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.panel .pillReplied {
+  background: #fffaeb;
+  color: #b54708;
+}
+
+.panel .pillArchived {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+/* ——— Fiche d'un message : vue « conversation » ——— */
+/* Carte du message à gauche, colonne d'actions à droite (statut segmenté,
+   note interne) ; under 1180 px les deux volets s'empilent. */
+.panel .inboxDetail {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 340px);
+  gap: 1.1rem;
+  align-items: start;
+}
+
+@media (max-width: 1180px) {
+  .panel .inboxDetail {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* `gap` et `margin-bottom` neutralisés : ils viennent de la base sombre de
+   `.detailCard` (colonne flex pour l'ancienne fiche) et créeraient des blancs
+   entre l'en-tête, le corps et le pied de la carte, plus une marge orpheline
+   dans la grille `.inboxDetail`. */
+.panel .detailCard {
+  overflow: hidden;
+  gap: 0;
+  margin-bottom: 0;
+  padding: 0;
+  border: 1px solid #e6ebf2;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+/* En-tête de la carte : avatar + identité à gauche, statut + date à droite. */
+.panel .detailHead {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 1rem 1.15rem;
+  border-bottom: 1px solid #eef2f6;
+  background: #fafbfc;
+}
+
+.panel .detailIdent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.panel .detailName {
+  color: #0f172a;
+  font-size: 0.95rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.panel .detailMail {
+  color: #6b7280;
+  font-size: 0.8rem;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.panel .detailMail:hover {
+  color: #111827;
+  text-decoration: underline;
+}
+
+.panel .detailStamp {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.3rem;
+}
+
+.panel .detailDate {
+  color: #94a3b8;
+  font-size: 0.74rem;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Le corps du message respire : fond clair, ligne de lecture généreuse. */
+.panel .detailBody {
+  margin: 0;
+  padding: 1.15rem;
+  border: 0;
+  border-radius: 0;
+  background: #ffffff;
+  color: #1f2937;
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+
+/* Provenance : rappelle d'où vient le message (formulaire de contact). */
+.panel .detailFoot {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1.15rem;
+  border-top: 1px solid #eef2f6;
+  background: #fafbfc;
+  color: #8b98a9;
+  font-size: 0.74rem;
+}
+
+/* ——— Colonne d'actions ——— */
+.panel .detailSide {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.panel .sideCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid #e6ebf2;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+/* Nommé `sideCardHead` (et non `sideHead`) : `.sideHead` appartient déjà à la
+   coquille sombre de la barre latérale, dont le rembourrage fuiterait ici. */
+.panel .sideCardHead {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.panel .sideCardTitle {
+  margin: 0;
+  flex: 1;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* Statut segmenté : les trois suites possibles dans une seule barre, celle
+   déjà appliquée marquée (fond sombre) et désactivée — rien à confirmer. */
+.panel .statusGroup {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.panel .statusForm {
+  flex: 1;
+}
+
+.panel .statusChoice {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid #e6ebf2;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #334155;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.14s ease, border-color 0.14s ease,
+    color 0.14s ease;
+}
+
+.panel .statusChoice:hover:not(:disabled) {
+  border-color: #d6dee8;
+  background: #f6f8fb;
+}
+
+.panel .statusChoiceOn,
+.panel .statusChoiceOn:hover:not(:disabled) {
+  border-color: #111827;
+  background: #111827;
+  color: #ffffff;
+}
+
+.panel .statusChoice:disabled {
+  cursor: default;
+}
+
+.panel .sideHint {
+  margin: 0;
+  font-size: 0.74rem;
+  line-height: 1.5;
+  color: #8b98a9;
+}
+
+@media (max-width: 720px) {
+  .panel .inboxTools {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .panel .searchWrap {
+    flex: 1;
+  }
+  .panel .searchInput {
+    width: 100%;
+  }
+
+  /* Sous 720 px, la grille passe à 3 colonnes : avatar, expéditeur (l'e-mail
+     passe sous le nom), pastille de statut. Date, chevron et libellés de
+     colonnes sont masqués — la date est déjà lisible dans la fiche. */
+  .panel .messageHead {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+  .panel .messageHeadLabel {
+    grid-column: auto;
+  }
+  .panel .messageHead .inboxStatusCol,
+  .panel .messageHead .inboxDateCol,
+  .panel .messageHead .inboxChevronSpacer {
+    display: none;
+  }
+  .panel .inboxRow {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+  .panel .inboxDateCol,
+  .panel .inboxChevron {
+    display: none;
+  }
+  .panel .inboxLine1 {
+    flex-wrap: wrap;
+    row-gap: 0.1rem;
+  }
+  .panel .inboxEmail {
+    flex-basis: 100%;
+  }
+  .panel .detailHead {
+    flex-wrap: wrap;
+  }
+  .panel .detailStamp {
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    justify-content: space-between;
+  }
+  .panel .statusGroup {
+    flex-wrap: wrap;
+  }
+  .panel .statusForm {
+    flex: 1 1 40%;
+  }
+}
+
+/* ── Santé (ADMIN-UI) ──────────────────────────────────────────────────────── */
+/* Page de statut en panneau clair : verdict global, indicateurs vitaux, registre
+   des contenus, journal d'erreurs. Toutes ces classes sont déclarées en clair
+   (la page ne consomme plus aucune règle sombre) ; `.santePage` borne les
+   réglages propres à l'écran afin de ne toucher aux classes partagées
+   (`.sectionTitle`) que pour ce seul écran. */
+
+.santePage .sectionTitle {
+  margin: 0; /* le titre est porté par .sectionTitleRow : pas d'espace en bas. */
+}
+
+/* —— Bannière d'état global —— */
+/* Surface blanche, rail de ton de 3 px à gauche et voile teinté qui s'efface : la
+   couleur sert de repère (rail, icône, puce d'état), jamais de fond plein — le
+   traitement des bandes d'incident des plateformes de statut. */
+.statusBanner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin-bottom: 1.3rem;
+  padding: 0.95rem 1.1rem 0.95rem 1.4rem;
+  overflow: hidden;
+  border: 1px solid #eef2f6;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.statusRail {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--status-tone);
+}
+
+.statusBannerOk {
+  --status-tone: #12b76a;
+  background-image: linear-gradient(90deg, #f2fbf6 0%, rgba(255, 255, 255, 0) 48%);
+}
+
+.statusBannerWarn {
+  --status-tone: #f79009;
+  background-image: linear-gradient(90deg, #fffaf0 0%, rgba(255, 255, 255, 0) 48%);
+}
+
+.statusBannerBad {
+  --status-tone: #ff1200;
+  background-image: linear-gradient(90deg, #fff4f2 0%, rgba(255, 255, 255, 0) 48%);
+}
+
+.statusIcon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+}
+
+.statusIconOk {
+  background: #ecfdf3;
+  color: #067647;
+}
+
+.statusIconWarn {
+  background: #fffaeb;
+  color: #b54708;
+}
+
+.statusIconBad {
+  background: #ffebe9;
+  color: #ff1200;
+}
+
+.statusBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+/* Titre en graisse 400 : le ton est porté par le rail, l'icône et la puce d'état. */
+.statusTitle {
+  color: #101828;
+  font-size: 0.98rem;
+  font-weight: 400;
+  letter-spacing: -0.005em;
+}
+
+/* État en erreur : le titre porte lui-même le rouge de l'incident. */
+.statusBannerBad .statusTitle {
+  color: #ff1200;
+}
+
+.statusText {
+  color: #667085;
+  font-size: 0.79rem;
+  line-height: 1.5;
+}
+
+/* Colonne de droite : puce d'état puis horodatage, alignés sur le bord. */
+.statusMeta {
+  flex: none;
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+}
+
+.statusChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.26rem 0.6rem;
+  border: 1px solid;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.statusChipOk {
+  border-color: #a6f4c5;
+  background: #ecfdf3;
+  color: #067647;
+}
+
+.statusChipWarn {
+  border-color: #fedf89;
+  background: #fffaeb;
+  color: #b54708;
+}
+
+.statusChipBad {
+  border-color: #ffc9c2;
+  background: #ffebe9;
+  color: #ff1200;
+}
+
+.statusDot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.statusStamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: #98a2b3;
+  font-size: 0.68rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Note ambre : journal d'erreurs indisponible (migration non appliquée). */
+.warnNote {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  margin: 0 0 1.2rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 0.79rem;
+  line-height: 1.5;
+}
+
+.warnNote svg {
+  flex: none;
+  margin-top: 0.12rem;
+}
+
+.inlineCode {
+  padding: 0.05rem 0.35rem;
+  border-radius: 5px;
+  background: rgba(146, 64, 14, 0.1);
+  color: #78350f;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.74rem;
+}
+
+.sectionHintRight {
+  margin-left: auto;
+  color: #6b7280;
+  font-size: 0.74rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* —— Indicateurs vitaux —— */
+.vitalGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 1.6rem;
+}
+
+.vitalCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: 1rem 1.05rem;
+  border: 1px solid #eef2f6;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+a.vitalCard {
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+a.vitalCard:hover {
+  border-color: #d8e0ea;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.07);
+  transform: translateY(-1px);
+}
+
+.vitalHead {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.vitalIcon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.toneOk .vitalIcon {
+  background: #dcfce7;
+  color: #067647;
+}
+
+.toneWarn .vitalIcon {
+  background: #ffedd5;
+  color: #9a3412;
+}
+
+.toneBad .vitalIcon {
+  background: #ffebe9;
+  color: #ff1200;
+}
+
+.toneInfo .vitalIcon {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.vitalLabel {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.vitalValue {
+  color: #0f172a;
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.vitalNote {
+  color: #6b7280;
+  font-size: 0.74rem;
+  line-height: 1.4;
+}
+
+.vitalNoteOk {
+  color: #067647;
+}
+
+.vitalNoteWarn {
+  color: #9a3412;
+}
+
+.vitalNoteBad {
+  color: #ff1200;
+}
+
+/* Jauge à 3 zones (vert < 200 ms, ambre < 500 ms, rouge au-delà) : seule la
+   zone atteinte est colorée. */
+.latGauge {
+  display: flex;
+  gap: 0.25rem;
+  margin-top: 0.1rem;
+}
+
+.latSeg {
+  flex: 1;
+  height: 5px;
+  border-radius: 999px;
+  background: #e8edf3;
+}
+
+.latSegOk {
+  background: #12b76a;
+}
+
+.latSegWarn {
+  background: #f79009;
+}
+
+.latSegBad {
+  background: #ff1200;
+}
+
+/* —— Registre des contenus —— */
+.regCard {
+  margin-bottom: 1.6rem;
+  border: 1px solid #eef2f6;
+  border-radius: 14px;
+  background: #ffffff;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.regHead {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid #eef2f6;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.regHead svg {
+  flex: none;
+  color: #64748b;
+}
+
+/* Filets d'un pixel : le fond gris ne transparaît que dans les gouttières. */
+.regGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  background: #eef2f6;
+}
+
+.regItem {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 0;
+  padding: 0.9rem 1rem;
+  background: #ffffff;
+}
+
+.regIcon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.regBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  min-width: 0;
+}
+
+.regLabel {
+  color: #6b7280;
+  font-size: 0.74rem;
+}
+
+.regValue {
+  color: #0f172a;
+  font-size: 1.05rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* —— Journal d'erreurs —— */
+.journalDate {
+  color: #6b7280;
+  font-size: 0.76rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.journalPath {
+  display: block;
+  margin-top: 0.15rem;
+  color: #94a3b8;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.7rem;
+}
+
+.rowResolved {
+  opacity: 0.55;
+}
+
+.pillDot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  margin-right: 0.4rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.pillError {
+  background: #ffebe9;
+  color: #ff1200;
+}
+
+.pillOk {
+  background: #ecfdf3;
+  color: #067647;
+}
+
+/* Étât vide « tout va bien » : l'icône neutre prend la teinte verte. */
+.emptyIconOk {
+  background: #ecfdf3;
+  color: #067647;
+}
+
+@media (max-width: 980px) {
+  .vitalGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .regGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  /* L'horodatage du contrôle reste lisible dans la bannière. */
+  .sectionHintRight {
+    display: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .vitalGrid,
+  .regGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .statusBanner {
+    flex-wrap: wrap;
+    gap: 0.7rem;
+  }
+  .statusMeta {
+    flex-direction: row;
+    align-items: center;
+    margin-left: 0;
+  }
+  .santePage .pageHeader {
+    flex-wrap: wrap;
+  }
 }

@@ -171,6 +171,50 @@ export async function deleteProjectAction(formData: FormData): Promise<void> {
   redirect(`${ADMIN_LIST}?deleted=1`);
 }
 
+/**
+ * Réordonnancement par glisser-déposer (UI-ADMIN) : reçoit l'ordre complet
+ * des réalisations et renumérote `sort_order` de 1 à n. La liste complète est
+ * exigée — un ordre partiel laisserait les réalisations absentes en tête.
+ */
+export async function reorderProjectsAction(
+  ids: string[],
+): Promise<{ ok: boolean; message?: string }> {
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) {
+    return { ok: false, message: "Supabase n'est pas configuré." };
+  }
+
+  const ordered = Array.isArray(ids)
+    ? [...new Set(ids.filter((id) => typeof id === "string" && id.trim() !== ""))]
+    : [];
+  if (ordered.length === 0) {
+    return { ok: false, message: "Ordre invalide." };
+  }
+
+  const { data: existing, error } = await supabase.from("projects").select("id");
+  if (error) return { ok: false, message: error.message };
+
+  const known = new Set((existing ?? []).map((project) => project.id));
+  if (ordered.length !== known.size || ordered.some((id) => !known.has(id))) {
+    return { ok: false, message: "La liste a changé entre-temps, rechargez la page." };
+  }
+
+  const results = await Promise.all(
+    ordered.map((id, index) =>
+      supabase.from("projects").update({ sort_order: index + 1 }).eq("id", id),
+    ),
+  );
+  const failed = results.find((result) => result.error);
+  if (failed?.error) return { ok: false, message: failed.error.message };
+
+  revalidateProject();
+  return { ok: true };
+}
+
+/**
+ * Repli sans glisser-déposer (écrans tactiles) : déplace une réalisation d'un
+ * cran. Conservé depuis S4/F4.1, c'est la seule voie qui reste sans souris.
+ */
 export async function moveProjectAction(formData: FormData): Promise<void> {
   const id = String(formData.get("id") ?? "").trim();
   const direction = String(formData.get("direction") ?? "");
@@ -250,6 +294,63 @@ export async function addImagesAction(formData: FormData): Promise<void> {
     }
   }
   redirect(`${ADMIN_LIST}/${projectId}?images=1`);
+}
+
+/**
+ * Réordonnancement de la galerie d'une réalisation par glisser-déposer :
+ * reçoit l'ordre complet des images du projet et renumérote `sort_order` de
+ * 1 à n (même convention que `addImagesAction`, qui démarre à 1). L'ordre
+ * complet est exigé — un ordre partiel laisserait les images absentes en tête
+ * et les positions de la galerie publique ne seraient plus lisibles.
+ */
+export async function reorderImagesAction(
+  projectId: string,
+  ids: string[],
+): Promise<{ ok: boolean; message?: string }> {
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) {
+    return { ok: false, message: "Supabase n'est pas configuré." };
+  }
+
+  const project = String(projectId ?? "").trim();
+  const ordered = Array.isArray(ids)
+    ? [...new Set(ids.filter((id) => typeof id === "string" && id.trim() !== ""))]
+    : [];
+  if (!project || ordered.length === 0) {
+    return { ok: false, message: "Ordre invalide." };
+  }
+
+  const { data: existing, error } = await supabase
+    .from("project_images")
+    .select("id")
+    .eq("project_id", project);
+  if (error) return { ok: false, message: error.message };
+
+  // L'ordre doit couvrir exactement la galerie du projet : une image ajoutée
+  // ou supprimée entre-temps est refusée plutôt que placée au hasard.
+  const known = new Set((existing ?? []).map((image) => image.id));
+  if (ordered.length !== known.size || ordered.some((id) => !known.has(id))) {
+    return {
+      ok: false,
+      message: "La galerie a changé entre-temps, rechargez la page.",
+    };
+  }
+
+  const results = await Promise.all(
+    ordered.map((id, index) =>
+      supabase.from("project_images").update({ sort_order: index + 1 }).eq("id", id),
+    ),
+  );
+  const failed = results.find((result) => result.error);
+  if (failed?.error) return { ok: false, message: failed.error.message };
+
+  const { data: projectRow } = await supabase
+    .from("projects")
+    .select("slug")
+    .eq("id", project)
+    .maybeSingle();
+  revalidateProject(projectRow?.slug);
+  return { ok: true };
 }
 
 export async function deleteImageAction(formData: FormData): Promise<void> {
