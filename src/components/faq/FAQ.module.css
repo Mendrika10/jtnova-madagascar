@@ -514,3 +514,60 @@
   );
   flex-shrink: 0;
 }
+
+/* ── Une seule colonne : la carte ne doit plus coller ─────────────────────
+   Au-dessus de 860 px la carte du logo est `sticky` : elle accompagne la
+   lecture de l'accordéon, dans la colonne de droite. En dessous, la grille
+   passe à une colonne et la carte est placée **au-dessus** des questions :
+   `top: 80px` la fait alors glisser sur la rangée suivante et recouvrir les
+   questions (mesuré : 40 px de recouvrement, soit tout l'écart de grille).
+
+   Comme la règle de base `.right { position: sticky }` est écrite plus haut et
+   qu'à spécificité égale c'est la dernière règle qui gagne, ce bloc doit
+   rester en fin de fichier. */
+@media (max-width: 860px) {
+  .right {
+    position: static;
+  }
+}
+
+/* ── Petits écrans ─────────────────────────────────────────────────────────
+   Le logo (290 px) plus les 96 px de padding de sa carte portaient la largeur
+   min-content de la colonne droite à ~450 px. En dessous de 860 px la grille
+   n'a plus qu'une colonne : elle s'élargissait donc au-delà de l'écran et,
+   la section rognant ses débordements (`overflow: hidden`), la carte du logo
+   **et** l'accordéon — même colonne de grille — apparaissaient coupés à
+   droite. On rend les deux colonnes compressibles et on laisse le logo se
+   réduire à la place disponible.
+
+   Ce bloc doit rester en fin de fichier : à spécificité égale, une règle de
+   base écrite plus bas l'emporterait sur lui. */
+@media (max-width: 640px) {
+  .left,
+  .right {
+    min-width: 0;
+  }
+
+  .logoCardOuter {
+    min-width: 0;
+    padding: 30px 16px;
+  }
+
+  .logoImgWrap {
+    min-width: 0;
+    padding: 20px 14px;
+  }
+
+  /* `max-width` borne aussi la contribution min-content d'un élément
+     remplacé : plus rien ne peut élargir la grille au-delà de l'écran.
+     Le `min(290px, …)` garde le logo à sa taille de design dès qu'il y a la
+     place (≈ 410 px de large et plus). */
+  .logoImg {
+    max-width: min(290px, calc(100vw - 132px));
+  }
+
+  /* Filet de sécurité : un libellé long ne peut plus forcer la largeur. */
+  .statLabel {
+    overflow-wrap: anywhere;
+  }
+}

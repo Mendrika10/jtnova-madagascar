@@ -28,9 +28,17 @@ const colVar = {
 export default function CTA({
   setting,
   contact,
+  hiddenOnMobile = false,
 }: {
   setting: CtaSetting;
   contact: ContactInfoSetting;
+  /**
+   * Masque la section sur mobile. Utilisé par la page d'accueil, où le
+   * formulaire reste accessible via `/contact` et le menu. Laisser `false`
+   * ailleurs (notamment dans l'aperçu de l'admin) pour que la section reste
+   * éditable sur téléphone.
+   */
+  hiddenOnMobile?: boolean;
 }) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [sent, setSent] = useState(false);
@@ -59,7 +67,11 @@ export default function CTA({
   }
 
   return (
-    <section id="contact" className={styles.section} aria-label="Contact">
+    <section
+      id="contact"
+      className={`${styles.section}${hiddenOnMobile ? ` ${styles.hiddenOnMobile}` : ""}`}
+      aria-label="Contact"
+    >
       {/* <div className={styles.outerBg} aria-hidden="true" />
       <div className={styles.outerGlow} aria-hidden="true" /> */}
 

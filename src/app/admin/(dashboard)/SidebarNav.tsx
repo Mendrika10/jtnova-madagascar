@@ -101,6 +101,10 @@ export default function SidebarNav({
                     href={href}
                     className={active ? styles.sideLinkOn : styles.sideLink}
                     aria-current={active ? "page" : undefined}
+                    // Info-bulle native : indispensable dans le rail réduit,
+                    // où le libellé textuel est masqué ; sans effet au bureau
+                    // déplié ni dans le tiroir mobile.
+                    title={label}
                   >
                     <span className={styles.sideIcon} aria-hidden>
                       <Icon size={16} strokeWidth={2} />
