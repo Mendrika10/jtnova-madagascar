@@ -934,6 +934,11 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  /* Le panneau de contenu doit toucher le bas de l'écran : sans hauteur
+     minimale, la ligne de grille reste à la taille du contenu et le fond
+     très sombre de `.shell` apparaît en dessous. Même hauteur que la
+     barre latérale (`calc(100vh - 1rem)`). */
+  min-height: calc(100vh - 1rem);
 }
 
 .srOnly {
@@ -948,13 +953,308 @@
   border: 0;
 }
 
-@media (max-width: 900px) {
+/* Fondu du contenu du rail : les icônes apparaissent en fondu APRÈS la
+   majeure partie du glissement (délai ~ mi-course), au lieu d'être déjà
+   posées pendant que la colonne rétrécit. `backwards` garde le contenu
+   invisible pendant le délai ; au dé-replier, l'animation est retirée et
+   les éléments reviennent instantanément (le retour est immédiat). */
+@keyframes adminRailIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ── Bureau : réduction en rail d'icônes (UI-ADMIN) ─────────────────────
+   Au-dessus de 900 px, la barre peut être réduite (bouton de bascule rendu
+   par `AdminShell`) : 236 px → 64 px, les libellés s'effacent, chaque lien
+   devient une icône, les compteurs passent en pastille sur le coin de
+   l'icône et le nom de l'écran apparaît en info-bulle native (`title`).
+   La préférence est retenue dans `localStorage` côté client. */
+.collapseBtn {
+  display: none;
+}
+
+@media (min-width: 901px) {
+  /* Glissement fluide de la colonne au clic (236 px ↔ 64 px). La grille
+     anime `grid-template-columns`, la sidebar et son contenu suivent au
+     fil du mouvement ; la courbe est celle du reste du site. */
   .shell {
-    grid-template-columns: minmax(0, 1fr);
+    transition: grid-template-columns 300ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Repli accessibilité : la réduction s'applique sans glissement. */
+  @media (prefers-reduced-motion: reduce) {
+    .shell {
+      transition: none;
+    }
+  }
+
+  .collapseBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    width: 100%;
+    padding: 0.45rem 0.6rem;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: #131e29;
+    color: #9db0c6;
+    font-family: inherit;
+    font-size: 0.74rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.18s ease, color 0.18s ease;
+  }
+
+  .collapseBtn:hover {
+    background: #1b2836;
+    color: #eaf2ff;
+  }
+
+  .shell[data-collapsed="true"] {
+    grid-template-columns: 64px minmax(0, 1fr);
+  }
+
+  .shell[data-collapsed="true"] .sidebar {
+    align-items: center;
+    padding: 0.85rem 0.45rem;
+  }
+
+  .shell[data-collapsed="true"] .collapseBtn {
+    padding: 0.45rem;
+  }
+
+  /* Apparition en fondu, retardée : la réduction glisse d'abord, le
+     contenu suit. Marque, bascule, bouton principal, icônes de nav,
+     compteurs et pied de barre. */
+  .shell[data-collapsed="true"] .sideHead,
+  .shell[data-collapsed="true"] .collapseBtn,
+  .shell[data-collapsed="true"] .sidePrimary,
+  .shell[data-collapsed="true"] .sideLink,
+  .shell[data-collapsed="true"] .sideLinkOn,
+  .shell[data-collapsed="true"] .sideFoot {
+    animation: adminRailIn 180ms ease 150ms backwards;
+  }
+
+  /* Repli accessibilité : réduction sans glissement ni attente. */
+  @media (prefers-reduced-motion: reduce) {
+    .shell[data-collapsed="true"] .sideHead,
+    .shell[data-collapsed="true"] .collapseBtn,
+    .shell[data-collapsed="true"] .sidePrimary,
+    .shell[data-collapsed="true"] .sideLink,
+    .shell[data-collapsed="true"] .sideLinkOn,
+    .shell[data-collapsed="true"] .sideFoot {
+      animation: none;
+    }
+  }
+
+  .shell[data-collapsed="true"] .collapseLabel,
+  .shell[data-collapsed="true"] .sideBrand,
+  .shell[data-collapsed="true"] .sideRole {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .shell[data-collapsed="true"] .sideHead {
+    justify-content: center;
+  }
+
+  .shell[data-collapsed="true"] .sideCaret {
+    display: none;
+  }
+
+  .shell[data-collapsed="true"] .sidePrimary {
+    padding: 0.55rem;
+    width: 100%;
+    font-size: 0;
+  }
+
+  .shell[data-collapsed="true"] .sideLink,
+  .shell[data-collapsed="true"] .sideLinkOn {
+    justify-content: center;
+    padding: 0.55rem;
+    position: relative;
+  }
+
+  .shell[data-collapsed="true"] .sideLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .shell[data-collapsed="true"] .sideCount {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    font-size: 0.58rem;
+  }
+
+  .shell[data-collapsed="true"] .sidePending {
+    display: none;
+  }
+
+  /* Sans libellés, la recherche et l'identité n'ont plus de place : elles
+     s'effacent (la recherche reste accessible depuis le tableau de bord). */
+  .shell[data-collapsed="true"] .sideSearch,
+  .shell[data-collapsed="true"] .sideGroupTitle {
+    display: none;
+  }
+
+  .shell[data-collapsed="true"] .sideUser {
+    justify-content: center;
+  }
+
+  .shell[data-collapsed="true"] .sideEmail {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .shell[data-collapsed="true"] .sideLogout {
+    padding: 0.5rem;
+    font-size: 0;
+  }
+}
+
+/* ── Barre mobile + tiroir (UI-ADMIN) ─────────────────────────────────────
+   En dessous de 900 px la barre latérale quitte le flux : elle devient un
+   tiroir coulissant, ouvert par un bouton hamburger posé dans une barre de
+   titre collée en haut. Le contenu de la barre (composants serveur) est
+   inchangé ; seule sa presentation varie. */
+.mobileBar {
+  display: none;
+}
+
+.scrim {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  /* Le hamburger (et la réduction) n'ont pas de sens dans le tiroir. */
+  .collapseBtn {
+    display: none;
+  }
+
+  /* Le tiroir est `position: fixed` : la grille reposante de `.shell`
+     n'a plus de raison d'être, on repasse en colonne flexible pour que la
+     zone de contenu occupe tout ce qui reste sous la barre mobile. */
+  .shell {
+    display: flex;
+    flex-direction: column;
+    padding: 0.5rem;
+  }
+
+  .mobileBar {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.55rem 0.7rem;
+    border-radius: 14px;
+    border: 1px solid rgba(140, 180, 235, 0.1);
+    background: linear-gradient(180deg, #0a141b 0%, #060c12 100%);
+    box-shadow: 0 18px 40px -30px rgba(0, 0, 0, 0.9);
+    position: sticky;
+    top: 0.5rem;
+    z-index: 40;
+  }
+
+  .burgerBtn {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    flex: none;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    background: #131e29;
+    color: #eaf2ff;
+    cursor: pointer;
+    transition: background-color 0.18s ease;
+  }
+
+  .burgerBtn:hover {
+    background: #1b2836;
+  }
+
+  .mobileBrand {
+    min-width: 0;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #f2f7ff;
+  }
+
+  .mobileBrand em {
+    font-style: normal;
+    font-weight: 500;
+    font-size: 0.72rem;
+    color: #7c8ea6;
+    margin-left: 0.45rem;
+  }
+
+  .scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    border: 0;
+    padding: 0;
+    background: rgba(2, 5, 10, 0.66);
+    z-index: 50;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.24s ease;
+  }
+
+  .shell[data-menu-open="true"] .scrim {
+    opacity: 1;
+    pointer-events: auto;
   }
 
   .sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    height: 100dvh;
     max-height: none;
+    width: min(300px, 87vw);
+    z-index: 60;
+    border-radius: 0 18px 18px 0;
+    transform: translateX(calc(-100% - 30px));
+    visibility: hidden;
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+      visibility 0s 0.28s;
+    box-shadow: 30px 0 70px -40px rgba(0, 0, 0, 0.9);
+  }
+
+  .shell[data-menu-open="true"] .sidebar {
+    transform: none;
+    visibility: visible;
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), visibility 0s;
+  }
+
+  /* Le tiroir, fixe, sort du flux : la zone principale suit et s'étire
+     jusqu'au bas de l'écran (plus de bande noire sous le panneau). */
+  .main {
+    flex: 1;
+    margin-top: 0.5rem;
+    min-height: 0;
   }
 
   .sideNav {
@@ -1861,15 +2161,8 @@
   margin: 0;
 }
 
-@media (max-width: 720px) {
-  .shell {
-    grid-template-columns: 1fr;
-  }
-  .sidebar {
-    border-right: none;
-    border-bottom: 1px solid rgba(120, 170, 255, 0.12);
-  }
-}
+/* L'ancien repli « sidebar empilée » (<720 px) est remplacé par le tiroir
+   coulissant défini dans le bloc des 900 px, qui couvre déjà cette plage. */
 
 /* ── Aperçu live (S5) ─────────────────────────────────────────────────────── */
 
