@@ -1,4 +1,4 @@
-﻿/* ──────────────────────────────────────────────
+/* ──────────────────────────────────────────────
    SECTION
 ────────────────────────────────────────────── */
 .section {
@@ -367,6 +367,21 @@
 @media (max-width: 480px) {
   .formRow {
     grid-template-columns: 1fr;
+  }
+}
+
+/* ── Section masquée sur mobile ──────────────────────────────────────────────
+   Piloté par la prop `hiddenOnMobile` (page d'accueil uniquement) : sur
+   téléphone la section « Créons votre prochaine grande idée. » et son
+   formulaire ne sont plus affichés — le contact reste accessible par
+   `/contact` et le lien du menu. L'aperçu de l'admin ne passe pas la prop,
+   la section y reste donc visible et éditable.
+
+   Même seuil que la mise en une colonne de `.grid` (820 px) : en fin de
+   fichier, pour qu'aucune règle de base ne l'emporte à spécificité égale. */
+@media (max-width: 820px) {
+  .hiddenOnMobile {
+    display: none;
   }
 }
 

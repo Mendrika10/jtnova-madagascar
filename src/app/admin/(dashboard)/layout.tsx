@@ -8,6 +8,7 @@ import { syncContactReadStatuses } from "@/lib/mail-sync";
 import { logoutAction } from "../login/actions";
 import FlashToasts, { ToastProvider } from "@/components/admin/Toaster";
 import SidebarNav from "./SidebarNav";
+import AdminShell from "./AdminShell";
 import styles from "../admin.module.css";
 
 export default async function AdminLayout({
@@ -49,8 +50,9 @@ export default async function AdminLayout({
     // navigations entre écrans, et le message déclenché par une Server Action
     // s'affiche bien sur la page d'arrivée (cf. `components/admin/Toaster`).
     <ToastProvider>
-      <div className={styles.shell}>
-        <aside className={styles.sidebar}>
+      <AdminShell
+        sidebar={
+          <>
           <div className={styles.sideHead}>
             <span className={styles.sideMark} aria-hidden>
               JT
@@ -64,7 +66,12 @@ export default async function AdminLayout({
             </span>
           </div>
 
-          <Link href="/admin/realisations/new" className={styles.sidePrimary}>
+          <Link
+            href="/admin/realisations/new"
+            className={styles.sidePrimary}
+            // Info-bulle native pour le rail réduit (libellé masqué).
+            title="Nouvelle réalisation"
+          >
             <Plus size={16} strokeWidth={2.2} aria-hidden />
             Nouvelle réalisation
           </Link>
@@ -113,20 +120,21 @@ export default async function AdminLayout({
               </button>
             </form>
           </div>
-        </aside>
-
+          </>
+        }
+      >
         <div className={styles.main}>
           {/* Le repli de chargement de ce segment (loading.tsx) s'affiche ici,
               pendant la réponse du serveur, sans recouvrir la barre latérale. */}
           <div className={styles.content}>{children}</div>
         </div>
+      </AdminShell>
 
         {/* `useSearchParams` impose une frontière Suspense : le pont est monté
             une seule fois et lit les codes de résultat des Server Actions. */}
         <Suspense fallback={null}>
           <FlashToasts />
         </Suspense>
-      </div>
     </ToastProvider>
   );
 }
