@@ -1,4 +1,4 @@
-﻿/* ─── Section ─── */
+/* ─── Section ─── */
 
 /* Grille de fond */
 .bg {
@@ -457,4 +457,19 @@
 
 .linkedinLink:hover {
   color: light-dark(rgba(0, 150, 200, 0.85), rgba(0, 212, 255, 0.85));
+}
+
+/* ─── Très petits écrans ──────────────────────────────────────────────────────
+   La barre basse (avatar + auteur | navigation) ne peut pas descendre sous
+   ~340 px de large : à 360 px et moins, elle poussait la carte au-delà de
+   l'écran et la page devenait défilable horizontalement. On laisse la
+   navigation passer à la ligne suivante. */
+@media (max-width: 420px) {
+  .bottomBar {
+    flex-wrap: wrap;
+    row-gap: 1rem;
+  }
+  .navRow {
+    margin-left: auto;
+  }
 }

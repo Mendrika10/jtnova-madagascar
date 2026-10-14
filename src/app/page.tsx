@@ -39,7 +39,9 @@ export default async function Home() {
       <Testimonials items={testimonials ?? undefined} />
       <TechBanner items={techs ?? undefined} />
       <FAQ items={faqs ?? undefined} />
-      <CTA setting={cta} contact={contact} />
+      {/* Sur mobile la section contact (titre + formulaire) est masquée :
+          le contact reste accessible via `/contact` et le menu. */}
+      <CTA setting={cta} contact={contact} hiddenOnMobile />
     </>
   );
 }

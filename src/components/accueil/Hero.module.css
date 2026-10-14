@@ -129,6 +129,10 @@
     0 8px 32px light-dark(rgba(13, 26, 43, 0.135), rgba(0, 0, 0, 0.3));
   padding-top: 2.2rem;
   margin-top: 0.5rem;
+  /* Sans `min-width: 0`, la carte refuse de rétrécir sous la largeur
+     min-content de ses enfants (cartes de stats + libellés insécables) et
+     déborde du hero, qui la rogne (`overflow: hidden`). */
+  min-width: 0;
 }
 
 /* ── Colonne gauche ── */
@@ -137,16 +141,19 @@
   flex-direction: column;
   gap: 1.25rem;
   justify-content: flex-end;
+  min-width: 0;
 }
 
 /* ── Stats cards ── */
 .statsRow {
   display: flex;
   gap: 0.75rem;
+  min-width: 0;
 }
 
 .statItem {
   flex: 1;
+  min-width: 0;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -233,6 +240,7 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  overflow-wrap: anywhere;
   color: light-dark(rgba(58, 79, 105, 0.6), rgba(180, 220, 240, 0.5));
   text-align: center;
   line-height: 1.3;
@@ -283,6 +291,7 @@
   flex-direction: column;
   align-items: flex-end;
   gap: 1.6rem;
+  min-width: 0;
 }
 
 .desc {
@@ -448,9 +457,30 @@
     padding: 3rem 1.25rem 2.5rem;
     gap: 1.6rem;
   }
+  /* Le titre restait à 13vw (≈ 51 px sur un téléphone) : six lignes qui
+     écrasaient tout le hero. On retombe sur l'échelle des autres h1 du site
+     (≈ 32 px) et on raccorde au palier 601 px, qui vaut aussi 2rem. */
   .title {
-    font-size: clamp(3rem, 13vw, 5rem);
-    line-height: 1;
+    font-size: clamp(1.55rem, 8.2vw, 2rem);
+    line-height: 1.08;
+  }
+  /* La carte bordée gardait 40 px de padding de chaque côté : avec trois
+     cartes de stats, son contenu dépassait la largeur du téléphone et était
+     rogné par le hero. */
+  .bottomRow {
+    padding: 1.4rem 1.1rem;
+    gap: 1.5rem;
+  }
+  .statItem {
+    padding: 0.9rem 0.5rem;
+    border-radius: 14px;
+  }
+  .statNum {
+    font-size: 1.4rem;
+  }
+  .statLabel {
+    font-size: 0.58rem;
+    letter-spacing: 0.05em;
   }
   .socialLink {
     font-size: 0.62rem;

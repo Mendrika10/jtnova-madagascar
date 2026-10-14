@@ -1,4 +1,4 @@
-﻿/* ═══════════════════════════════════════════════
+/* ═══════════════════════════════════════════════
    À PROPOS – About.module.css
 ═══════════════════════════════════════════════ */
 
@@ -6,6 +6,9 @@
 .page {
   position: relative;
   background: light-dark(#eef3fa, #070d1a);
+  /* Coupe les débordements des animations d'entrée (`x: 48` sur `.whoCard`) :
+     sans elle, le navigateur mobile élargit le viewport à la largeur du contenu
+     et la page devient ~28 px plus large que l'écran. */
   overflow: hidden;
   min-height: 100vh;
 }
